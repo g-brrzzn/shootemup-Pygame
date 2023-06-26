@@ -1,6 +1,6 @@
 # Shoot 'em Up - Pygame
 
-### A base for a Shoot 'em Up game in Python-pygame as a personal project
+### A base for a Shoot 'em Up game in Python-pygame as a personal project, made from scratch
 
 ### Gameplay
 ![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/4972238b-930c-401c-8c3e-cb15c38682df)
