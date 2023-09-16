@@ -65,7 +65,6 @@ class Bullet:
 
 
 class Player:
-    vida = 3
     shot_delay = 0.25
     moving_right = False
     moving_left = False
@@ -77,12 +76,22 @@ class Player:
     def __init__(self, pos):
         self.last_time = time()
         self.last_shot = self.last_time
-        self.image = pygame.image.load('assets/Player.png').convert()
-        self.image = pygame.transform.scale(self.image, (SCALED_SPRITE_SIZE, SCALED_SPRITE_SIZE))
-        self.image.set_colorkey((0, 0, 0))
+        self.sprites = []
+        for i in range(1, 3):
+            self.sprite = pygame.image.load(f'assets/player_idle{i}.png').convert()
+            self.sprite = pygame.transform.scale(self.sprite, (SCALED_SPRITE_SIZE, 24*4))
+            self.sprite.set_colorkey((0, 0, 0))
+            self.sprites.append(self.sprite)
+        self.current_sprite = 0
+        self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect(center=pos)
         self.movement = pygame.math.Vector2()
         self.speed = 7
+
+    def animate(self):
+        self.current_sprite += 0.07
+        if self.current_sprite >= len(self.sprites): self.current_sprite = 0
+        self.image = self.sprites[int(self.current_sprite)]
 
     def get_input(self, event):
         if event.key in CONTROLS['LEFT']:
@@ -125,28 +134,36 @@ class Player:
         if self.rect[1] > WINDOW_SIZE[1] - self.rect.height: self.rect[1] = WINDOW_SIZE[1] - self.rect.height
         if self.rect[1] < 0: self.rect[1] = 0
 
+        self.animate()
+
     def draw(self, surf):
         surf.blit(self.image, self.rect)
 
 
-class Enemy1: # Placeholder enemy
+class Enemy1:  # Placeholder enemy
     instancelist = []
     speed = WINDOW_SIZE[1] * 0.004
 
-    def __init__(self, pos, name):
-        if pos is None and name is None:
-            pass
-        else:
-            self.x, self.y = pos
-            self.name = name
-            self.instancelist.append(self)
-            self.image = pygame.image.load('assets/Enemy1.png').convert()
-            self.image.set_colorkey((0, 0, 0))
-            self.image = pygame.transform.flip(self.image, False, True)
-            self.image = pygame.transform.scale(self.image, (SCALED_SPRITE_SIZE, SCALED_SPRITE_SIZE))
-            self.rect = self.image.get_rect()
-            self.direction = choice([True, False])
-            self.y_direction = False
+    def __init__(self, pos):
+        self.x, self.y = pos
+        self.instancelist.append(self)
+        self.sprites = []
+        for i in range(1, 3):
+            self.sprite = pygame.image.load(f'assets/enemy_idle{i}.png').convert()
+            self.sprite = pygame.transform.flip(self.sprite, False, True)
+            self.sprite = pygame.transform.scale(self.sprite, (SCALED_SPRITE_SIZE, SCALED_SPRITE_SIZE))
+            self.sprite.set_colorkey((0, 0, 0))
+            self.sprites.append(self.sprite)
+        self.current_sprite = 0
+        self.image = self.sprites[self.current_sprite]
+        self.rect = self.image.get_rect()
+        self.direction = choice([True, False])
+        self.y_direction = False
+
+    def animate(self):
+        self.current_sprite += 0.07
+        if self.current_sprite >= len(self.sprites): self.current_sprite = 0
+        self.image = self.sprites[int(self.current_sprite)]
 
     def death(self):
         for bloc in Bullet.locs:
@@ -179,6 +196,7 @@ class Enemy1: # Placeholder enemy
         self.rect[0] = self.x
         self.rect[1] = self.y
 
+        self.animate()
         self.draw(surf)
 
     def draw(self, surf):
@@ -189,7 +207,7 @@ class Enemy1: # Placeholder enemy
         for i in range(1, n):
             x = randint(0, WINDOW_SIZE[0])
             y = WINDOW_SIZE[1]/2 - 300
+            Enemy1((x, y))
 
-            newname = ''.join(choices(ascii_uppercase, k=5))
-            if newname not in Enemy1.instancelist:
-                Enemy1((x, y), newname)
+
+

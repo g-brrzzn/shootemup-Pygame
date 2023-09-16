@@ -3,6 +3,7 @@ from states.Menu import Menu
 from states.Pause import *
 from states.GameState import GameState
 from states.Options import Options
+from states.DeathScreen import *
 from constants.global_imports import *
 from constants.global_var import *
 from constants.global_func import *
@@ -16,17 +17,21 @@ last_time = time()
 
 
 class Game(GameState):
+    level = 1
     def __init__(self, screen=screen):
         super().__init__()
-        self.player = Player((WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2))
+        self.player = Player((WINDOW_SIZE[0] / 2, (WINDOW_SIZE[1] / 2)+150))
         self.background_fall = Fall(300)
         self.bullets = Bullet(self.player.rect[0] + SPRITE_SIZE, self.player.rect[1] + SPRITE_SIZE / 2, 5)
         self.next_state = "Pause"
-        self.enemy = Enemy1(None, None)
         self.last_time = last_time
+        self.level = 1
+        self.level_done = False
 
     def start(self):
-        Enemy1.spawn_enemy(10)
+        if not self.level_done:
+            Enemy1.spawn_enemy(self.level * 5)
+            self.level_done = True
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -44,9 +49,17 @@ class Game(GameState):
         self.player.update(dt, self.last_time)
         self.background_fall.update()
         if Enemy1.instancelist is not None: [instance.update(dt, surf) for instance in Enemy1.instancelist]
+        if not len(Enemy1.instancelist):
+            self.level += 1
+            Enemy1.spawn_enemy(self.level * 5)
+            self.level_done = True
 
     def draw(self, surf=screen):
-        vertical(surf, False, (60, 7, 40, 255), (30, 5, 20, 255))
+        if SHOW_FPS:
+            text(f'FPS: {(int(clock.get_fps()))}', 50, 30, original_font=False)
+        text(f'Level {self.level}', WINDOW_SIZE[0]-50, WINDOW_SIZE[1]-30, original_font=False)
+
+        vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
         self.player.draw(surf)
 
@@ -92,10 +105,8 @@ class GameRunner(object):
         sys.exit()
 
     def draw(self):
-        if SHOW_FPS:
-            text(f'FPS: {(int(clock.get_fps()))}', 30, 30)
 
-        #pygame.display.set_icon(Player.image)
+        pygame.display.set_icon(pygame.image.load('assets/player_idle1.png'))
         pygame.display.set_caption(f'Shoot \'em Up - Pygame. FPS: {int(clock.get_fps())}')
         clock.tick(FRAME_RATE)
         pygame.display.update()
@@ -104,11 +115,12 @@ class GameRunner(object):
 
 if __name__ == "__main__":
     states = {
-        "Menu": Menu(),
-        "Game": Game(),
-        "Pause": Pause(),
-        "Exit": Exit(),
-        "Options": Options()
+        "Menu":     Menu(),
+        "Game":     Game(),
+        "Pause":    Pause(),
+        "Exit":     Exit(),
+        "Options":  Options(),
+        "Death":    Death()
     }
     game = GameRunner(screen, states, "Menu")
 

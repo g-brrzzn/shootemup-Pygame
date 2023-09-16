@@ -20,7 +20,7 @@ class Options(GameState):
         
     def update(self, surf=screen):
         self.fall.update(-3, 0)
-        vertical(surf, False, (60, 5, 40, 20), (25, 2, 10, 20))
+        vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {bool2Switch(SHOW_FPS)}',
                         f'FULLSCREEN: {bool2Switch(SET_FULLSCREEN)}', 'APPLY RESOLUTION', 'BACK']
         MenuMaker(self.options, __class__.__name__, self.selected, surf)

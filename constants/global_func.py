@@ -4,11 +4,13 @@ from constants.global_imports import *
 pygame.init()
 screen = pygame.display.set_mode(WINDOW_SIZE)
 font = pygame.font.Font('assets/American Captain.ttf', 42)
+gameplay_font = pygame.font.Font('assets/American Captain.ttf', 32)
 
 
-def text(string, x, y, color=(255, 255, 255)):
+def text(string, x, y, color=(255, 255, 255), original_font=True):
     string = str(string)
-    info = font.render(string, True, color)
+    if original_font: info = font.render(string, True, color)
+    else:             info = gameplay_font.render(string, True, color)
     textrect = info.get_rect()
     textrect.center = (x, y)
     screen.blit(info, textrect)
@@ -16,7 +18,7 @@ def text(string, x, y, color=(255, 255, 255)):
 
 def bool2Switch(bool):
     if bool: return 'ON'
-    else: return 'OFF'
+    else:    return 'OFF'
 
 
 def delta_time(last_time):
@@ -26,7 +28,7 @@ def delta_time(last_time):
     return dt, last_time
 
 
-def vertical(surf, is_square=True, start_color=(80, 10, 60, 200), end_color=(30, 5, 20, 200)):
+def vertical(surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BACKGROUND_COLOR_2):
     if not is_square:
         size = WINDOW_SIZE
         axis_x, axis_y = 0, 0
@@ -35,7 +37,7 @@ def vertical(surf, is_square=True, start_color=(80, 10, 60, 200), end_color=(30,
         center = (WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2)
         x, y = center
         axis_x = x - size[0] / 2
-        axis_y = y - size[0] / 2
+        axis_y = y - size[1] / 2
 
     height = size[1]
     big_surf = pygame.Surface((1, height)).convert_alpha()
@@ -51,8 +53,7 @@ def vertical(surf, is_square=True, start_color=(80, 10, 60, 200), end_color=(30,
                        (int(sr + rm * y),
                         int(sg + gm * y),
                         int(sb + bm * y),
-                        int(sa + am * y))
-                       )
+                        int(sa + am * y)))
     v = pygame.transform.scale(big_surf, size)
     surf.blit(v, (axis_x, axis_y))
 
@@ -60,7 +61,7 @@ def vertical(surf, is_square=True, start_color=(80, 10, 60, 200), end_color=(30,
 def MenuMaker(options, title, selected, surf):
     vertical(surf)
     for i in range(200):
-        pygame.draw.line(surf, (80, 10, 60),
+        pygame.draw.line(surf, BACKGROUND_COLOR_MENU_1,
                          (WINDOW_SIZE[0] / 2 - 100 + i, WINDOW_SIZE[1] / 2 - 179),      # Title background
                          (WINDOW_SIZE[0] / 2 - 100 + i, WINDOW_SIZE[1] / 2 - 230), 4)   # Title background
     text(title, WINDOW_SIZE[0] / 2, WINDOW_SIZE[1] / 2 - 200)
@@ -112,4 +113,5 @@ def MenuMaker(options, title, selected, surf):
                 text('|', WINDOW_SIZE[0] / 2 - 180, (WINDOW_SIZE[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
         else:
             text(option, WINDOW_SIZE[0] / 2, (WINDOW_SIZE[1] / 2 - y_gap) + 50 * options.index(option))
+
 
