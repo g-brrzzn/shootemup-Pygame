@@ -1,23 +1,22 @@
 # Shoot 'em Up - Pygame
 
-### A base for a Shoot 'em Up game in Python-pygame as a personal project, made from scratch
+### A "Shoot 'em Up" base game in Python-pygame as a personal project, made from scratch
 
 ### Gameplay
-![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/4972238b-930c-401c-8c3e-cb15c38682df)
-![gameplay2](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/5bca2c0a-3e60-4f69-8c46-49ab5bf1459e)
+![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/f4deaea0-935c-4156-ace6-b26bd3ccf58d)
+
 
 ### Menu and options
-![Menu](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/b2780aeb-5c67-4b22-8999-a23ffb58d4ef)
-![optionsMenu](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/b9c69c14-6ba4-4989-828a-22d28db6d563)
+![Menu](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/dbce6bf2-6a5e-4648-a771-ede6e5e418ba)
+![optionsMenu](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/8d1ff797-e5c5-46ba-81c4-fd47860ae0c4)
 
-#### The game is incomplete, it's just a base.
 ### Installation
 
 ```console
 # clone the repo
 $ git clone https://github.com/g-brrzzn/shootemup-Pygame
 
-# change the working directory to sherlock
+# change the working directory
 $ cd shootemup-Pygame
 
 # install the requirements
