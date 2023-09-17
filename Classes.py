@@ -1,34 +1,10 @@
 import pygame.image
-
 from constants.global_var import *
 from constants.global_imports import *
 
 pygame.init()
-pygame.display.set_mode(WINDOW_SIZE)
+pygame.display.set_mode(config.window_size)
 
-
-class Fall:
-    def __init__(self, quantidade):
-        self.locs = []
-        for i in range(quantidade):
-            snowloc = [randint(1, WINDOW_SIZE[0] - 1), randint(1, WINDOW_SIZE[1] - 1)]
-            self.locs.append(snowloc)
-
-    def update(self, gravity=0.3, wind=0.3):
-        for loc in self.locs:
-            loc[1] += gravity + uniform(0.1, 0.9)
-
-            if wind > 0:
-                loc[0] += wind
-            if gravity < 0:
-                if loc[1] < 0: loc[1] = WINDOW_SIZE[1]
-                if loc[0] < 0: loc[0] = WINDOW_SIZE[0]
-
-            if loc[1] > WINDOW_SIZE[1]: loc[1] = 0
-            if loc[0] > WINDOW_SIZE[0]: loc[0] = 0
-
-    def draw(self, surf, color=(70, 70, 70)):
-        [pygame.draw.circle(surf, pygame.Color(color), loc, 3) for loc in self.locs]
 
 
 class Bullet:
@@ -51,9 +27,9 @@ class Bullet:
             elif loc[2] == 3: loc[1] += round(self.speed * dt)
             elif loc[2] == 4: loc[0] += round(self.speed * dt)
 
-            if loc[0] > WINDOW_SIZE[0] + 1: self.locs.remove(loc)
+            if loc[0] > config.window_size[0] + 1: self.locs.remove(loc)
             if loc[0] < 0 - self.rect.height: self.locs.remove(loc)
-            if loc[1] > WINDOW_SIZE[1] + 1: self.locs.remove(loc)
+            if loc[1] > config.window_size[1] + 1: self.locs.remove(loc)
             if loc[1] < 0 - self.rect.height: self.locs.remove(loc)
 
             self.rect[0] = loc[0]
@@ -72,6 +48,7 @@ class Player:
     moving_down = False
     firing = False
     rect = pygame.math.Vector2()
+    life = 3
 
     def __init__(self, pos):
         self.last_time = time()
@@ -122,27 +99,34 @@ class Player:
 
     def update(self, dt, last_time):
         self.last_time = last_time
-        if self.moving_right: self.rect[0] += round(self.speed * dt)
-        if self.moving_left: self.rect[0] -= round(self.speed * dt)
-        if self.moving_up: self.rect[1] -= round(self.speed * dt)
-        if self.moving_down: self.rect[1] += round(self.speed * dt)
+        if self.moving_right: self.rect[0]  +=  round(self.speed * dt)
+        if self.moving_left: self.rect[0]   -=  round(self.speed * dt)
+        if self.moving_up: self.rect[1]     -=  round(self.speed * dt)
+        if self.moving_down: self.rect[1]   +=  round(self.speed * dt)
 
         if self.firing and self.last_time - self.last_shot > self.shot_delay: self.fire(); self.last_shot = self.last_time
 
-        if self.rect[0] > WINDOW_SIZE[0] - self.rect.height: self.rect[0] = WINDOW_SIZE[0] - self.rect.height
+        if self.rect[0] > config.window_size[0] - self.rect.width: self.rect[0] = config.window_size[0] - self.rect.width
         if self.rect[0] < 0: self.rect[0] = 0
-        if self.rect[1] > WINDOW_SIZE[1] - self.rect.height: self.rect[1] = WINDOW_SIZE[1] - self.rect.height
+        if self.rect[1] > config.window_size[1] - self.rect.height: self.rect[1] = config.window_size[1] - self.rect.height
         if self.rect[1] < 0: self.rect[1] = 0
+
+        for e in Enemy1.instancelist:
+            if self.rect.x - self.rect.width/2 < e.rect.x < self.rect.x + self.rect.width/2 and self.rect.y - self.rect.height/2 < e.rect.y < self.rect.y + self.rect.height/2:
+                self.life -= 1
 
         self.animate()
 
     def draw(self, surf):
         surf.blit(self.image, self.rect)
 
+    def getLife(self):       return self.life
+    def setLife(self, life): self.life = life
+
 
 class Enemy1:  # Placeholder enemy
     instancelist = []
-    speed = WINDOW_SIZE[1] * 0.004
+    speed = config.window_size[1] * 0.004
 
     def __init__(self, pos):
         self.x, self.y = pos
@@ -172,7 +156,7 @@ class Enemy1:  # Placeholder enemy
                 Bullet.locs.remove(bloc)
 
     def move(self, dt):
-        if randint(0, 2000) < 1:
+        if randint(0, 2000) < 2:
             self.y_direction = True
             self.old_y = self.y
         if self.y_direction:
@@ -182,7 +166,7 @@ class Enemy1:  # Placeholder enemy
         else:
             if self.direction:
                 self.x += self.speed * dt
-                if self.x > WINDOW_SIZE[0]-100:
+                if self.x > config.window_size[0]-100:
                     self.direction = False
             else:
                 self.x -= self.speed * dt
@@ -205,8 +189,8 @@ class Enemy1:  # Placeholder enemy
     @staticmethod
     def spawn_enemy(n):
         for i in range(1, n):
-            x = randint(0, WINDOW_SIZE[0])
-            y = WINDOW_SIZE[1]/2 - 300
+            x = randint(0, config.window_size[0])
+            y = config.window_size[1]/2 - 300
             Enemy1((x, y))
 
 

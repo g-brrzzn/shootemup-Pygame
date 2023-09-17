@@ -51,18 +51,18 @@ class Pause(GameState):
         self.selected = 0
 
     def update(self, surf=screen):
-        MenuMaker(['CONTINUE', 'OPTIONS', 'EXIT'], __class__.__name__, self.selected, surf)
+        MenuMaker(['CONTINUE', 'EXIT'], __class__.__name__, self.selected, surf)
 
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
-                if self.selected == 2:
+                if self.selected == 1:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
                 if self.selected == 0:
-                    self.selected = 2
+                    self.selected = 1
                 else:
                     self.selected -= 1
             if event.key in CONTROLS['START']:
@@ -70,10 +70,6 @@ class Pause(GameState):
                     self.next_state = 'Game'
                     self.done = True
                 elif self.selected == 1:
-                    # self.next_state = 'GameOptions'
-                    # self.done = True
-                    print("Ingame Options not available in this version")
-                elif self.selected == 2:
                     self.next_state = 'Exit'
                     self.done = True
             if event.key == K_ESCAPE:

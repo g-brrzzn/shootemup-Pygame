@@ -10,8 +10,8 @@ from constants.global_func import *
 
 pygame.init()
 clock = pygame.time.Clock()
-if SET_FULLSCREEN: screen = pygame.display.set_mode(WINDOW_SIZE, pygame.FULLSCREEN)
-else: screen = pygame.display.set_mode(WINDOW_SIZE)
+if config.set_fullscreen:   screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN, vsync=True)
+else:                       screen = pygame.display.set_mode(config.window_size, vsync=True)
 
 last_time = time()
 
@@ -20,7 +20,7 @@ class Game(GameState):
     level = 1
     def __init__(self, screen=screen):
         super().__init__()
-        self.player = Player((WINDOW_SIZE[0] / 2, (WINDOW_SIZE[1] / 2)+150))
+        self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150))
         self.background_fall = Fall(300)
         self.bullets = Bullet(self.player.rect[0] + SPRITE_SIZE, self.player.rect[1] + SPRITE_SIZE / 2, 5)
         self.next_state = "Pause"
@@ -43,7 +43,6 @@ class Game(GameState):
             self.player.get_input_keyup(event)
 
     def update(self, surf=screen):
-        if SHOW_FPS: text(FRAME_RATE, 30, 30)
         dt, self.last_time = delta_time(self.last_time)
         self.bullets.update(dt, surf)
         self.player.update(dt, self.last_time)
@@ -53,15 +52,18 @@ class Game(GameState):
             self.level += 1
             Enemy1.spawn_enemy(self.level * 5)
             self.level_done = True
+        if not Player.getLife(self.player):
+            self.next_state = "Death"
+            Player.setLife(self.player, 3)
+            self.done = True
 
     def draw(self, surf=screen):
-        if SHOW_FPS:
-            text(f'FPS: {(int(clock.get_fps()))}', 50, 30, original_font=False)
-        text(f'Level {self.level}', WINDOW_SIZE[0]-50, WINDOW_SIZE[1]-30, original_font=False)
-
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
         self.player.draw(surf)
+        text(f'Level {self.level}', config.window_size[0] - 50, config.window_size[1] - 30, original_font=False)
+        if config.show_fps:
+            text(f'FPS: {(int(clock.get_fps()))}', 50, 30, original_font=False)
 
 
 class GameRunner(object):

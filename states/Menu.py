@@ -2,12 +2,12 @@ from states.GameState import GameState
 from constants.global_func import *
 from constants.global_imports import *
 from constants.global_var import *
-from Classes import Fall
+from constants.global_func import Fall
 
 
 pygame.init()
-screen = pygame.display.set_mode(WINDOW_SIZE)
-font = pygame.font.Font('assets/American Captain.ttf', 42)
+screen = pygame.display.set_mode(config.window_size)
+
 
 class Menu(GameState):
     def __init__(self):

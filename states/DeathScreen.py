@@ -2,7 +2,6 @@ from states.GameState import GameState
 from constants.global_imports import *
 from constants.global_var import *
 from constants.global_func import *
-from Classes import Fall
 
 class Exit(GameState):
     def __init__(self):
