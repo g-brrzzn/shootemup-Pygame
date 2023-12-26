@@ -23,5 +23,6 @@ $ cd shootemup-Pygame
 $ python -m pip install -r requirements.txt
 
 # run the Game.py
+$ python Game.py
 ```
 

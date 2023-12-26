@@ -29,6 +29,11 @@ class Game(GameState):
         self.level_done = False
 
     def start(self):
+        if Player.getLife(self.player) == 0:
+            [instance.kill() for instance in Enemy1.instancelist]
+            self.level = 1
+            self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150))
+            self.next_state = "Pause"
         if not self.level_done:
             Enemy1.spawn_enemy(self.level * 5)
             self.level_done = True
@@ -54,16 +59,16 @@ class Game(GameState):
             self.level_done = True
         if not Player.getLife(self.player):
             self.next_state = "Death"
-            Player.setLife(self.player, 3)
             self.done = True
 
     def draw(self, surf=screen):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
-        self.player.draw(surf)
+        self.player.draw(surf) 
         text(f'Level {self.level}', config.window_size[0] - 50, config.window_size[1] - 30, original_font=False)
+        text(f'Life    {self.player.getLife()}', config.window_size[0] - 50, config.window_size[1] - 60, original_font=False)
         if config.show_fps:
-            text(f'FPS: {(int(clock.get_fps()))}', 50, 30, original_font=False)
+            text(f'FPS {(int(clock.get_fps()))}', 50, 30, original_font=False)
 
 
 class GameRunner(object):

@@ -66,9 +66,9 @@ def vertical(surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BAC
 
 
 class Fall:
-    def __init__(self, quantidade):
+    def __init__(self, amount):
         self.locs = []
-        for i in range(quantidade):
+        for i in range(amount):
             snowloc = [randint(1, config.window_size[0] - 1), randint(1, config.window_size[1] - 1)]
             self.locs.append(snowloc)
 
@@ -88,7 +88,43 @@ class Fall:
     def draw(self, surf, color=(70, 70, 70)):
         [pygame.draw.circle(surf, pygame.Color(color), loc, 3) for loc in self.locs]
 
+class Explosion:
+    locs = []
+    def create(self, x, y):
+        for i in range(50):
+            loc = [x, y, x, y]
+            self.locs.append(loc)
 
+    def update(self, dt, speed=7):
+        for loc in self.locs:
+            randx = randint(-1, 1)
+            randy = randint(-1, 1)
+            
+            if randx == 1:  
+                loc[0] += speed * dt
+                try: 
+                    if loc[0] > loc[2] + 50: self.locs.remove(loc)
+                except: pass
+            elif randx == -1: 
+                loc[0] -= speed * dt
+                try: 
+                    if loc[0] < loc[2] - 50: self.locs.remove(loc)
+                except: pass
+            if randy == 1:  
+                loc[1] += speed * dt
+                try: 
+                    if loc[1] > loc[3] + 50: self.locs.remove(loc)
+                except: pass
+            elif randy == -1: 
+                loc[1] -= speed * dt
+                try: 
+                    if loc[1] < loc[3] - 50: self.locs.remove(loc)
+                except: pass
+            
+            #self.locs.remove(loc)
+
+    def draw(self, surf):
+        [pygame.draw.circle(surf, (221, 245, 154), [loc[0], loc[1]], 3) for loc in self.locs]
 
 
 def MenuMaker(options, title, selected, surf):
