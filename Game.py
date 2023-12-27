@@ -23,6 +23,7 @@ class Game(GameState):
         self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150))
         self.background_fall = Fall(300)
         self.bullets = Bullet(self.player.rect[0] + SPRITE_SIZE, self.player.rect[1] + SPRITE_SIZE / 2, 5)
+        
         self.next_state = "Pause"
         self.last_time = last_time
         self.level = 1
@@ -35,8 +36,9 @@ class Game(GameState):
             self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150))
             self.next_state = "Pause"
         if not self.level_done:
+            [instance.kill() for instance in Enemy1.instancelist]
             Enemy1.spawn_enemy(self.level * 5)
-            self.level_done = True
+            self.level_done = False
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -49,10 +51,12 @@ class Game(GameState):
 
     def update(self, surf=screen):
         dt, self.last_time = delta_time(self.last_time)
+        
         self.bullets.update(dt, surf)
         self.player.update(dt, self.last_time)
-        self.background_fall.update()
+        self.background_fall.update(gravity=self.level*3/10)
         if Enemy1.instancelist is not None: [instance.update(dt, surf) for instance in Enemy1.instancelist]
+        
         if not len(Enemy1.instancelist):
             self.level += 1
             Enemy1.spawn_enemy(self.level * 5)
@@ -65,6 +69,7 @@ class Game(GameState):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
         self.player.draw(surf) 
+        
         text(f'Level {self.level}', config.window_size[0] - 50, config.window_size[1] - 30, original_font=False)
         text(f'Life    {self.player.getLife()}', config.window_size[0] - 50, config.window_size[1] - 60, original_font=False)
         if config.show_fps:

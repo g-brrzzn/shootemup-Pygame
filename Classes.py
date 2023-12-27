@@ -188,7 +188,7 @@ class Enemy1:  # Placeholder enemy
             Bullet(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, 3, False)
               
     def move(self, dt):
-        if randint(0, 1000) < 1:
+        if randint(0, 500) < 1:
             self.y_direction = True
             self.old_y = self.y
         if self.y_direction:
@@ -214,6 +214,8 @@ class Enemy1:  # Placeholder enemy
 
         self.rect[0] = self.x
         self.rect[1] = self.y
+        if self.x > config.window_size[0]+100 or self.x < -100 or self.y > config.window_size[1] or self.y < -100:
+            self.kill()
 
         self.animate()
         self.draw(surf)
@@ -225,7 +227,7 @@ class Enemy1:  # Placeholder enemy
     def spawn_enemy(n):
         for i in range(1, n):
             x = randint(0, config.window_size[0])
-            y = config.window_size[1]/2 - 300
+            y = config.window_size[1]/2 - 320
             Enemy1((x, y))
 
 
