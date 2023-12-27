@@ -5,7 +5,8 @@
 ### Gameplay
 
 ![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/f4deaea0-935c-4156-ace6-b26bd3ccf58d)
-![gameplay2](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/741e628b-8ff3-4598-9b4c-53fa2dceeb22)
+</br></br>$~~~~~~~~~~~~~~~~~~~~~~~~~$![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/35efcf48-989f-441f-b47a-9ed76f56e691)
+
 
 
 ### Menu and options
