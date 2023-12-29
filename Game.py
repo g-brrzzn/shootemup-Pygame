@@ -3,7 +3,7 @@ from states.Menu import Menu
 from states.Pause import *
 from states.GameState import GameState
 from states.Options import Options
-from states.DeathScreen import *
+from states.GameOver import *
 from constants.global_imports import *
 from constants.global_var import *
 from constants.global_func import *
@@ -62,7 +62,7 @@ class Game(GameState):
             Enemy1.spawn_enemy(self.level * 5)
             self.level_done = True
         if not Player.getLife(self.player):
-            self.next_state = "Death"
+            self.next_state = "GameOver"
             self.done = True
 
     def draw(self, surf=screen):
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "Pause":    Pause(),
         "Exit":     Exit(),
         "Options":  Options(),
-        "Death":    Death()
+        "GameOver": GameOver()
     }
     game = GameRunner(screen, states, "Menu")
 

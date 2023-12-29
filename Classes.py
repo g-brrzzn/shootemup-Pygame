@@ -33,16 +33,18 @@ class Bullet:
         elif loc[2] == 3: loc[1] += round(speed * dt)
         elif loc[2] == 4: loc[0] += round(speed * dt)
 
-        if loc[3]:
-            if loc[0] > config.window_size[0] + 1: self.locs.remove(loc)
-            if loc[0] < 0 - self.rect.height: self.locs.remove(loc)
-            if loc[1] > config.window_size[1] + 1: self.locs.remove(loc)
-            if loc[1] < 0 - self.rect.height: self.locs.remove(loc)
-        else: 
-            if loc[0] > config.window_size[0] + 1: self.enemylocs.remove(loc)
-            if loc[0] < 0 - self.rect.height: self.enemylocs.remove(loc)
-            if loc[1] > config.window_size[1] + 1: self.enemylocs.remove(loc)
-            if loc[1] < 0 - self.rect.height: self.enemylocs.remove(loc)
+        try:
+            if loc[3]:
+                if loc[0] > config.window_size[0] + 1: self.locs.remove(loc)
+                if loc[0] < 0 - self.rect.height: self.locs.remove(loc)
+                if loc[1] > config.window_size[1] + 1: self.locs.remove(loc)
+                if loc[1] < 0 - self.rect.height: self.locs.remove(loc)
+            else: 
+                if loc[0] > config.window_size[0] + 1: self.enemylocs.remove(loc)
+                if loc[0] < 0 - self.rect.height: self.enemylocs.remove(loc)
+                if loc[1] > config.window_size[1] + 1: self.enemylocs.remove(loc)
+                if loc[1] < 0 - self.rect.height: self.enemylocs.remove(loc)
+        except: pass
 
         self.rect[0] = loc[0]
         self.rect[1] = loc[1]

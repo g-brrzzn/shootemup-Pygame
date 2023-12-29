@@ -57,8 +57,8 @@ BACKGROUND_COLOR_MENU_2 = (BACKGROUND_COLOR_2[0], BACKGROUND_COLOR_2[1], BACKGRO
 CONTROLS = {
     'UP':       [pygame.K_w, pygame.K_UP],
     'DOWN':     [pygame.K_s, pygame.K_DOWN],
-    'RIGHT':    [pygame.K_d, pygame.K_LEFT],
-    'LEFT':     [pygame.K_a, pygame.K_RIGHT],
+    'RIGHT':    [pygame.K_d, pygame.K_RIGHT],
+    'LEFT':     [pygame.K_a, pygame.K_LEFT],
     'FIRE':     [pygame.K_SPACE],
     'START':    [pygame.K_RETURN],
     'ESC':      [pygame.K_ESCAPE]

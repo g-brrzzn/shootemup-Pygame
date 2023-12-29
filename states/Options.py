@@ -51,7 +51,6 @@ class Options(GameState):
                 if self.selected == 0:
                     pass
                 elif self.selected == 1:
-                    # SHOW_FPS = not SHOW_FPS
                     print("\"Show FPS\" is not available in this version ")
                     config.show_fps = not config.show_fps
                 elif self.selected == 2:
