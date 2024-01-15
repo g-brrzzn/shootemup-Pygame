@@ -1,7 +1,7 @@
 # Shoot 'em Up - Pygame
 
 ### A "Shoot 'em Up" base game in Python-pygame as a personal project, made from scratch
-
+A complex aspect of this project lies not in the fundamental gameplay itself, but rather in the intricacies of coding and implementing several foundational concepts from scratch. These include the development of  Game State, OOP principles, crafting efficient Game Loops, applying Clean Code, and adeptly handling the creation and management of various particle types and explosions, as well as the effective management of instances
 ### Gameplay
 
 ![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/f4deaea0-935c-4156-ace6-b26bd3ccf58d)
