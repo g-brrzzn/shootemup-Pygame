@@ -6,6 +6,8 @@ A complex aspect of this project lies not in the fundamental gameplay itself, bu
 
 ![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/f4deaea0-935c-4156-ace6-b26bd3ccf58d)
 </br></br>$~~~~~~~~~~~~~~~~~~~~~~~~~$![gameplay](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/35efcf48-989f-441f-b47a-9ed76f56e691)
+</br></br>$~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~$![Untitled-ezgif com-video-to-gif-converter](https://github.com/g-brrzzn/shootemup-Pygame/assets/136928835/080616e2-7be7-40d1-8c57-bc361290a19e)
+
 
 
 
