@@ -15,6 +15,12 @@ else:                       screen = pygame.display.set_mode(config.window_size,
 
 last_time = time()
 
+pygame.mixer.init()
+pygame.mixer.music.load("assets/victory.mp3")
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.1)
+
+
 
 class Game(GameState):
     level = 1
@@ -117,7 +123,6 @@ class GameRunner(object):
         sys.exit()
 
     def draw(self):
-
         pygame.display.set_icon(pygame.image.load('assets/player_idle1.png'))
         pygame.display.set_caption(f'Shoot \'em Up - Pygame. FPS: {int(clock.get_fps())}')
         clock.tick(FRAME_RATE)

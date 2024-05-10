@@ -12,6 +12,11 @@ class Bullet:
     image.set_colorkey((0, 0, 0))
     image = pygame.transform.scale(image, (SPRITE_SIZE, SPRITE_SIZE))
     rect = image.get_rect()
+    
+    enemyimage = pygame.image.load('assets/enemy_bullet.png').convert()
+    enemyimage.set_colorkey((0, 0, 0))
+    enemyimage = pygame.transform.scale(enemyimage, (SPRITE_SIZE, SPRITE_SIZE))
+    
     locs = []
     enemylocs = []
     speed = 12
@@ -48,16 +53,18 @@ class Bullet:
 
         self.rect[0] = loc[0]
         self.rect[1] = loc[1]
-        self.draw(surf)
+        self.draw(surf, loc[3])
     
     def update(self, dt, surf):
+        
         for loc in self.locs:
             self.moveBullets(loc, dt, surf)
         for loc in self.enemylocs:
             self.moveBullets(loc, dt, surf)
 
-    def draw(self, surf):
-        surf.blit(self.image, self.rect)
+    def draw(self, surf, isFromPlayer):
+        if isFromPlayer: surf.blit(self.image, self.rect)
+        else: surf.blit(self.enemyimage, self.rect)
 
 
 class Player:
@@ -116,6 +123,7 @@ class Player:
 
     def fire(self):
         Bullet(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, 1)
+        pygame.mixer.Sound.play(pygame.mixer.Sound('assets/shoot.mp3'))
 
     def update(self, dt, last_time):
         self.last_time = last_time
@@ -182,6 +190,7 @@ class Enemy1:  # Placeholder enemy
         for bloc in Bullet.locs:
             if self.x - self.rect.width/2 < bloc[0] < self.x+10 + self.rect.height and self.y - self.rect.height < bloc[1] < self.y + self.rect.height:
                 self.explosion.create(self.x, self.y)
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/hit.mp3'))
                 self.kill()
                 Bullet.locs.remove(bloc)
                 

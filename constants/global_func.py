@@ -170,16 +170,16 @@ def MenuMaker(options, title, selected, surf):
 
     for option in options:
         if selected == options.index(option):
-            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), (100, 40, 80))
+            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), GAME_COLOR)
             if len(option) < 10:
-                text('|', config.window_size[0] / 2 + 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
-                text('|', config.window_size[0] / 2 - 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
+                text('|', config.window_size[0] / 2 + 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
+                text('|', config.window_size[0] / 2 - 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
             elif len(option) < 20:
-                text('|', config.window_size[0] / 2 + 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
-                text('|', config.window_size[0] / 2 - 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
+                text('|', config.window_size[0] / 2 + 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
+                text('|', config.window_size[0] / 2 - 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
             else:
-                text('|', config.window_size[0] / 2 + 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
-                text('|', config.window_size[0] / 2 - 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), (100, 40, 80))
+                text('|', config.window_size[0] / 2 + 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
+                text('|', config.window_size[0] / 2 - 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
         else:
             text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option))
 

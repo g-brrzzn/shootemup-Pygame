@@ -25,16 +25,19 @@ class Menu(GameState):
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 if self.selected == 2:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 if self.selected == 0:
                     self.selected = 2
                 else:
                     self.selected -= 1
             if event.key in CONTROLS['START']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/forceField_001.mp3'))
                 if self.selected == 0:
                     self.next_state = 'Game'
                     self.done = True

@@ -10,8 +10,8 @@ class Configs:
         SVGA =  (800, 600)
         self.RESOLUTIONS = [SVGA, QHD, XGA, HD, FHD]
         self.SHOW_FPS = False
-        self.SET_FULLSCREEN = False
-        self.WINDOW_SIZE = self.RESOLUTIONS[3]
+        self.SET_FULLSCREEN = True
+        self.WINDOW_SIZE = self.RESOLUTIONS[4]
 
     @property
     def show_fps(self):
@@ -49,6 +49,8 @@ MAX_LIFE = 1
 BACKGROUND_COLOR_1 = (15, 25, 27, 200)
 BACKGROUND_COLOR_2 = (15, 25, 27, 200)
 
+GAME_COLOR = (100, 40, 80)
+
 BACKGROUND_COLOR_GAME_1 = (BACKGROUND_COLOR_1[0], BACKGROUND_COLOR_1[1], BACKGROUND_COLOR_1[2], 255)
 BACKGROUND_COLOR_GAME_2 = (BACKGROUND_COLOR_2[0], BACKGROUND_COLOR_2[1], BACKGROUND_COLOR_2[2], 255)
 
@@ -60,6 +62,6 @@ CONTROLS = {
     'RIGHT':    [pygame.K_d, pygame.K_RIGHT],
     'LEFT':     [pygame.K_a, pygame.K_LEFT],
     'FIRE':     [pygame.K_SPACE],
-    'START':    [pygame.K_RETURN],
+    'START':    [pygame.K_RETURN, pygame.K_SPACE],
     'ESC':      [pygame.K_ESCAPE]
 }

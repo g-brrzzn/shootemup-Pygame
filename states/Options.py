@@ -25,29 +25,34 @@ class Options(GameState):
 
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 if self.selected == len(self.options) - 1:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 if self.selected == 0:
                     self.selected = len(self.options) - 1
                 else:
                     self.selected -= 1
 
             if event.key in CONTROLS['RIGHT']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 if self.selected == 0:
                     selec = config.RESOLUTIONS.index(self.config_res)
                     if selec == 0: self.config_res = config.RESOLUTIONS[0]
                     else: self.config_res = config.RESOLUTIONS[selec - 1]; selec -= 1
 
             if event.key in CONTROLS['LEFT']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 if self.selected == 0:
                     selec = config.RESOLUTIONS.index(self.config_res)
                     if selec == len(config.RESOLUTIONS) - 1: self.config_res = config.RESOLUTIONS[len(config.RESOLUTIONS) - 1]
                     else: self.config_res = config.RESOLUTIONS[selec + 1]; selec += 1
             config.window_size = self.config_res
             if event.key in CONTROLS['START']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/forceField_001.mp3'))
                 if self.selected == 0:
                     pass
                 elif self.selected == 1:
@@ -66,6 +71,7 @@ class Options(GameState):
                     self.next_state = 'Menu'
                     self.done = True
             if event.key in CONTROLS['ESC']:
+                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
                 self.next_state = 'Menu'
                 self.done = True
 
