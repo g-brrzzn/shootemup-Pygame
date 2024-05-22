@@ -90,7 +90,10 @@ class Player:
         self.rect = self.image.get_rect(center=pos)
         self.movement = pygame.math.Vector2()
         self.speed = 7
+        
         self.life = MAX_LIFE
+        self.last_damage = self.last_time
+        self.explosion = Explosion()
 
     def animate(self):
         self.current_sprite += 0.07
@@ -146,6 +149,7 @@ class Player:
         for bloc in Bullet.enemylocs:
             if self.rect.x - self.rect.width/2+25 < bloc[0] < self.rect.x + self.rect.height/2 and self.rect.y - self.rect.height/2+30 < bloc[1] < self.rect.y + self.rect.height/2:
                 self.life -= 1 
+                self.explosion.create(bloc[0], bloc[1], 1)
                 Bullet.enemylocs.remove(bloc)
                 
         self.animate()
@@ -177,6 +181,11 @@ class Enemy1:  # Placeholder enemy
         self.direction = choice([True, False])
         self.y_direction = False
         self.explosion = Explosion()
+        
+        self.last_time = time()
+        self.last_damage = self.last_time
+        
+        self.life = 3
 
     def animate(self):
         self.current_sprite += 0.07
@@ -185,13 +194,20 @@ class Enemy1:  # Placeholder enemy
 
     def kill(self):
         self.instancelist.remove(self)
+        
+    def damage(self):
+        if self.life <= 1: 
+            self.kill()
+            self.explosion.create(self.x, self.y)
+        else: 
+            self.life -= 1
+            self.explosion.create(self.x, self.y, e_range=25)
 
     def death(self):
         for bloc in Bullet.locs:
             if self.x - self.rect.width/2 < bloc[0] < self.x+10 + self.rect.height and self.y - self.rect.height < bloc[1] < self.y + self.rect.height:
-                self.explosion.create(self.x, self.y)
                 pygame.mixer.Sound.play(pygame.mixer.Sound('assets/hit.mp3'))
-                self.kill()
+                self.damage()
                 Bullet.locs.remove(bloc)
                 
     def shoot(self):
@@ -216,7 +232,8 @@ class Enemy1:  # Placeholder enemy
                 if self.x < 5:
                     self.direction = True
 
-    def update(self, dt, surf):
+    def update(self, dt, last_time, surf):
+        self.last_time = last_time
         self.death()
         self.move(dt)
         self.shoot()
@@ -225,8 +242,10 @@ class Enemy1:  # Placeholder enemy
 
         self.rect[0] = self.x
         self.rect[1] = self.y
-        if self.x > config.window_size[0]+100 or self.x < -100 or self.y > config.window_size[1] or self.y < -100:
-            self.kill()
+        
+        if (self.x > config.window_size[0]+100 or self.x < -100 or self.y > config.window_size[1] or self.y < -100) and ((self.last_time - self.last_damage) > 1): 
+            self.last_damage = self.last_time
+            self.damage()
 
         self.animate()
         self.draw(surf)

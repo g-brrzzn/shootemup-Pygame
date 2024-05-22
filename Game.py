@@ -8,6 +8,7 @@ from constants.global_imports import *
 from constants.global_var import *
 from constants.global_func import *
 
+
 pygame.init()
 clock = pygame.time.Clock()
 if config.set_fullscreen:   screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN, vsync=True)
@@ -19,7 +20,6 @@ pygame.mixer.init()
 pygame.mixer.music.load("assets/victory.mp3")
 pygame.mixer.music.play(-1)
 pygame.mixer.music.set_volume(0.1)
-
 
 
 class Game(GameState):
@@ -61,7 +61,8 @@ class Game(GameState):
         self.bullets.update(dt, surf)
         self.player.update(dt, self.last_time)
         self.background_fall.update(gravity=self.level*3/10)
-        if Enemy1.instancelist is not None: [instance.update(dt, surf) for instance in Enemy1.instancelist]
+        if Enemy1.instancelist is not None: [instance.update(dt, last_time, surf) for instance in Enemy1.instancelist]
+        
         
         if not len(Enemy1.instancelist):
             self.level += 1

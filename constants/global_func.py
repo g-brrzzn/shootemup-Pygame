@@ -90,9 +90,10 @@ class Fall:
 
 class Explosion:
     locs = []
-    def create(self, x, y):
+    explosion_color = [(221, 245, 154), (28, 162, 111)] # 0 - 1st enemy color; 1 - Player color; 2 - 
+    def create(self, x, y, index_color=0, e_range=50):
         for i in range(50):
-            loc = [x, y, x, y]
+            loc = [x, y, x, y, index_color, e_range]  # actual_x, actual_y, old_x, old_y, index_color, explosion_range
             self.locs.append(loc)
 
     def update(self, dt, speed=7):
@@ -103,28 +104,26 @@ class Explosion:
             if randx == 1:  
                 loc[0] += speed * dt
                 try: 
-                    if loc[0] > loc[2] + 50: self.locs.remove(loc)
+                    if loc[0] > loc[2] + loc[5]: self.locs.remove(loc)
                 except: pass
             elif randx == -1: 
                 loc[0] -= speed * dt
                 try: 
-                    if loc[0] < loc[2] - 50: self.locs.remove(loc)
+                    if loc[0] < loc[2] - loc[5]: self.locs.remove(loc)
                 except: pass
             if randy == 1:  
                 loc[1] += speed * dt
                 try: 
-                    if loc[1] > loc[3] + 50: self.locs.remove(loc)
+                    if loc[1] > loc[3] + loc[5]: self.locs.remove(loc)
                 except: pass
             elif randy == -1: 
                 loc[1] -= speed * dt
                 try: 
-                    if loc[1] < loc[3] - 50: self.locs.remove(loc)
+                    if loc[1] < loc[3] - loc[5]: self.locs.remove(loc)
                 except: pass
-            
-            #self.locs.remove(loc)
 
     def draw(self, surf):
-        [pygame.draw.circle(surf, (221, 245, 154), [loc[0], loc[1]], 3) for loc in self.locs]
+        [pygame.draw.circle(surf, self.explosion_color[loc[4]], [loc[0], loc[1]], 3) for loc in self.locs]
 
 
 def MenuMaker(options, title, selected, surf):
