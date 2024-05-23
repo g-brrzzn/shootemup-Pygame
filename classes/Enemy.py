@@ -11,7 +11,6 @@ from constants.global_imports import *
 
 class EnemyBase:
     instancelist = []
-    speed = config.window_size[1] * 0.004
 
     def __init__(self, pos, sprite_files):
         self.x, self.y = pos
@@ -28,13 +27,14 @@ class EnemyBase:
         self.last_damage = self.last_time
         
         self.life = 3
+        self.speed = config.window_size[1] * 0.005
 
     def load_sprites(self, sprite_files):
         sprites = []
         for file in sprite_files:
             sprite = pygame.image.load(file).convert()
             sprite = pygame.transform.flip(sprite, False, True)
-            sprite = pygame.transform.scale(sprite, (SCALED_SPRITE_SIZE, SCALED_SPRITE_SIZE))
+            sprite = pygame.transform.scale(sprite, (sprite.get_width() * SCALE, sprite.get_height() * SCALE))
             sprite.set_colorkey((0, 0, 0))
             sprites.append(sprite)
         return sprites
@@ -54,28 +54,47 @@ class EnemyBase:
     def death(self):
         for bloc in Bullet.locs:
             if self.x - self.rect.width/2 < bloc[0] < self.x+10 + self.rect.height and self.y - self.rect.height < bloc[1] < self.y + self.rect.height:
-                self.explosion.create(self.x, self.y)
+                self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE)
                 pygame.mixer.Sound.play(pygame.mixer.Sound('assets/hit.mp3'))
                 self.damage()
                 Bullet.locs.remove(bloc)
                 
-    def damage_player(self):
+    def damage_player(self, player):
         for e in self.instancelist:
-            if Player.getX() - self.rect.width/2 < e.rect.x < Player.getX() + self.rect.width/2 and Player.getY() - self.rect.height/2 < e.rect.y < Player.getY() + self.rect.height/2:
-                Player.setLife(Player.getLife() - 1)
+            if player.getX() - self.rect.width/2 < e.rect.x < player.getX() + self.rect.width/2 and player.getY() - self.rect.height/2 < e.rect.y < player.getY() + self.rect.height/2:
+                player.setLife(player.getLife() - 1)
                 
-    def shoot(self):
-        if randint(0, 1000) < 2:
-            Bullet(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, 3, False)
+    def shoot(self, weight):
+        for _ in range(weight):
+            if randint(0, 1000) < 2:
+                Bullet(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, 3, False)
               
-    def move(self, dt):
-        pass  # This method should be implemented in subclasses
+    def move(self, dt, player, weight):
+        if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+        if randint(0, 500 * weight) < 1:
+            self.y_direction = True
+            self.old_y = self.y
+        if self.y_direction:
+            if self.y < self.old_y + SCALED_SPRITE_SIZE:
+                self.y += self.speed * dt
+            else:
+                self.y_direction = False
+        else:
+            if self.direction:
+                self.x += self.speed * dt
+                if self.x > config.window_size[0] - (config.window_size[0] * (weight * 0.1)):
+                    self.direction = False
+            else:
+                self.x -= self.speed * dt
+                if self.x < (config.window_size[0] * (weight * 0.1)):
+                    self.direction = True
 
-    def update(self, dt, last_time, surf):
+    def update(self, dt, last_time, surf, player, weight):
         self.last_time = last_time
         self.death()
-        self.move(dt)
-        self.shoot()
+        self.move(dt, player)
+        self.damage_player(player)
+        self.shoot(weight)
         self.explosion.update(dt)
         self.explosion.draw(surf)
 
@@ -99,32 +118,42 @@ class EnemyBase:
             y = config.window_size[1] / 2 - 320
             enemy_class((x, y))
 
-
 class Enemy1(EnemyBase):
     def __init__(self, pos):
         sprite_files = ['assets/enemy_idle1.png', 'assets/enemy_idle2.png']
         super().__init__(pos, sprite_files)
         self.life = 1
 
-    def move(self, dt):
-        if randint(0, 500) < 1:
-            self.y_direction = True
-            self.old_y = self.y
-        if self.y_direction:
-            if self.y < self.old_y + SCALED_SPRITE_SIZE:
-                self.y += self.speed * dt
-            else:
-                self.y_direction = False
-        else:
-            if self.direction:
-                self.x += self.speed * dt
-                if self.x > config.window_size[0] - 100:
-                    self.direction = False
-            else:
-                self.x -= self.speed * dt
-                if self.x < 5:
-                    self.direction = True
+    def move(self, dt, player):
+        return super().move(dt, player, 1)
+    
+    def update(self, dt, last_time, surf, player):
+        return super().update(dt, last_time, surf, player, 1)
 
-    def damage_player(self):
-        return super().damage_player()
+
+class Enemy2(EnemyBase):
+    def __init__(self, pos):
+        sprite_files = ['assets/enemy_medium1.png', 'assets/enemy_medium2.png']
+        super().__init__(pos, sprite_files)
+        self.life = 3
+        self.speed = self.speed * 0.75
+
+    def move(self, dt, player):
+        return super().move(dt, player, 2)
+    
+    def update(self, dt, last_time, surf, player):
+        return super().update(dt, last_time, surf, player, 2)
         
+        
+class Enemy3(EnemyBase):
+    def __init__(self, pos):
+        sprite_files = ['assets/enemy_big1.png', 'assets/enemy_big2.png']
+        super().__init__(pos, sprite_files)
+        self.life = 5
+        self.speed = self.speed * 0.5
+
+    def move(self, dt, player):
+        return super().move(dt, player, 3)
+    
+    def update(self, dt, last_time, surf, player):
+        return super().update(dt, last_time, surf, player, 3)

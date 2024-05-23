@@ -64,14 +64,16 @@ class Game(GameState):
         self.bullets.update(dt, surf)
         self.player.update(dt, self.last_time)
         self.background_fall.update(gravity=self.level*3/10)
-        if Enemy1.instancelist is not None: [instance.update(dt, last_time, surf) for instance in Enemy1.instancelist]
+        if Enemy1.instancelist is not None: [instance.update(dt, last_time, surf, self.player) for instance in Enemy1.instancelist]
         
         
-        if not len(Enemy1.instancelist):
+        if not len(Enemy1.instancelist) and not len(Enemy2.instancelist) and not len(Enemy3.instancelist):
             self.level += 1
             EnemyBase.spawn_enemy(self.level * 5, Enemy1)
+            EnemyBase.spawn_enemy(self.level * 2, Enemy2)
+            EnemyBase.spawn_enemy(self.level * 1, Enemy3)
             self.level_done = True
-        if not Player.getLife(self.player):
+        if self.player.getLife() <= 0:
             self.next_state = "GameOver"
             self.done = True
 
