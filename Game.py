@@ -1,4 +1,7 @@
-from Classes import *
+from classes.Bullet import Bullet
+from classes.Enemy import *
+from classes.Player import Player
+
 from states.Menu import Menu
 from states.Pause import *
 from states.GameState import GameState
@@ -43,7 +46,7 @@ class Game(GameState):
             self.next_state = "Pause"
         if not self.level_done:
             [instance.kill() for instance in Enemy1.instancelist]
-            Enemy1.spawn_enemy(self.level * 5)
+            EnemyBase.spawn_enemy(self.level * 5, Enemy1)
             self.level_done = False
 
     def get_event(self, event):
@@ -66,7 +69,7 @@ class Game(GameState):
         
         if not len(Enemy1.instancelist):
             self.level += 1
-            Enemy1.spawn_enemy(self.level * 5)
+            EnemyBase.spawn_enemy(self.level * 5, Enemy1)
             self.level_done = True
         if not Player.getLife(self.player):
             self.next_state = "GameOver"
