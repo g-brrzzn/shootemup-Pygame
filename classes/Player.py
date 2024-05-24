@@ -51,6 +51,18 @@ class Player:
             self.moving_up = True
         if event.key in CONTROLS['FIRE']:
             self.firing = True
+        if event.key == K_o:
+            if self.shot_delay >= 0.1:
+                self.shot_delay -= 0.1
+        if event.key == K_l:
+            if self.shot_delay < 0.25:
+                self.shot_delay += 0.1
+        if event.key == K_i:
+            self.speed += 1
+        if event.key == K_k:
+            if self.speed >= 7:
+                self.speed -= 1        
+    
 
     def get_input_keyup(self, event):
         if event.key in CONTROLS['LEFT']:

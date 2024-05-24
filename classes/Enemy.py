@@ -45,7 +45,8 @@ class EnemyBase:
         self.image = self.sprites[int(self.current_sprite)]
 
     def kill(self):
-        self.instancelist.remove(self)
+        try: self.instancelist.remove(self)
+        except: pass
         
     def damage(self):
         if self.life <= 1: self.kill()

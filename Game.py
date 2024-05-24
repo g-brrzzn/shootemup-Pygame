@@ -39,13 +39,18 @@ class Game(GameState):
         self.level_done = False
 
     def start(self):
-        if Player.getLife(self.player) == 0:
+        if Player.getLife(self.player) <= 0:
+            del self.player
             [instance.kill() for instance in Enemy1.instancelist]
+            [instance.kill() for instance in Enemy2.instancelist]
+            [instance.kill() for instance in Enemy3.instancelist]
             self.level = 1
             self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150))
             self.next_state = "Pause"
         if not self.level_done:
             [instance.kill() for instance in Enemy1.instancelist]
+            [instance.kill() for instance in Enemy2.instancelist]
+            [instance.kill() for instance in Enemy3.instancelist]
             EnemyBase.spawn_enemy(self.level * 5, Enemy1)
             self.level_done = False
 
@@ -63,7 +68,7 @@ class Game(GameState):
         
         self.bullets.update(dt, surf)
         self.player.update(dt, self.last_time)
-        self.background_fall.update(gravity=self.level*3/10)
+        self.background_fall.update(gravity=self.level*3/3)
         if Enemy1.instancelist is not None: [instance.update(dt, last_time, surf, self.player) for instance in Enemy1.instancelist]
         
         
