@@ -5,7 +5,19 @@ pygame.init()
 screen = pygame.display.set_mode(config.window_size)
 font = pygame.font.Font('assets/American Captain.ttf', 42)
 gameplay_font = pygame.font.Font('assets/American Captain.ttf', 32)
+titlefont = pygame.font.Font('assets/American Captain.ttf', 80)
 
+
+def title_text(string, x, y):
+    string = str(string)
+    info_1 = titlefont.render(string, True, TITLE_YELLOW_1)
+    info_2 = titlefont.render(string, True, TITLE_YELLOW_2)
+    textrect = info_1.get_rect()
+    textrect.center = (x, y)
+    textrect_2 = info_2.get_rect()
+    textrect_2.center = (x+4, y+4)
+    screen.blit(info_2, textrect_2)
+    screen.blit(info_1, textrect)
 
 def text(string, x, y, color=(200, 200, 200), original_font=True):
     string = str(string)

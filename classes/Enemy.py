@@ -72,6 +72,7 @@ class EnemyBase:
               
     def move(self, dt, player, weight):
         if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+        
         if randint(0, 500 * weight) < 1:
             self.y_direction = True
             self.old_y = self.y
@@ -89,7 +90,7 @@ class EnemyBase:
                 self.x -= self.speed * dt
                 if self.x < (config.window_size[0] * (weight * 0.1)):
                     self.direction = True
-
+    
     def update(self, dt, last_time, surf, player, weight):
         self.last_time = last_time
         self.death()
@@ -138,9 +139,35 @@ class Enemy2(EnemyBase):
         super().__init__(pos, sprite_files)
         self.life = 3
         self.speed = self.speed * 0.75
+        self.x_direction = 1
 
     def move(self, dt, player):
-        return super().move(dt, player, 2)
+        weight = 2
+        if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+
+        if randint(0, 500 * weight) < 1:
+            self.y_direction = True
+            self.old_y = self.y
+            self.x_direction = choice([-1, 1])
+
+        if self.y_direction:
+            if self.y < self.old_y + SCALED_SPRITE_SIZE:
+                self.y += self.speed * dt
+            else:
+                self.y_direction = False
+        else:
+            time_elapsed = pygame.time.get_ticks() / 1000.0
+            frequency = 0.5 
+            
+            self.x += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed) * self.x_direction
+            self.y += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed)
+            
+            if self.x < 0: self.x = 0
+            elif self.x > config.window_size[0] - SCALED_SPRITE_SIZE: self.x = config.window_size[0] - SCALED_SPRITE_SIZE
+            
+            if self.y > config.window_size[1] - SCALED_SPRITE_SIZE:
+                self.y = config.window_size[1] - SCALED_SPRITE_SIZE
+                self.y_direction = False
     
     def update(self, dt, last_time, surf, player):
         return super().update(dt, last_time, surf, player, 2)
@@ -152,9 +179,34 @@ class Enemy3(EnemyBase):
         super().__init__(pos, sprite_files)
         self.life = 5
         self.speed = self.speed * 0.5
+        self.xy_direction = choice([-1, 1])
 
     def move(self, dt, player):
-        return super().move(dt, player, 3)
+        weight = 3
+        if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+
+        if randint(0, 500 * weight) < 1:
+            self.y_direction = True
+            self.old_y = self.y
+
+        if self.y_direction:
+            if self.y < self.old_y + SCALED_SPRITE_SIZE:
+                self.y += self.speed * dt
+            else:
+                self.y_direction = False
+        else:
+            time_elapsed = pygame.time.get_ticks() / 1000.0
+            frequency = 0.5 
+            
+            self.x += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed) * self.xy_direction
+            self.y += self.speed * dt * math.cos(2 * math.pi * frequency * time_elapsed) * self.xy_direction
+            
+            if self.x < 0: self.x = 0
+            elif self.x > config.window_size[0] - SCALED_SPRITE_SIZE: self.x = config.window_size[0] - SCALED_SPRITE_SIZE
+            
+            if self.y > config.window_size[1] - SCALED_SPRITE_SIZE:
+                self.y = config.window_size[1] - SCALED_SPRITE_SIZE
+                self.y_direction = False
     
     def update(self, dt, last_time, surf, player):
         return super().update(dt, last_time, surf, player, 3)

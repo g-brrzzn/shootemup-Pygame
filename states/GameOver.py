@@ -57,7 +57,7 @@ class GameOver(GameState):
 
     def update(self, surf=screen):
         self.fall.update(-1.5, 3)
-        self.fall.draw(surf, (100, 40, 80))
+        self.fall.draw(surf, GAME_COLOR)
         MenuMaker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf)
 
         

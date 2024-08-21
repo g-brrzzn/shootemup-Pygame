@@ -16,9 +16,12 @@ class Menu(GameState):
 
     def start(self):
         self.selected = 0
+        self.last_time = pygame.time.get_ticks()
 
     def update(self, surf=screen):
+        dt, self.last_time = delta_time(self.last_time)
         self.fall.update(-3, 0)
+        title_text("Shoot\'em Up - Pygame", randint(1,5)+config.window_size[0]/2, 20*math.sin(2 * math.pi * pygame.time.get_ticks()/1000)+config.window_size[1] / 2 - 400)
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         MenuMaker(['START', 'OPTIONS', 'EXIT'], __class__.__name__, self.selected, surf)
 
