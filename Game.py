@@ -16,7 +16,8 @@ pygame.init()
 clock = pygame.time.Clock()
 if config.set_fullscreen:   screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN, vsync=True)
 else:                       screen = pygame.display.set_mode(config.window_size, vsync=True)
-
+game_width, game_height = 1280, 720
+game_surface = pygame.Surface((game_width, game_height))
 last_time = time()
 
 pygame.mixer.init()
@@ -63,7 +64,7 @@ class Game(GameState):
         if event.type == KEYUP:
             self.player.get_input_keyup(event)
 
-    def update(self, surf=screen):
+    def update(self, surf):
         dt, self.last_time = delta_time(self.last_time)
         
         self.bullets.update(dt, surf)
@@ -82,7 +83,7 @@ class Game(GameState):
             self.next_state = "GameOver"
             self.done = True
 
-    def draw(self, surf=screen):
+    def draw(self, surf):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
         self.player.draw(surf) 
@@ -118,7 +119,7 @@ class GameRunner(object):
             self.state.get_event(event)
 
     def update(self):
-        self.state.update()
+        self.state.update(game_surface)
         if self.state.done:
             self.next_state()
 
@@ -137,8 +138,11 @@ class GameRunner(object):
         pygame.display.set_icon(pygame.image.load('assets/player_idle1.png'))
         pygame.display.set_caption(f'Shoot \'em Up - Pygame. FPS: {int(clock.get_fps())}')
         clock.tick(FRAME_RATE)
+        self.state.draw(game_surface)
+        scaled_surface = pygame.transform.scale(game_surface, self.screen.get_size())
+        self.screen.blit(scaled_surface, (0, 0))
         pygame.display.update()
-        self.state.draw(self.screen)
+        
 
 
 if __name__ == "__main__":
