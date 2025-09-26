@@ -1,6 +1,11 @@
-from constants.global_var import *
-from constants.global_imports import *
+import pygame
+from time import time
+from random import randint, uniform
 
+from .global_var import (
+    config, FRAME_RATE, BACKGROUND_COLOR_1, BACKGROUND_COLOR_2,
+    TITLE_YELLOW_1, TITLE_YELLOW_2, BACKGROUND_COLOR_MENU_1, GAME_COLOR
+)
 pygame.init()
 screen = pygame.display.set_mode(config.window_size)
 

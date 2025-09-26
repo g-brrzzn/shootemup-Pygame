@@ -1,11 +1,10 @@
 import pygame
 from time import time
-import pygame.image
+from pygame.locals import *
 
 from classes.Bullet import Bullet
-from constants.global_func import *
-from constants.global_var import *
-from constants.global_imports import *
+from constants.global_func import Explosion
+from constants.global_var import MAX_LIFE, CONTROLS, config, SPRITE_SIZE
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, assets_manager, *groups): 

@@ -1,7 +1,9 @@
+import pygame
+from pygame.locals import *
+
 from states.GameState import GameState
-from constants.global_imports import *
-from constants.global_var import *
-from constants.global_func import *
+from constants.global_func import MenuMaker
+from constants.global_var import CONTROLS
 
 class Pause(GameState):
     def __init__(self):

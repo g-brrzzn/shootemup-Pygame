@@ -1,8 +1,12 @@
+import pygame
+from pygame.locals import *
+import sys
+import math
+from random import randint
+
 from states.GameState import GameState
-from constants.global_func import *
-from constants.global_imports import *
-from constants.global_var import *
-from constants.global_func import Fall
+from constants.global_func import delta_time, title_text, vertical, MenuMaker, Fall
+from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
 
 
 pygame.init()

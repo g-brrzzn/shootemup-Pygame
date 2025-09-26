@@ -1,16 +1,21 @@
+import pygame
+from pygame.locals import *
+import sys
+from time import time
+
 from classes.Bullet import Bullet
-from classes.Enemy import *
+from classes.Enemy import EnemyBase, Enemy1, Enemy2, Enemy3
 from classes.Player import Player
 from assets.AssetManager import AssetManager
 
 from states.Menu import Menu
-from states.Pause import *
+from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
-from states.GameOver import *
-from constants.global_imports import *
-from constants.global_var import *
-from constants.global_func import *
+from states.GameOver import GameOver, Exit
+
+from constants.global_var import SCALE, config, FRAME_RATE, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2, CONTROLS
+from constants.global_func import Fall, delta_time, vertical, text
 
 
 pygame.init()

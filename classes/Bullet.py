@@ -1,9 +1,5 @@
 import pygame
-import pygame.image
-
-from constants.global_func import *
-from constants.global_var import *
-from constants.global_imports import *
+from constants.global_var import config
 
 class Bullet(pygame.sprite.Sprite):
     player_image = None

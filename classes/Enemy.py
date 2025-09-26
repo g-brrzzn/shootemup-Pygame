@@ -1,13 +1,11 @@
 import pygame
+import math
 from random import choice, randint
 from time import time
-import pygame.image
 
 from classes.Bullet import Bullet
-from classes.Player import Player
-from constants.global_func import *
-from constants.global_var import *
-from constants.global_imports import *
+from constants.global_func import Explosion
+from constants.global_var import config, SCALED_SPRITE_SIZE
 
 class EnemyBase(pygame.sprite.Sprite):
     instancelist = []
