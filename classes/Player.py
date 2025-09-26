@@ -7,8 +7,9 @@ from constants.global_func import *
 from constants.global_var import *
 from constants.global_imports import *
 
-class Player:
-    def __init__(self, pos, assets_manager): 
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pos, assets_manager, *groups): 
+        super().__init__(*groups)
         self.assets = assets_manager
         self.shot_delay = 0.25
         self.moving_right = False
@@ -75,12 +76,12 @@ class Player:
         if event.key in CONTROLS['FIRE']:
             self.firing = False
 
-    def fire(self, assets):
-        Bullet(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, 1)
+    def fire(self, assets, bullet_group, all_sprites_group):
+        Bullet(self.rect.center, 1, True, bullet_group, all_sprites_group)
         pygame.mixer.Sound.play(assets.get_sound('shoot'))
 
-    def update(self, dt, last_time):
-        self.last_time = last_time
+    def update(self, dt, assets, player_bullets, all_sprites):
+        self.last_time = time() 
         self.explosion.update(dt)
         if self.moving_right: self.rect[0]  +=  round(self.speed * dt)
         if self.moving_left: self.rect[0]   -=  round(self.speed * dt)
@@ -92,17 +93,14 @@ class Player:
         if self.rect[1] > config.window_size[1] - self.rect.height: self.rect[1] = config.window_size[1] - self.rect.height
         if self.rect[1] < 0: self.rect[1] = 0
         
-        for bloc in Bullet.enemylocs:
-            if self.rect.x - self.rect.width/2+25 < bloc[0] < self.rect.x + self.rect.height/2 and self.rect.y - self.rect.height/2+30 < bloc[1] < self.rect.y + self.rect.height/2:
-                self.life -= 1 
-                self.explosion.create(bloc[0], bloc[1], 1)
-                Bullet.enemylocs.remove(bloc)
+        if self.firing and self.last_time - self.last_shot > self.shot_delay:
+            self.fire(assets, player_bullets, all_sprites)
+            self.last_shot = self.last_time
+    
                 
-
     def draw(self, surf, assets):
         self.animate()
         surf.blit(self.image, self.rect)
-        if self.firing and self.last_time - self.last_shot > self.shot_delay: self.fire(assets); self.last_shot = self.last_time
         self.explosion.draw(surf)
         
     def take_damage(self, assets):

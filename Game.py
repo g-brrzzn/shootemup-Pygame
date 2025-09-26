@@ -32,11 +32,16 @@ pygame.mixer.music.set_volume(0.1)
 
 class Game(GameState):
     level = 1
-    def __init__(self, screen=screen):
+    def __init__(self): 
         super().__init__()
-        self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets)
+        
+        self.all_sprites = pygame.sprite.Group()
+        self.all_enemies = pygame.sprite.Group()
+        self.player_bullets = pygame.sprite.Group()
+        self.enemy_bullets = pygame.sprite.Group()
+        
+        self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets, self.all_sprites)
         self.background_fall = Fall(300)
-        self.bullets = Bullet(self.player.rect[0] + SPRITE_SIZE, self.player.rect[1] + SPRITE_SIZE / 2, 5)
         
         self.next_state = "Pause"
         self.last_time = last_time
@@ -44,19 +49,16 @@ class Game(GameState):
         self.level_done = False
 
     def start(self):
-        if Player.getLife(self.player) <= 0:
-            del self.player
-            [instance.kill() for instance in Enemy1.instancelist]
-            [instance.kill() for instance in Enemy2.instancelist]
-            [instance.kill() for instance in Enemy3.instancelist]
+        if self.player.getLife() <= 0:
+            self.player.kill() 
+            for enemy in self.all_enemies:
+                enemy.kill()
             self.level = 1
-            self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets)
+            self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets, self.all_sprites)
             self.next_state = "Pause"
-        if not self.level_done:
-            [instance.kill() for instance in Enemy1.instancelist]
-            [instance.kill() for instance in Enemy2.instancelist]
-            [instance.kill() for instance in Enemy3.instancelist]
-            EnemyBase.spawn_enemy(self.level * 5, Enemy1, assets)
+
+        if not self.level_done:         
+            EnemyBase.spawn_enemy(self.level * 5, Enemy1, assets, self.all_enemies, self.all_sprites)
             self.level_done = False
 
     def get_event(self, event, assets):
@@ -68,21 +70,37 @@ class Game(GameState):
         if event.type == KEYUP:
             self.player.get_input_keyup(event)
 
-    def update(self, surf=screen):
+    def update(self, assets):
         dt, self.last_time = delta_time(self.last_time)
-        
-        self.bullets.update(dt)
-        self.player.update(dt, self.last_time)
+    
+        self.player.update(dt, assets, self.player_bullets, self.all_sprites)
+        self.all_enemies.update(dt, self.player, assets, self.enemy_bullets, self.all_sprites)
+        self.player_bullets.update(dt)
+        self.enemy_bullets.update(dt)
         self.background_fall.update(gravity=self.level*3/3)
-        if Enemy1.instancelist is not None:
-            [instance.update(dt, self.player, assets) for instance in Enemy1.instancelist]
-        
-        if not len(Enemy1.instancelist) and not len(Enemy2.instancelist) and not len(Enemy3.instancelist):
+
+        enemy_hits = pygame.sprite.groupcollide(self.all_enemies, self.player_bullets, False, True)
+        for enemy in enemy_hits:
+            enemy.damage()
+            enemy.explosion.create(enemy.rect.centerx, enemy.rect.centery)
+
+        player_hits = pygame.sprite.spritecollide(self.player, self.enemy_bullets, True)
+        if player_hits:
+            self.player.take_damage(assets)
+            
+        player_crashes = pygame.sprite.spritecollide(self.player, self.all_enemies, False)
+        if player_crashes:
+            self.player.take_damage(assets)
+            for enemy in player_crashes:
+                enemy.kill() 
+
+        if not self.all_enemies:
             self.level += 1
-            EnemyBase.spawn_enemy(self.level * 5, Enemy1, assets)
-            EnemyBase.spawn_enemy(self.level * 2, Enemy2, assets)
-            EnemyBase.spawn_enemy(self.level * 1, Enemy3, assets)
+            EnemyBase.spawn_enemy(self.level * 5, Enemy1, assets, self.all_enemies, self.all_sprites)
+            EnemyBase.spawn_enemy(self.level * 2, Enemy2, assets, self.all_enemies, self.all_sprites)
+            EnemyBase.spawn_enemy(self.level * 1, Enemy3, assets, self.all_enemies, self.all_sprites)
             self.level_done = True
+            
         if self.player.getLife() <= 0:
             self.next_state = "GameOver"
             self.done = True
@@ -90,19 +108,13 @@ class Game(GameState):
     def draw(self, surf, assets):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
-        self.player.draw(surf, assets) 
-        self.bullets.draw_all(surf)
         
-        if Enemy1.instancelist is not None:
-            for instance in Enemy1.instancelist:
-                instance.draw(surf)
-        if Enemy2.instancelist is not None:
-            for instance in Enemy2.instancelist:
-                instance.draw(surf)        
-        if Enemy3.instancelist is not None:
-            for instance in Enemy3.instancelist:
-                instance.draw(surf)
+        self.all_sprites.draw(surf)
         
+        self.player.explosion.draw(surf)
+        for enemy in self.all_enemies:
+            enemy.explosion.draw(surf)
+            
         text(f'Level {self.level}', config.window_size[0] - 50, config.window_size[1] - 30, assets, original_font=False)
         text(f'Life    {self.player.getLife()}', config.window_size[0] - 50, config.window_size[1] - 60, assets, original_font=False)
         if config.show_fps:

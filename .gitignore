@@ -66,3 +66,5 @@ env
 __pycache__
 **/__pycache__
 /pycache/*
+code2text.py
+code2text_output.txt

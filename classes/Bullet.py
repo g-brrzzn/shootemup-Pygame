@@ -5,35 +5,38 @@ from constants.global_func import *
 from constants.global_var import *
 from constants.global_imports import *
 
-class Bullet:    
-    locs = []
-    enemylocs = []
-    speed = 12
-    enemyspeed = 4
-
-    def __init__(self, rectx, recty, direction, isFromPlayer=True):
-        if direction < 5:
-            if isFromPlayer:
-                self.locs.append([rectx, recty, direction, isFromPlayer])
-            else: self.enemylocs.append([rectx, recty, direction, isFromPlayer])
+class Bullet(pygame.sprite.Sprite):
+    player_image = None
+    enemy_image = None
 
     @classmethod
     def load_assets(cls, assets_manager):
-        cls.image = assets_manager.get_image('bullet_player')
-        cls.enemyimage = assets_manager.get_image('bullet_enemy')
-        cls.rect = cls.image.get_rect()
-    
-    @classmethod
-    def update(cls, dt):
-        for loc in cls.locs[:]:
-            cls.move_bullet(loc, dt, is_player=True)
-            if cls.is_off_screen(loc):
-                cls.locs.remove(loc)
+        cls.player_image = assets_manager.get_image('bullet_player')
+        cls.enemy_image = assets_manager.get_image('bullet_enemy')
 
-        for loc in cls.enemylocs[:]:
-            cls.move_bullet(loc, dt, is_player=False)
-            if cls.is_off_screen(loc):
-                cls.enemylocs.remove(loc)
+    def __init__(self, pos, direction, is_from_player, *groups):
+        super().__init__(*groups)
+        
+        self.is_from_player = is_from_player
+        self.direction = direction # 1:UP, 2:LEFT, 3:DOWN, 4:RIGHT
+        
+        if self.is_from_player:
+            self.image = Bullet.player_image
+            self.speed = 12
+        else:
+            self.image = Bullet.enemy_image
+            self.speed = 4
+            
+        self.rect = self.image.get_rect(center=pos)
+
+    def update(self, dt):
+        if self.direction == 1: self.rect.y -= round(self.speed * dt)
+        elif self.direction == 2: self.rect.x -= round(self.speed * dt)
+        elif self.direction == 3: self.rect.y += round(self.speed * dt)
+        elif self.direction == 4: self.rect.x += round(self.speed * dt)
+        
+        if not pygame.display.get_surface().get_rect().colliderect(self.rect):
+            self.kill()
 
     @classmethod
     def move_bullet(cls, loc, dt, is_player):
