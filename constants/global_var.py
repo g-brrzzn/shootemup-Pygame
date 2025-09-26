@@ -10,7 +10,7 @@ class Configs:
         SVGA =  (800, 600)
         self.RESOLUTIONS = [SVGA, QHD, XGA, HD, FHD]
         self.SHOW_FPS = False
-        self.SET_FULLSCREEN = True
+        self.SET_FULLSCREEN = False
         self.WINDOW_SIZE = self.RESOLUTIONS[4]
 
     @property

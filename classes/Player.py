@@ -8,7 +8,8 @@ from constants.global_var import *
 from constants.global_imports import *
 
 class Player:
-    def __init__(self, pos):
+    def __init__(self, pos, assets_manager): 
+        self.assets = assets_manager
         self.shot_delay = 0.25
         self.moving_right = False
         self.moving_left = False
@@ -16,15 +17,13 @@ class Player:
         self.moving_down = False
         self.firing = False
         self.rect = pygame.math.Vector2()
-        
         self.last_time = time()
         self.last_shot = self.last_time
-        self.sprites = []
-        for i in range(1, 3):
-            self.sprite = pygame.image.load(f'assets/player_idle{i}.png').convert()
-            self.sprite = pygame.transform.scale(self.sprite, (SCALED_SPRITE_SIZE, 24*4))
-            self.sprite.set_colorkey((0, 0, 0))
-            self.sprites.append(self.sprite)
+
+        self.sprites = [
+            self.assets.get_image('player_idle1'),
+            self.assets.get_image('player_idle2')
+        ]
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect(center=pos)
@@ -76,12 +75,13 @@ class Player:
         if event.key in CONTROLS['FIRE']:
             self.firing = False
 
-    def fire(self):
+    def fire(self, assets):
         Bullet(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, 1)
-        pygame.mixer.Sound.play(pygame.mixer.Sound('assets/shoot.mp3'))
+        pygame.mixer.Sound.play(assets.get_sound('shoot'))
 
     def update(self, dt, last_time):
         self.last_time = last_time
+        self.explosion.update(dt)
         if self.moving_right: self.rect[0]  +=  round(self.speed * dt)
         if self.moving_left: self.rect[0]   -=  round(self.speed * dt)
         if self.moving_up: self.rect[1]     -=  round(self.speed * dt)
@@ -92,20 +92,23 @@ class Player:
         if self.rect[1] > config.window_size[1] - self.rect.height: self.rect[1] = config.window_size[1] - self.rect.height
         if self.rect[1] < 0: self.rect[1] = 0
         
-        if self.firing and self.last_time - self.last_shot > self.shot_delay: self.fire(); self.last_shot = self.last_time
-        
-        
-
         for bloc in Bullet.enemylocs:
             if self.rect.x - self.rect.width/2+25 < bloc[0] < self.rect.x + self.rect.height/2 and self.rect.y - self.rect.height/2+30 < bloc[1] < self.rect.y + self.rect.height/2:
                 self.life -= 1 
                 self.explosion.create(bloc[0], bloc[1], 1)
                 Bullet.enemylocs.remove(bloc)
                 
-        self.animate()
 
-    def draw(self, surf):
+    def draw(self, surf, assets):
+        self.animate()
         surf.blit(self.image, self.rect)
+        if self.firing and self.last_time - self.last_shot > self.shot_delay: self.fire(assets); self.last_shot = self.last_time
+        self.explosion.draw(surf)
+        
+    def take_damage(self, assets):
+        self.life -= 1
+        self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE)
+        pygame.mixer.Sound.play(assets.get_sound('hit'))
 
     def getLife(self):       return self.life
     def setLife(self, life): self.life = life

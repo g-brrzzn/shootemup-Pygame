@@ -3,15 +3,13 @@ from constants.global_imports import *
 
 pygame.init()
 screen = pygame.display.set_mode(config.window_size)
-font = pygame.font.Font('assets/American Captain.ttf', 42)
-gameplay_font = pygame.font.Font('assets/American Captain.ttf', 32)
-titlefont = pygame.font.Font('assets/American Captain.ttf', 80)
 
 
-def title_text(string, x, y):
+def title_text(string, x, y, assets): 
     string = str(string)
-    info_1 = titlefont.render(string, True, TITLE_YELLOW_1)
-    info_2 = titlefont.render(string, True, TITLE_YELLOW_2)
+    title_font_obj = assets.get_font('captain_80')
+    info_1 = title_font_obj.render(string, True, TITLE_YELLOW_1)
+    info_2 = title_font_obj.render(string, True, TITLE_YELLOW_2)
     textrect = info_1.get_rect()
     textrect.center = (x, y)
     textrect_2 = info_2.get_rect()
@@ -19,10 +17,14 @@ def title_text(string, x, y):
     screen.blit(info_2, textrect_2)
     screen.blit(info_1, textrect)
 
-def text(string, x, y, color=(200, 200, 200), original_font=True):
+def text(string, x, y, assets, color=(200, 200, 200), original_font=True):
     string = str(string)
-    if original_font: info = font.render(string, True, color)
-    else:             info = gameplay_font.render(string, True, color)
+    if original_font:
+        font_obj = assets.get_font('captain_42')
+    else:
+        font_obj = assets.get_font('captain_32')
+    
+    info = font_obj.render(string, True, color)
     textrect = info.get_rect()
     textrect.center = (x, y)
     screen.blit(info, textrect)
@@ -138,13 +140,13 @@ class Explosion:
         [pygame.draw.circle(surf, self.explosion_color[loc[4]], [loc[0], loc[1]], 3) for loc in self.locs]
 
 
-def MenuMaker(options, title, selected, surf):
+def MenuMaker(options, title, selected, surf, assets):
     vertical(surf)
     for i in range(200):
         pygame.draw.line(surf, BACKGROUND_COLOR_MENU_1,
                          (config.window_size[0] / 2 - 100 + i, config.window_size[1] / 2 - 179),      # Title background
                          (config.window_size[0] / 2 - 100 + i, config.window_size[1] / 2 - 230), 4)   # Title background
-    text(title, config.window_size[0] / 2, config.window_size[1] / 2 - 200)
+    text(title, config.window_size[0] / 2, config.window_size[1] / 2 - 200, assets)
 
     pygame.draw.line(surf, (200, 200, 200),
                      (config.window_size[0] / 2 - 100, config.window_size[1] / 2 - 180),      # Title Bottom outline
@@ -181,17 +183,17 @@ def MenuMaker(options, title, selected, surf):
 
     for option in options:
         if selected == options.index(option):
-            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), GAME_COLOR)
+            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), assets, GAME_COLOR)
             if len(option) < 10:
-                text('|', config.window_size[0] / 2 + 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
-                text('|', config.window_size[0] / 2 - 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
+                text('|', config.window_size[0] / 2 + 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
+                text('|', config.window_size[0] / 2 - 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
             elif len(option) < 20:
-                text('|', config.window_size[0] / 2 + 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
-                text('|', config.window_size[0] / 2 - 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
+                text('|', config.window_size[0] / 2 + 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
+                text('|', config.window_size[0] / 2 - 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
             else:
-                text('|', config.window_size[0] / 2 + 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
-                text('|', config.window_size[0] / 2 - 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), GAME_COLOR)
+                text('|', config.window_size[0] / 2 + 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
+                text('|', config.window_size[0] / 2 - 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
         else:
-            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option))
+            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), assets)
 
 

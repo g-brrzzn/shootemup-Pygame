@@ -12,47 +12,51 @@ class Options(GameState):
     def start(self):
         self.selected = 0
         self.config_res = config.window_size
-
-        
-    def update(self, surf=screen):
-        self.fall.update(-3, 0)
-        vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {bool2Switch(config.show_fps)}',
                         f'FULLSCREEN: {bool2Switch(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
-        MenuMaker(self.options, __class__.__name__, self.selected, surf)
 
-    def get_event(self, event):
+        
+    def update(self, assets):
+        self.fall.update(-3, 0) 
+        self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {bool2Switch(config.show_fps)}',
+                        f'FULLSCREEN: {bool2Switch(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
+           
+    def draw(self, surf, assets):
+        self.fall.draw(surf, (200, 200, 200))
+        vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
+        MenuMaker(self.options, __class__.__name__, self.selected, surf, assets)
 
+    def get_event(self, event, assets):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == len(self.options) - 1:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 0:
                     self.selected = len(self.options) - 1
                 else:
                     self.selected -= 1
 
             if event.key in CONTROLS['RIGHT']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 0:
                     selec = config.RESOLUTIONS.index(self.config_res)
                     if selec == 0: self.config_res = config.RESOLUTIONS[0]
                     else: self.config_res = config.RESOLUTIONS[selec - 1]; selec -= 1
 
             if event.key in CONTROLS['LEFT']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 0:
                     selec = config.RESOLUTIONS.index(self.config_res)
                     if selec == len(config.RESOLUTIONS) - 1: self.config_res = config.RESOLUTIONS[len(config.RESOLUTIONS) - 1]
                     else: self.config_res = config.RESOLUTIONS[selec + 1]; selec += 1
             config.window_size = self.config_res
             if event.key in CONTROLS['START']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/forceField_001.mp3'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_confirm'))
                 if self.selected == 0:
                     pass
                 elif self.selected == 1:
@@ -71,10 +75,6 @@ class Options(GameState):
                     self.next_state = 'Menu'
                     self.done = True
             if event.key in CONTROLS['ESC']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 self.next_state = 'Menu'
                 self.done = True
-
-    def draw(self, surf):
-        self.fall.draw(surf, (200, 200, 200))
-

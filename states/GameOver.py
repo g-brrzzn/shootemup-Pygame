@@ -12,25 +12,28 @@ class Exit(GameState):
     def start(self):
         self.selected = 0
 
-    def update(self, surf=screen):
-        MenuMaker(['EXIT TO MAIN-MENU', 'EXIT TO DESKTOP', 'BACK'], __class__.__name__, self.selected, surf)
+    def update(self, assets):
+        pass
+        
+    def draw(self, surf, assets):
+        MenuMaker(['EXIT TO MAIN-MENU', 'EXIT TO DESKTOP', 'BACK'], __class__.__name__, self.selected, surf, assets)
 
-    def get_event(self, event):
+    def get_event(self, event, assets):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 2:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 0:
                     self.selected = 2
                 else:
                     self.selected -= 1
             if event.key in CONTROLS['START']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/forceField_001.mp3'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_confirm'))
                 if self.selected == 0:
                     self.next_state = 'Menu'
                     self.done = True
@@ -41,7 +44,7 @@ class Exit(GameState):
                     self.next_state = 'Pause'
                     self.done = True
             if event.key in CONTROLS['ESC']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 self.next_state = 'Pause'
                 self.done = True
 
@@ -55,28 +58,30 @@ class GameOver(GameState):
         self.selected = 0
         self.fall = Fall(100)
 
-    def update(self, surf=screen):
+    def update(self, assets):
         self.fall.update(-1.5, 3)
-        self.fall.draw(surf, GAME_COLOR)
-        MenuMaker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf)
-
         
-    def get_event(self, event):
+    def draw(self, surf, assets):
+        vertical(surf)
+        self.fall.draw(surf, GAME_COLOR)
+        MenuMaker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf, assets)
+        
+    def get_event(self, event, assets):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 1:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/impactMetal_002.ogg'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
                 if self.selected == 0:
                     self.selected = 1
                 else:
                     self.selected -= 1
             if event.key in CONTROLS['START']:
-                pygame.mixer.Sound.play(pygame.mixer.Sound('assets/forceField_001.mp3'))
+                pygame.mixer.Sound.play(assets.get_sound('menu_confirm'))
                 if self.selected == 0:
                     self.next_state = 'Menu'
                     self.done = True

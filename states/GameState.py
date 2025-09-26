@@ -8,9 +8,9 @@ class GameState(object):
 
     def update(self):
         pass
-
-    def get_event(self, event):
+    
+    def draw(self, surf, assets):
         pass
-
-    def draw(self, surf):
+    
+    def get_event(self, event):
         pass
