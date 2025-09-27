@@ -1,7 +1,5 @@
 import pygame
 from time import time
-from random import randint, uniform
-
 from .global_var import (
     config, FRAME_RATE, BACKGROUND_COLOR_1, BACKGROUND_COLOR_2,
     TITLE_YELLOW_1, TITLE_YELLOW_2, BACKGROUND_COLOR_MENU_1, GAME_COLOR
@@ -82,68 +80,6 @@ def vertical(surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BAC
                         int(sa + am * y)))
     v = pygame.transform.scale(big_surf, size)
     surf.blit(v, (axis_x, axis_y))
-
-
-class Fall:
-    def __init__(self, amount):
-        self.locs = []
-        for i in range(amount):
-            snowloc = [randint(1, config.window_size[0] - 1), randint(1, config.window_size[1] - 1)]
-            self.locs.append(snowloc)
-
-    def update(self, gravity=0.3, wind=0.3):
-        for loc in self.locs:
-            loc[1] += gravity + uniform(0.1, 0.9)
-
-            if wind > 0:
-                loc[0] += wind
-            if gravity < 0:
-                if loc[1] < 0: loc[1] = config.window_size[1]
-                if loc[0] < 0: loc[0] = config.window_size[0]
-
-            if loc[1] > config.window_size[1]: loc[1] = 0
-            if loc[0] > config.window_size[0]: loc[0] = 0
-
-    def draw(self, surf, color=(70, 70, 70)):
-        [pygame.draw.circle(surf, pygame.Color(color), loc, 3) for loc in self.locs]
-
-class Explosion:
-    locs = []
-    explosion_color = [(221, 245, 154), (28, 162, 111)] # 0 - 1st enemy color; 1 - Player color; 2 - 
-    def create(self, x, y, index_color=0, e_range=50):
-        for i in range(50):
-            loc = [x, y, x, y, index_color, e_range]  # actual_x, actual_y, old_x, old_y, index_color, explosion_range
-            self.locs.append(loc)
-
-    def update(self, dt, speed=7):
-        for loc in self.locs:
-            randx = randint(-1, 1)
-            randy = randint(-1, 1)
-            
-            if randx == 1:  
-                loc[0] += speed * dt
-                try: 
-                    if loc[0] > loc[2] + loc[5]: self.locs.remove(loc)
-                except: pass
-            elif randx == -1: 
-                loc[0] -= speed * dt
-                try: 
-                    if loc[0] < loc[2] - loc[5]: self.locs.remove(loc)
-                except: pass
-            if randy == 1:  
-                loc[1] += speed * dt
-                try: 
-                    if loc[1] > loc[3] + loc[5]: self.locs.remove(loc)
-                except: pass
-            elif randy == -1: 
-                loc[1] -= speed * dt
-                try: 
-                    if loc[1] < loc[3] - loc[5]: self.locs.remove(loc)
-                except: pass
-
-    def draw(self, surf):
-        [pygame.draw.circle(surf, self.explosion_color[loc[4]], [loc[0], loc[1]], 3) for loc in self.locs]
-
 
 def MenuMaker(options, title, selected, surf, assets):
     vertical(surf)

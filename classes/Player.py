@@ -3,8 +3,8 @@ from time import time
 from pygame.locals import *
 
 from classes.Bullet import Bullet
-from constants.global_func import Explosion
-from constants.global_var import MAX_LIFE, CONTROLS, config, SPRITE_SIZE
+from classes.particles.Explosion import Explosion
+from constants.global_var import MAX_LIFE, CONTROLS, config, SPRITE_SIZE, PLAYER_COLOR_GREEN
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, assets_manager, *groups): 
@@ -104,7 +104,7 @@ class Player(pygame.sprite.Sprite):
         
     def take_damage(self, assets):
         self.life -= 1
-        self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE)
+        self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN)
         pygame.mixer.Sound.play(assets.get_sound('hit'))
 
     def getLife(self):       return self.life

@@ -4,7 +4,7 @@ from random import choice, randint
 from time import time
 
 from classes.Bullet import Bullet
-from constants.global_func import Explosion
+from classes.particles.Explosion import Explosion
 from constants.global_var import config, SCALED_SPRITE_SIZE
 
 class EnemyBase(pygame.sprite.Sprite):
@@ -23,6 +23,7 @@ class EnemyBase(pygame.sprite.Sprite):
         self.direction = choice([True, False])
         self.y_direction = False
         self.explosion = Explosion()
+        self.explosion.create(self.rect.centerx, self.rect.centery)
         
         self.last_time = time()
         self.last_damage = self.last_time
@@ -55,6 +56,7 @@ class EnemyBase(pygame.sprite.Sprite):
             pass
         
     def damage(self):
+        self.explosion.create(self.x, self.y)
         if self.life <= 1: self.kill()
         else: self.life -= 1
                 

@@ -5,7 +5,8 @@ import math
 from random import randint
 
 from states.GameState import GameState
-from constants.global_func import delta_time, title_text, vertical, MenuMaker, Fall
+from classes.particles.Fall import Fall
+from constants.global_func import delta_time, title_text, vertical, MenuMaker
 from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
 
 

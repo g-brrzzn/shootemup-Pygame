@@ -6,6 +6,8 @@ from time import time
 from classes.Bullet import Bullet
 from classes.Enemy import EnemyBase, Enemy1, Enemy2, Enemy3
 from classes.Player import Player
+from classes.particles.Fall import Fall
+from classes.particles.Explosion import Explosion
 from assets.AssetManager import AssetManager
 
 from states.Menu import Menu
@@ -15,7 +17,7 @@ from states.Options import Options
 from states.GameOver import GameOver, Exit
 
 from constants.global_var import SCALE, config, FRAME_RATE, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2, CONTROLS
-from constants.global_func import Fall, delta_time, vertical, text
+from constants.global_func import delta_time, vertical, text
 
 
 pygame.init()
@@ -46,7 +48,9 @@ class Game(GameState):
         self.enemy_bullets = pygame.sprite.Group()
         
         self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets, self.all_sprites)
+        self.explosion = Explosion()
         self.background_fall = Fall(300)
+        self.particles = pygame.sprite.Group()
         
         self.next_state = "Pause"
         self.last_time = last_time
@@ -83,11 +87,13 @@ class Game(GameState):
         self.player_bullets.update(dt)
         self.enemy_bullets.update(dt)
         self.background_fall.update(gravity=self.level*3/3)
+        self.explosion.update(dt)
+        self.particles.update(dt)
 
         enemy_hits = pygame.sprite.groupcollide(self.all_enemies, self.player_bullets, False, True)
         for enemy in enemy_hits:
+            self.explosion.create(enemy.rect.centerx, enemy.rect.centery)
             enemy.damage()
-            enemy.explosion.create(enemy.rect.centerx, enemy.rect.centery)
 
         player_hits = pygame.sprite.spritecollide(self.player, self.enemy_bullets, True)
         if player_hits:
@@ -117,6 +123,7 @@ class Game(GameState):
         self.all_sprites.draw(surf)
         
         self.player.explosion.draw(surf)
+        self.explosion.draw(surf)
         for enemy in self.all_enemies:
             enemy.explosion.draw(surf)
             

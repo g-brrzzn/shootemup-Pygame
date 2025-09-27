@@ -2,7 +2,8 @@ import pygame
 from pygame.locals import *
 
 from states.GameState import GameState
-from constants.global_func import vertical, MenuMaker, Fall, bool2Switch
+from classes.particles.Fall import Fall
+from constants.global_func import vertical, MenuMaker, bool2Switch
 from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
 
 

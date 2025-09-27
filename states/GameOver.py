@@ -3,7 +3,8 @@ import pygame
 from pygame.locals import *
 
 from states.GameState import GameState
-from constants.global_func import vertical, MenuMaker, Fall
+from constants.global_func import vertical, MenuMaker
+from classes.particles.Fall import Fall
 from constants.global_var import CONTROLS, GAME_COLOR
 
 class Exit(GameState):
@@ -62,7 +63,7 @@ class GameOver(GameState):
         self.fall = Fall(100)
 
     def update(self, assets):
-        self.fall.update(-1.5, 3)
+        self.fall.update(-2, 3)
         
     def draw(self, surf, assets):
         vertical(surf)
