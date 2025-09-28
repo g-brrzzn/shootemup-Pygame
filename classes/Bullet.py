@@ -18,10 +18,10 @@ class Bullet(pygame.sprite.Sprite):
         
         if self.is_from_player:
             self.image = Bullet.player_image
-            self.speed = 12
+            self.speed = config.INTERNAL_RESOLUTION[1] * 0.012
         else:
             self.image = Bullet.enemy_image
-            self.speed = 4
+            self.speed = config.INTERNAL_RESOLUTION[1] * 0.004
             
         self.rect = self.image.get_rect(center=pos)
 
@@ -31,7 +31,8 @@ class Bullet(pygame.sprite.Sprite):
         elif self.direction == 3: self.rect.y += round(self.speed * dt)
         elif self.direction == 4: self.rect.x += round(self.speed * dt)
         
-        if not pygame.display.get_surface().get_rect().colliderect(self.rect):
+        game_world_rect = pygame.Rect(0, 0, config.INTERNAL_RESOLUTION[0], config.INTERNAL_RESOLUTION[1])
+        if not game_world_rect.colliderect(self.rect):
             self.kill()
 
     @classmethod
@@ -42,13 +43,6 @@ class Bullet(pygame.sprite.Sprite):
         elif loc[2] == 2: loc[0] -= round(speed * dt)
         elif loc[2] == 3: loc[1] += round(speed * dt)
         elif loc[2] == 4: loc[0] += round(speed * dt)
-
-    @classmethod
-    def is_off_screen(cls, loc):
-        return (loc[0] > config.window_size[0] + 10 or
-                loc[0] < -10 or
-                loc[1] > config.window_size[1] + 10 or
-                loc[1] < -10)
 
     @classmethod
     def draw_all(cls, surf):

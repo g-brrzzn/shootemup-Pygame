@@ -46,8 +46,8 @@ class AssetManager:
         self.sounds['music'] = os.path.join(ASSET_DIR, 'sound', 'victory.mp3')
 
     def _load_fonts(self):
-        self.fonts['captain_42'] = self._load_font(os.path.join('font', 'American Captain.ttf'), 42)
         self.fonts['captain_32'] = self._load_font(os.path.join('font', 'American Captain.ttf'), 32)
+        self.fonts['captain_42'] = self._load_font(os.path.join('font', 'American Captain.ttf'), 42)
         self.fonts['captain_80'] = self._load_font(os.path.join('font', 'American Captain.ttf'), 80)
 
     def get_image(self, key):

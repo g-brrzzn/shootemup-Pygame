@@ -23,13 +23,13 @@ class EnemyBase(pygame.sprite.Sprite):
         self.direction = choice([True, False])
         self.y_direction = False
         self.explosion = Explosion()
-        self.explosion.create(self.rect.centerx, self.rect.centery)
+        self.explosion.create(self.rect.centerx, self.rect.centery, speed=-5)
         
         self.last_time = time()
         self.last_damage = self.last_time
         
         self.life = 3
-        self.speed = config.window_size[1] * 0.005
+        self.speed = config.INTERNAL_RESOLUTION[1] * 0.005
         self.weight = 1
         
     @classmethod
@@ -66,7 +66,7 @@ class EnemyBase(pygame.sprite.Sprite):
                 Bullet(self.rect.center, 3, False, enemy_bullets_group, all_sprites_group)
             
     def move(self, dt, player, assets):
-        if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.take_damage(assets)
+        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.take_damage(assets)
         if randint(0, 500 * self.weight) < 1:
             self.y_direction = True
             self.old_y = self.y
@@ -78,11 +78,11 @@ class EnemyBase(pygame.sprite.Sprite):
         else:
             if self.direction:
                 self.x += self.speed * dt
-                if self.x > config.window_size[0] - (config.window_size[0] * (self.weight * 0.1)):
+                if self.x > config.INTERNAL_RESOLUTION[0] - (config.INTERNAL_RESOLUTION[0] * (self.weight * 0.1)):
                     self.direction = False
             else:
                 self.x -= self.speed * dt
-                if self.x < (config.window_size[0] * (self.weight * 0.1)):
+                if self.x < (config.INTERNAL_RESOLUTION[0] * (self.weight * 0.1)):
                     self.direction = True
     
     def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):
@@ -100,8 +100,8 @@ class EnemyBase(pygame.sprite.Sprite):
     @staticmethod
     def spawn_enemy(n, enemy_class, assets_manager, enemy_group, all_sprites_group): 
         for _ in range(n):
-            x = randint(0, config.window_size[0])
-            y = config.window_size[1] / 2 - 320
+            x = randint(0, config.INTERNAL_RESOLUTION[0])
+            y = config.INTERNAL_RESOLUTION[1] / 2 - 320
             enemy_class((x, y), assets_manager, enemy_group, all_sprites_group) 
 
 class Enemy1(EnemyBase):
@@ -128,7 +128,7 @@ class Enemy2(EnemyBase):
 
     def move(self, dt, player, assets):
         weight = 2
-        if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
 
         if randint(0, 500 * weight) < 1:
             self.y_direction = True
@@ -148,10 +148,10 @@ class Enemy2(EnemyBase):
             self.y += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed)
             
             if self.x < 0: self.x = 0
-            elif self.x > config.window_size[0] - SCALED_SPRITE_SIZE: self.x = config.window_size[0] - SCALED_SPRITE_SIZE
+            elif self.x > config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE: self.x = config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE
             
-            if self.y > config.window_size[1] - SCALED_SPRITE_SIZE:
-                self.y = config.window_size[1] - SCALED_SPRITE_SIZE
+            if self.y > config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE:
+                self.y = config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE
                 self.y_direction = False
     
     def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):
@@ -169,7 +169,7 @@ class Enemy3(EnemyBase):
 
     def move(self, dt, player, assets):
         weight = 3
-        if self.y > (config.window_size[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
 
         if randint(0, 500 * weight) < 1:
             self.y_direction = True
@@ -188,10 +188,10 @@ class Enemy3(EnemyBase):
             self.y += self.speed * dt * math.cos(2 * math.pi * frequency * time_elapsed) * self.xy_direction
             
             if self.x < 0: self.x = 0
-            elif self.x > config.window_size[0] - SCALED_SPRITE_SIZE: self.x = config.window_size[0] - SCALED_SPRITE_SIZE
+            elif self.x > config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE: self.x = config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE
             
-            if self.y > config.window_size[1] - SCALED_SPRITE_SIZE:
-                self.y = config.window_size[1] - SCALED_SPRITE_SIZE
+            if self.y > config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE:
+                self.y = config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE
                 self.y_direction = False
     
     def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):

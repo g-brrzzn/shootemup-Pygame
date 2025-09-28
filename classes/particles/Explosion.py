@@ -19,9 +19,9 @@ class Explosion:
 
     def create(self, x: float, y: float,
                color: Tuple[int, int, int] = (221, 245, 154),
-               count: int = 50,
+               count: int = 80,
                e_range: float = 50,
-               speed: float = 12.0,
+               speed: float = 10.0,
                range_variation: float = 0.4) -> None:
         origin = Vector2(x, y)
         for _ in range(count):

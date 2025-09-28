@@ -28,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect(center=pos)
         self.movement = pygame.math.Vector2()
-        self.speed = 7
+        self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
         
         self.life = MAX_LIFE
         self.last_damage = self.last_time
@@ -82,14 +82,15 @@ class Player(pygame.sprite.Sprite):
     def update(self, dt, assets, player_bullets, all_sprites):
         self.last_time = time() 
         self.explosion.update(dt)
+        self.animate()
         if self.moving_right: self.rect[0]  +=  round(self.speed * dt)
         if self.moving_left: self.rect[0]   -=  round(self.speed * dt)
         if self.moving_up: self.rect[1]     -=  round(self.speed * dt)
         if self.moving_down: self.rect[1]   +=  round(self.speed * dt)
 
-        if self.rect[0] > config.window_size[0] - self.rect.width: self.rect[0] = config.window_size[0] - self.rect.width
+        if self.rect[0] > config.INTERNAL_RESOLUTION[0] - self.rect.width: self.rect[0] = config.INTERNAL_RESOLUTION[0] - self.rect.width
         if self.rect[0] < 0: self.rect[0] = 0
-        if self.rect[1] > config.window_size[1] - self.rect.height: self.rect[1] = config.window_size[1] - self.rect.height
+        if self.rect[1] > config.INTERNAL_RESOLUTION[1] - self.rect.height: self.rect[1] = config.INTERNAL_RESOLUTION[1] - self.rect.height
         if self.rect[1] < 0: self.rect[1] = 0
         
         if self.firing and self.last_time - self.last_shot > self.shot_delay:
@@ -98,13 +99,12 @@ class Player(pygame.sprite.Sprite):
     
                 
     def draw(self, surf, assets):
-        self.animate()
         surf.blit(self.image, self.rect)
         self.explosion.draw(surf)
         
     def take_damage(self, assets):
         self.life -= 1
-        self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN)
+        self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN, speed=-5)
         pygame.mixer.Sound.play(assets.get_sound('hit'))
 
     def getLife(self):       return self.life

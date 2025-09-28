@@ -17,25 +17,28 @@ from states.Options import Options
 from states.GameOver import GameOver, Exit
 
 from constants.global_var import SCALE, config, FRAME_RATE, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2, CONTROLS
-from constants.global_func import delta_time, vertical, text
+from constants.global_func import delta_time, vertical, draw_text
 
 
 pygame.init()
+clock = pygame.time.Clock()
+last_time = time()
+
+if config.set_fullscreen:
+    screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN, vsync=True)
+else:
+    screen = pygame.display.set_mode(config.window_size, vsync=True)
+game_surface = pygame.Surface(config.INTERNAL_RESOLUTION)
+    
 assets = AssetManager()
 assets.load_assets(SCALE)
 Bullet.load_assets(assets)
 EnemyBase.load_assets(assets)
 
-clock = pygame.time.Clock()
-if config.set_fullscreen:   screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN, vsync=True)
-else:                       screen = pygame.display.set_mode(config.window_size, vsync=True)
-
-last_time = time()
 pygame.mixer.init()
 pygame.mixer.music.load(assets.get_sound('music'))
 pygame.mixer.music.play(-1)
 pygame.mixer.music.set_volume(0.1)
-
 
 class Game(GameState):
     level = 1
@@ -47,7 +50,7 @@ class Game(GameState):
         self.player_bullets = pygame.sprite.Group()
         self.enemy_bullets = pygame.sprite.Group()
         
-        self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets, self.all_sprites)
+        self.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), assets, self.all_sprites)
         self.explosion = Explosion()
         self.background_fall = Fall(300)
         self.particles = pygame.sprite.Group()
@@ -63,7 +66,7 @@ class Game(GameState):
             for enemy in self.all_enemies:
                 enemy.kill()
             self.level = 1
-            self.player = Player((config.window_size[0] / 2, (config.window_size[1] / 2)+150), assets, self.all_sprites)
+            self.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), assets, self.all_sprites)
             self.next_state = "Pause"
 
         if not self.level_done:         
@@ -127,15 +130,16 @@ class Game(GameState):
         for enemy in self.all_enemies:
             enemy.explosion.draw(surf)
             
-        text(f'Level {self.level}', config.window_size[0] - 50, config.window_size[1] - 30, assets, original_font=False)
-        text(f'Life    {self.player.getLife()}', config.window_size[0] - 50, config.window_size[1] - 60, assets, original_font=False)
+        draw_text(surf, f'Level {self.level}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 30, assets, use_smaller_font=False)
+        draw_text(surf, f'Life    {self.player.getLife()}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 60, assets, use_smaller_font=False)
         if config.show_fps:
-            text(f'FPS {(int(clock.get_fps()))}', 50, 30, assets, original_font=False)
+            draw_text(surf, f'FPS {(int(clock.get_fps()))}', 50, 30, assets, use_smaller_font=False)
 
 
 class GameRunner(object):
-    def __init__(self, screen, states, start_state):
+    def __init__(self, screen, game_surface, states, start_state):
         self.screen = screen
+        self.game_surface = game_surface
         self.states = states
         self.start_state = start_state
         self.state = self.states[self.start_state]
@@ -176,9 +180,11 @@ class GameRunner(object):
     def draw(self):
         pygame.display.set_icon(pygame.image.load('assets/sprites/player/player_idle1.png'))
         pygame.display.set_caption(f'Shoot \'em Up - Pygame. FPS: {int(clock.get_fps())}')
-        clock.tick(FRAME_RATE)
+        self.state.draw(self.game_surface, assets)
+        scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
+        self.screen.blit(scaled_surface, (0, 0))
         pygame.display.update()
-        self.state.draw(self.screen, assets)
+        clock.tick(FRAME_RATE)
 
 
 if __name__ == "__main__":
@@ -190,5 +196,5 @@ if __name__ == "__main__":
         "Options":  Options(),
         "GameOver": GameOver()
     }
-    game = GameRunner(screen, states, "Menu")
+    game = GameRunner(screen, game_surface, states, "Menu")
 

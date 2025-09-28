@@ -3,15 +3,18 @@ import pygame
 
 class Configs:
     def __init__(self):
-        FHD =   (1920, 1080)
-        HD =    (1280, 720)
-        XGA =   (1024, 768)
-        QHD =   (960, 540)
-        SVGA =  (800, 600)
-        self.RESOLUTIONS = [SVGA, QHD, XGA, HD, FHD]
+        UHD  =  (3840, 2160) # 5
+        WQHD =  (2560, 1440) # 4
+        FHD  =  (1920, 1080) # 3
+        HD   =  (1280, 720)  # 2
+        XGA  =  (1024, 768)  # 1
+        QHD  =  (960, 540)   # 0
+        self.RESOLUTIONS = [QHD, XGA, HD, FHD, WQHD, UHD]
+        self.INTERNAL_RESOLUTION = (1600, 900)
+        
         self.SHOW_FPS = False
         self.SET_FULLSCREEN = False
-        self.WINDOW_SIZE = self.RESOLUTIONS[4]
+        self.WINDOW_SIZE = self.RESOLUTIONS[2]     
 
     @property
     def show_fps(self):

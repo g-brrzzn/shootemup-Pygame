@@ -5,10 +5,10 @@ from .global_var import (
     TITLE_YELLOW_1, TITLE_YELLOW_2, BACKGROUND_COLOR_MENU_1, GAME_COLOR
 )
 pygame.init()
-screen = pygame.display.set_mode(config.window_size)
 
 
-def title_text(string, x, y, assets): 
+
+def title_text(surf, string, x, y, assets): 
     string = str(string)
     title_font_obj = assets.get_font('captain_80')
     info_1 = title_font_obj.render(string, True, TITLE_YELLOW_1)
@@ -17,20 +17,22 @@ def title_text(string, x, y, assets):
     textrect.center = (x, y)
     textrect_2 = info_2.get_rect()
     textrect_2.center = (x+4, y+4)
-    screen.blit(info_2, textrect_2)
-    screen.blit(info_1, textrect)
+    surf.blit(info_2, textrect_2)
+    surf.blit(info_1, textrect)
 
-def text(string, x, y, assets, color=(200, 200, 200), original_font=True):
-    string = str(string)
-    if original_font:
-        font_obj = assets.get_font('captain_42')
-    else:
-        font_obj = assets.get_font('captain_32')
-    
-    info = font_obj.render(string, True, color)
-    textrect = info.get_rect()
+def draw_text(surf, string, x, y, assets, color=(200, 200, 200), use_smaller_font=False):
+    min_width_for_large_font = 1920
+    font_large_name = 'captain_42'
+    font_small_name = 'captain_32'
+    should_use_smaller = use_smaller_font or config.INTERNAL_RESOLUTION[0] < min_width_for_large_font
+
+    font_name = font_small_name if should_use_smaller else font_large_name
+    font_obj = assets.get_font(font_name)
+
+    text_surface = font_obj.render(str(string), True, color)
+    textrect = text_surface.get_rect()
     textrect.center = (x, y)
-    screen.blit(info, textrect)
+    surf.blit(text_surface, textrect)
 
 
 def bool2Switch(bool):
@@ -54,11 +56,11 @@ def find_key_by_value(dict, target_value):
 
 def vertical(surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BACKGROUND_COLOR_2):
     if not is_square:
-        size = config.window_size
+        size = config.INTERNAL_RESOLUTION
         axis_x, axis_y = 0, 0
     else:
-        size = (400, 400)
-        center = (config.window_size[0] / 2, config.window_size[1] / 2)
+        size = (config.INTERNAL_RESOLUTION[0] * 0.2, config.INTERNAL_RESOLUTION[0] * 0.2)
+        center = (config.INTERNAL_RESOLUTION[0] / 2, config.INTERNAL_RESOLUTION[1] / 2)
         x, y = center
         axis_x = x - size[0] / 2
         axis_y = y - size[1] / 2
@@ -72,7 +74,7 @@ def vertical(surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BAC
     gm = (eg - sg) * dd
     bm = (eb - sb) * dd
     am = (ea - sa) * dd
-    for y in range(height):
+    for y in range(int(height)):
         big_surf.set_at((0, y),
                        (int(sr + rm * y),
                         int(sg + gm * y),
@@ -82,59 +84,67 @@ def vertical(surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BAC
     surf.blit(v, (axis_x, axis_y))
 
 def MenuMaker(options, title, selected, surf, assets):
+    half_internal_res_width = config.INTERNAL_RESOLUTION[0] / 2
+    half_internal_res_height = config.INTERNAL_RESOLUTION[1] / 2
+    five_percent_internal_res = config.INTERNAL_RESOLUTION[0]*0.05
+    ten_percent_internal_res = config.INTERNAL_RESOLUTION[0]*0.1
+    five_percent_internal_res_height = config.INTERNAL_RESOLUTION[1]*0.05
+    title_gap = config.INTERNAL_RESOLUTION[1] * 0.0045
+    
     vertical(surf)
     for i in range(200):
         pygame.draw.line(surf, BACKGROUND_COLOR_MENU_1,
-                         (config.window_size[0] / 2 - 100 + i, config.window_size[1] / 2 - 179),      # Title background
-                         (config.window_size[0] / 2 - 100 + i, config.window_size[1] / 2 - 230), 4)   # Title background
-    text(title, config.window_size[0] / 2, config.window_size[1] / 2 - 200, assets)
+                         (half_internal_res_width - five_percent_internal_res-title_gap + i, half_internal_res_height - five_percent_internal_res_height*3.15),      # Title background
+                         (half_internal_res_width - five_percent_internal_res-title_gap + i, half_internal_res_height - five_percent_internal_res_height*4.15), 4)   # Title background
+    draw_text(surf, title, half_internal_res_width, half_internal_res_height - ten_percent_internal_res*1.0, assets)
 
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 - 100, config.window_size[1] / 2 - 180),      # Title Bottom outline
-                     (config.window_size[0] / 2 + 100, config.window_size[1] / 2 - 180), 4)   # Title Bottom outline
+                     (half_internal_res_width - five_percent_internal_res, half_internal_res_height - five_percent_internal_res*1.8),      # Title Bottom outline
+                     (half_internal_res_width + five_percent_internal_res, half_internal_res_height - five_percent_internal_res*1.8), 4)   # Title Bottom outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 + 100, config.window_size[1] / 2 - 179),      # Title Top-left outline
-                     (config.window_size[0] / 2 + 100, config.window_size[1] / 2 - 230), 4)   # Title Top-left outline
+                     (half_internal_res_width + five_percent_internal_res, half_internal_res_height - five_percent_internal_res*1.8),      # Title Top-left outline
+                     (half_internal_res_width + five_percent_internal_res, half_internal_res_height - five_percent_internal_res*2.3), 4)   # Title Top-left outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 - 100, config.window_size[1] / 2 - 179),      # Title Top-right outline
-                     (config.window_size[0] / 2 - 100, config.window_size[1] / 2 - 230), 4)   # Title Top-right outline
+                     (half_internal_res_width - five_percent_internal_res, half_internal_res_height - five_percent_internal_res*1.8),      # Title Top-right outline
+                     (half_internal_res_width - five_percent_internal_res, half_internal_res_height - five_percent_internal_res*2.3), 4)   # Title Top-right outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 - 100, config.window_size[1] / 2 - 230),      # Title Top outline
-                     (config.window_size[0] / 2 + 100, config.window_size[1] / 2 - 230), 4)   # Title Top outline
+                     (half_internal_res_width - five_percent_internal_res, half_internal_res_height - five_percent_internal_res*2.3),      # Title Top outline
+                     (half_internal_res_width + five_percent_internal_res, half_internal_res_height - five_percent_internal_res*2.3), 4)   # Title Top outline
 
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 + 100, config.window_size[1] / 2 - 200),      # Top-right outline
-                     (config.window_size[0] / 2 + 200, config.window_size[1] / 2 - 200), 4)   # Top-right outline
+                     (half_internal_res_width + five_percent_internal_res, half_internal_res_height - ten_percent_internal_res),      # Top-right outline
+                     (half_internal_res_width + ten_percent_internal_res, half_internal_res_height - ten_percent_internal_res), 4)   # Top-right outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 - 100, config.window_size[1] / 2 - 200),      # Top-left outline
-                     (config.window_size[0] / 2 - 200, config.window_size[1] / 2 - 200), 4)   # Top-left outline
+                     (half_internal_res_width - five_percent_internal_res, half_internal_res_height - ten_percent_internal_res),      # Top-left outline
+                     (half_internal_res_width - ten_percent_internal_res, half_internal_res_height - ten_percent_internal_res), 4)   # Top-left outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 + 200, config.window_size[1] / 2 - 200),      # Left outline
-                     (config.window_size[0] / 2 + 200, config.window_size[1] / 2 + 200), 4)   # Left outline
+                     (half_internal_res_width + ten_percent_internal_res, half_internal_res_height - ten_percent_internal_res),      # Left outline
+                     (half_internal_res_width + ten_percent_internal_res, half_internal_res_height + ten_percent_internal_res), 4)   # Left outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 - 200, config.window_size[1] / 2 - 200),      # Right outline
-                     (config.window_size[0] / 2 - 200, config.window_size[1] / 2 + 200), 4)   # Right outline
+                     (half_internal_res_width - ten_percent_internal_res, half_internal_res_height - ten_percent_internal_res),      # Right outline
+                     (half_internal_res_width - ten_percent_internal_res, half_internal_res_height + ten_percent_internal_res), 4)   # Right outline
     pygame.draw.line(surf, (200, 200, 200),
-                     (config.window_size[0] / 2 - 200, config.window_size[1] / 2 + 200),      # Bottom outline
-                     (config.window_size[0] / 2 + 200, config.window_size[1] / 2 + 200), 4)   # Bottom outline
+                     (half_internal_res_width - ten_percent_internal_res, half_internal_res_height + ten_percent_internal_res),      # Bottom outline
+                     (half_internal_res_width + ten_percent_internal_res, half_internal_res_height + ten_percent_internal_res), 4)   # Bottom outline
 
-    if len(options) >= 4: y_gap = 90
-    elif len(options) >= 6: y_gap = 120
-    else: y_gap = 50
+    options_items_quantity = len(options)
+    if options_items_quantity >= 4: y_gap = five_percent_internal_res*0.9
+    elif options_items_quantity >= 6: y_gap = five_percent_internal_res*1.1
+    else: y_gap = five_percent_internal_res/2
 
     for option in options:
         if selected == options.index(option):
-            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), assets, GAME_COLOR)
+            draw_text(surf, option, half_internal_res_width, (half_internal_res_height - y_gap) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
             if len(option) < 10:
-                text('|', config.window_size[0] / 2 + 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
-                text('|', config.window_size[0] / 2 - 100, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
+                draw_text(surf, '|', half_internal_res_width + five_percent_internal_res, (half_internal_res_height - y_gap - 5) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
+                draw_text(surf, '|', half_internal_res_width - five_percent_internal_res, (half_internal_res_height - y_gap - 5) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
             elif len(option) < 20:
-                text('|', config.window_size[0] / 2 + 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
-                text('|', config.window_size[0] / 2 - 150, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
+                draw_text(surf, '|', half_internal_res_width + five_percent_internal_res*1.5, (half_internal_res_height - y_gap - 5) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
+                draw_text(surf, '|', half_internal_res_width - five_percent_internal_res*1.5, (half_internal_res_height - y_gap - 5) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
             else:
-                text('|', config.window_size[0] / 2 + 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
-                text('|', config.window_size[0] / 2 - 180, (config.window_size[1] / 2 - y_gap - 5) + 50 * options.index(option), assets, GAME_COLOR)
+                draw_text(surf, '|', half_internal_res_width + five_percent_internal_res*1.9, (half_internal_res_height - y_gap - 5) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
+                draw_text(surf, '|', half_internal_res_width - five_percent_internal_res*1.9, (half_internal_res_height - y_gap - 5) + five_percent_internal_res/2 * options.index(option), assets, GAME_COLOR)
         else:
-            text(option, config.window_size[0] / 2, (config.window_size[1] / 2 - y_gap) + 50 * options.index(option), assets)
+            draw_text(surf, option, half_internal_res_width, (half_internal_res_height - y_gap) + five_percent_internal_res/2 * options.index(option), assets)
 
 

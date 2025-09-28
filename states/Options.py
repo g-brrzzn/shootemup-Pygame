@@ -63,15 +63,10 @@ class Options(GameState):
                 if self.selected == 0:
                     pass
                 elif self.selected == 1:
-                    print("\"Show FPS\" is not available in this version ")
                     config.show_fps = not config.show_fps
-                elif self.selected == 2:
-                    # SET_FULLSCREEN = not SET_FULLSCREEN
-                    print("\"Set Fullscreen\" is not available in this version ")
+                elif self.selected == 2:                   
                     config.set_fullscreen = not config.set_fullscreen
                 elif self.selected == 3:
-                    if config.window_size != (1280, 720):
-                        print("Resolution config is not available in this version, please come back to the 720p")
                     if config.set_fullscreen:   screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN)
                     else:                       screen = pygame.display.set_mode(config.window_size)
                 elif self.selected == 4:

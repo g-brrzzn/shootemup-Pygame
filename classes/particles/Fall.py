@@ -15,7 +15,7 @@ class Drop:
 class Fall:
     def __init__(self, amount: int):
         self.drops: List[Drop] = []
-        width, height = config.window_size
+        width, height = config.INTERNAL_RESOLUTION
         for _ in range(amount):
             x = randint(1, width - 1)
             y = randint(1, height - 1)
@@ -23,7 +23,7 @@ class Fall:
             self.drops.append(Drop(pos=Vector2(x, y), fall_speed=fall_speed))
 
     def update(self, gravity: float = 0.3, wind: float = 0.3, dt: float = 1.0) -> None:
-        width, height = config.window_size
+        width, height = config.INTERNAL_RESOLUTION
         for drop in self.drops:
             drop.pos.y += (gravity + drop.fall_speed) * dt
 
