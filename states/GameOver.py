@@ -2,8 +2,8 @@ import sys
 import pygame
 from pygame.locals import *
 
-from states.GameState import GameState
-from constants.global_func import vertical, MenuMaker
+from .GameState import GameState
+from .States_util import vertical, menu_maker
 from classes.particles.Fall import Fall
 from constants.global_var import CONTROLS, GAME_COLOR
 
@@ -20,7 +20,7 @@ class Exit(GameState):
         pass
         
     def draw(self, surf, assets):
-        MenuMaker(['EXIT TO MAIN-MENU', 'EXIT TO DESKTOP', 'BACK'], __class__.__name__, self.selected, surf, assets)
+        menu_maker(['EXIT TO MAIN-MENU', 'EXIT TO DESKTOP', 'BACK'], __class__.__name__, self.selected, surf, assets)
 
     def get_event(self, event, assets):
         if event.type == KEYDOWN:
@@ -68,7 +68,7 @@ class GameOver(GameState):
     def draw(self, surf, assets):
         vertical(surf)
         self.fall.draw(surf, GAME_COLOR)
-        MenuMaker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf, assets)
+        menu_maker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf, assets)
         
     def get_event(self, event, assets):
         if event.type == KEYDOWN:

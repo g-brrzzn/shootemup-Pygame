@@ -15,9 +15,10 @@ from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
 from states.GameOver import GameOver, Exit
+from states.States_util import vertical, draw_text
 
 from constants.global_var import SCALE, config, FRAME_RATE, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2, CONTROLS
-from constants.global_func import delta_time, vertical, draw_text
+from constants.Utils import delta_time
 
 
 pygame.init()

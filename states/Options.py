@@ -1,9 +1,9 @@
 import pygame
 from pygame.locals import *
 
-from states.GameState import GameState
+from .GameState import GameState
+from .States_util import vertical, menu_maker, get_on_off_status
 from classes.particles.Fall import Fall
-from constants.global_func import vertical, MenuMaker, bool2Switch
 from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
 
 
@@ -15,19 +15,19 @@ class Options(GameState):
     def start(self):
         self.selected = 0
         self.config_res = config.window_size
-        self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {bool2Switch(config.show_fps)}',
-                        f'FULLSCREEN: {bool2Switch(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
+        self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {get_on_off_status(config.show_fps)}',
+                        f'FULLSCREEN: {get_on_off_status(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
 
         
     def update(self, assets):
         self.fall.update(-3, 0) 
-        self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {bool2Switch(config.show_fps)}',
-                        f'FULLSCREEN: {bool2Switch(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
+        self.options = [f'RESOLUTION - {self.config_res}', f'SHOW FPS: {get_on_off_status(config.show_fps)}',
+                        f'FULLSCREEN: {get_on_off_status(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
            
     def draw(self, surf, assets):
         self.fall.draw(surf, (200, 200, 200))
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
-        MenuMaker(self.options, __class__.__name__, self.selected, surf, assets)
+        menu_maker(self.options, __class__.__name__, self.selected, surf, assets)
 
     def get_event(self, event, assets):
         if event.type == KEYDOWN:

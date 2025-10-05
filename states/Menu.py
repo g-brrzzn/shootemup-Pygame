@@ -4,9 +4,10 @@ import sys
 import math
 from random import randint
 
-from states.GameState import GameState
+from .GameState import GameState
+from .States_util import title_text, vertical, menu_maker
 from classes.particles.Fall import Fall
-from constants.global_func import delta_time, title_text, vertical, MenuMaker
+from constants.Utils import delta_time
 from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
 
 class Menu(GameState):
@@ -27,7 +28,7 @@ class Menu(GameState):
         self.fall.draw(surf, (200, 200, 200))
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         title_text(surf, "Shoot'em Up - Pygame",  randint(1,5) + config.INTERNAL_RESOLUTION[0]/2, self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33, assets)
-        MenuMaker(['START', 'OPTIONS', 'EXIT'], __class__.__name__, self.selected, surf, assets)
+        menu_maker(['START', 'OPTIONS', 'EXIT'], __class__.__name__, self.selected, surf, assets)
 
     def get_event(self, event, assets):
         if event.type == KEYDOWN:

@@ -1,8 +1,8 @@
 import pygame
 from pygame.locals import *
 
-from states.GameState import GameState
-from constants.global_func import MenuMaker
+from .GameState import GameState
+from .States_util import menu_maker
 from constants.global_var import CONTROLS
 
 class Pause(GameState):
@@ -17,7 +17,7 @@ class Pause(GameState):
         pass
     
     def draw(self, surf, assets):
-        MenuMaker(['CONTINUE', 'EXIT'], __class__.__name__, self.selected, surf, assets)
+        menu_maker(['CONTINUE', 'EXIT'], __class__.__name__, self.selected, surf, assets)
 
     def get_event(self, event, assets):
         if event.type == KEYDOWN:
