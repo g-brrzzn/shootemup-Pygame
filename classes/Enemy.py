@@ -63,7 +63,13 @@ class EnemyBase(pygame.sprite.Sprite):
     def shoot(self, enemy_bullets_group, all_sprites_group):
         for _ in range(self.weight):
             if randint(0, 1000) < 2:
-                Bullet(self.rect.center, 3, False, enemy_bullets_group, all_sprites_group)
+                Bullet.create_bullets(
+                    pattern='single',
+                    pos=self.rect.center,
+                    is_from_player=False,
+                    groups=(enemy_bullets_group, all_sprites_group),
+                    options={'angle': -90}
+                )
             
     def move(self, dt, player, assets):
         if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.take_damage(assets)

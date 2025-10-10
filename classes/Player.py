@@ -76,7 +76,13 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def fire(self, assets, bullet_group, all_sprites_group):
-        Bullet(self.rect.center, 1, True, bullet_group, all_sprites_group)
+        Bullet.create_bullets(
+            pattern='single',
+            pos=self.rect.center,
+            is_from_player=True,
+            groups=(bullet_group, all_sprites_group),
+            options={'angle': 90}  
+        )
         pygame.mixer.Sound.play(assets.get_sound('shoot'))
 
     def update(self, dt, assets, player_bullets, all_sprites):

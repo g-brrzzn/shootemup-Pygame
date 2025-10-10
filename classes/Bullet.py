@@ -1,54 +1,85 @@
 import pygame
+from pygame.math import Vector2
+from typing import Optional, Iterable, Tuple, List
 from constants.global_var import config
+import math
 
 class Bullet(pygame.sprite.Sprite):
-    player_image = None
-    enemy_image = None
+    player_image: Optional[pygame.Surface] = None
+    enemy_image: Optional[pygame.Surface] = None
 
     @classmethod
-    def load_assets(cls, assets_manager):
+    def load_assets(cls, assets_manager) -> None:
         cls.player_image = assets_manager.get_image('bullet_player')
         cls.enemy_image = assets_manager.get_image('bullet_enemy')
 
-    def __init__(self, pos, direction, is_from_player, *groups):
+    @classmethod
+    def create_bullets(cls, pattern: str, pos: tuple, is_from_player: bool, groups: tuple, options: dict = {}) -> List['Bullet']:
+        bullets = []
+        
+        if pattern == 'single':
+            angle = options.get('angle', 90 if is_from_player else 270)
+            direction = Vector2(math.cos(math.radians(angle)), -math.sin(math.radians(angle)))
+            bullets.append(cls(pos, direction, is_from_player, *groups, **options))
+
+        elif pattern == 'spread':
+            count = options.get('count', 3)
+            spread_arc = options.get('spread_arc', 30)
+            base_angle = options.get('angle', 90 if is_from_player else 270)
+            
+            if count <= 1:
+                return cls.create_bullets('single', pos, is_from_player, groups, options)
+            
+            angle_step = spread_arc / (count - 1)
+            start_angle = base_angle - spread_arc / 2
+            
+            for i in range(count):
+                angle = start_angle + i * angle_step
+                direction = Vector2(math.cos(math.radians(angle)), -math.sin(math.radians(angle)))
+                bullets.append(cls(pos, direction, is_from_player, *groups, **options))
+        
+        return bullets
+
+    def __init__(
+        self,
+        pos: Tuple[float, float],
+        direction_vector: Vector2,
+        is_from_player: bool,
+        *groups: Iterable[pygame.sprite.Group],
+        **kwargs
+    ) -> None:
         super().__init__(*groups)
         
         self.is_from_player = is_from_player
-        self.direction = direction # 1:UP, 2:LEFT, 3:DOWN, 4:RIGHT
         
-        if self.is_from_player:
-            self.image = Bullet.player_image
-            self.speed = config.INTERNAL_RESOLUTION[1] * 0.012
-        else:
-            self.image = Bullet.enemy_image
-            self.speed = config.INTERNAL_RESOLUTION[1] * 0.004
-            
-        self.rect = self.image.get_rect(center=pos)
+        speed_scale = kwargs.get('speed_scale')
+        if speed_scale is None:
+            speed_scale = 0.012 if is_from_player else 0.004
 
-    def update(self, dt):
-        if self.direction == 1: self.rect.y -= round(self.speed * dt)
-        elif self.direction == 2: self.rect.x -= round(self.speed * dt)
-        elif self.direction == 3: self.rect.y += round(self.speed * dt)
-        elif self.direction == 4: self.rect.x += round(self.speed * dt)
+        base_speed = config.INTERNAL_RESOLUTION[1]
+        self.speed = base_speed * speed_scale
         
-        game_world_rect = pygame.Rect(0, 0, config.INTERNAL_RESOLUTION[0], config.INTERNAL_RESOLUTION[1])
+        self.image = self.player_image if is_from_player else self.enemy_image
+        if self.image is None:
+            size = (4, 4)
+            self.image = pygame.Surface(size, pygame.SRCALPHA)
+            color = (255, 200, 0) if is_from_player else (200, 50, 50)
+            pygame.draw.circle(self.image, color, (size[0] // 2, size[1] // 2), size[0] // 2)
+
+        self.rect = self.image.get_rect(center=pos)
+        self.pos = Vector2(pos)
+        
+        if direction_vector.length() > 0:
+            self.vel = direction_vector.normalize() * self.speed
+        else:
+            default_vel_y = -self.speed if is_from_player else self.speed
+            self.vel = Vector2(0, default_vel_y)
+
+    def update(self, dt: float) -> None:
+        self.pos += self.vel * dt
+        self.rect.center = (round(self.pos.x), round(self.pos.y))
+        
+        world_w, world_h = config.INTERNAL_RESOLUTION
+        game_world_rect = pygame.Rect(0, 0, world_w, world_h)
         if not game_world_rect.colliderect(self.rect):
             self.kill()
-
-    @classmethod
-    def move_bullet(cls, loc, dt, is_player):
-        speed = cls.speed if is_player else cls.enemyspeed
-        # 1-UP, 2-LEFT, 3-DOWN, 4-RIGHT
-        if loc[2] == 1: loc[1] -= round(speed * dt)
-        elif loc[2] == 2: loc[0] -= round(speed * dt)
-        elif loc[2] == 3: loc[1] += round(speed * dt)
-        elif loc[2] == 4: loc[0] += round(speed * dt)
-
-    @classmethod
-    def draw_all(cls, surf):
-        for loc in cls.locs:
-            cls.rect.topleft = (loc[0], loc[1])
-            surf.blit(cls.image, cls.rect)
-        for loc in cls.enemylocs:
-            cls.rect.topleft = (loc[0], loc[1])
-            surf.blit(cls.enemyimage, cls.rect)
