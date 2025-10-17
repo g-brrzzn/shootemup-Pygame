@@ -3,6 +3,7 @@ import math
 from random import choice, randint
 from time import time
 
+from game_engine import g_engine
 from classes.Bullet import Bullet
 from classes.particles.Explosion import Explosion
 from constants.global_var import config, SCALED_SPRITE_SIZE
@@ -10,9 +11,8 @@ from constants.global_var import config, SCALED_SPRITE_SIZE
 class EnemyBase(pygame.sprite.Sprite):
     instancelist = []
 
-    def __init__(self, pos, sprite_files_keys, assets_manager, *groups):
+    def __init__(self, pos, sprite_files_keys, *groups):
         super().__init__(*groups) 
-        self.assets = assets_manager
         self.x, self.y = pos
         self.instancelist.append(self)
         self.sprites = self.load_sprites(sprite_files_keys) 
@@ -39,7 +39,7 @@ class EnemyBase(pygame.sprite.Sprite):
     def load_sprites(self, sprite_keys):
         sprites = []
         for key in sprite_keys: 
-            sprite = self.assets.get_image(key) 
+            sprite = g_engine.assets.get_image(key) 
             sprites.append(sprite)
         return sprites
 
@@ -60,19 +60,20 @@ class EnemyBase(pygame.sprite.Sprite):
         if self.life <= 1: self.kill()
         else: self.life -= 1
                 
-    def shoot(self, enemy_bullets_group, all_sprites_group):
+    def shoot(self):
         for _ in range(self.weight):
             if randint(0, 1000) < 2:
                 Bullet.create_bullets(
                     pattern='single',
                     pos=self.rect.center,
                     is_from_player=False,
-                    groups=(enemy_bullets_group, all_sprites_group),
+                    groups=(g_engine.enemy_bullets, g_engine.all_sprites),
                     options={'angle': -90}
                 )
             
-    def move(self, dt, player, assets):
-        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.take_damage(assets)
+    def move(self, dt):
+        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): 
+            g_engine.player.take_damage()
         if randint(0, 500 * self.weight) < 1:
             self.y_direction = True
             self.old_y = self.y
@@ -91,9 +92,9 @@ class EnemyBase(pygame.sprite.Sprite):
                 if self.x < (config.INTERNAL_RESOLUTION[0] * (self.weight * 0.1)):
                     self.direction = True
     
-    def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):
-        self.move(dt, player, assets)   
-        self.shoot(enemy_bullets_group, all_sprites_group) 
+    def update(self, dt):
+        self.move(dt)   
+        self.shoot() 
         self.explosion.update(dt)
 
         self.rect.topleft = (self.x, self.y)
@@ -104,37 +105,37 @@ class EnemyBase(pygame.sprite.Sprite):
         self.explosion.draw(surf)
 
     @staticmethod
-    def spawn_enemy(n, enemy_class, assets_manager, enemy_group, all_sprites_group): 
+    def spawn_enemy(n, enemy_class): 
         for _ in range(n):
             x = randint(0, config.INTERNAL_RESOLUTION[0])
             y = config.INTERNAL_RESOLUTION[1] / 2 - 320
-            enemy_class((x, y), assets_manager, enemy_group, all_sprites_group) 
+            enemy_class((x, y), g_engine.all_enemies, g_engine.all_sprites) 
 
 class Enemy1(EnemyBase):
-    def __init__(self, pos, assets_manager, *groups):
-        super().__init__(pos, ['enemy1_1', 'enemy1_2'], assets_manager, *groups)
+    def __init__(self, pos, *groups):
+        super().__init__(pos, ['enemy1_1', 'enemy1_2'], *groups)
         self.life = 1
         self.weight = 1
 
-    def move(self, dt, player, assets):
-        return super().move(dt, player, assets)
+    def move(self, dt):
+        return super().move(dt)
     
-    def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):
-        super().update(dt, player, assets, enemy_bullets_group, all_sprites_group)
+    def update(self, dt):
+        super().update(dt)
 
 
 class Enemy2(EnemyBase):
-    def __init__(self, pos, assets_manager, *groups):
-        super().__init__(pos, ['enemy2_1', 'enemy2_2'], assets_manager, *groups)
+    def __init__(self, pos, *groups):
+        super().__init__(pos, ['enemy2_1', 'enemy2_2'], *groups)
         self.life = 3
         self.weight = 2
-        self.life = 3
         self.speed = self.speed * 0.75
         self.x_direction = 1
 
-    def move(self, dt, player, assets):
+    def move(self, dt):
         weight = 2
-        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): 
+            g_engine.player.setLife(g_engine.player.getLife() - 1)
 
         if randint(0, 500 * weight) < 1:
             self.y_direction = True
@@ -160,22 +161,22 @@ class Enemy2(EnemyBase):
                 self.y = config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE
                 self.y_direction = False
     
-    def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):
-        super().update(dt, player, assets, enemy_bullets_group, all_sprites_group)
+    def update(self, dt):
+        super().update(dt)
         
         
 class Enemy3(EnemyBase):
-    def __init__(self, pos, assets_manager, *groups):
-        super().__init__(pos, ['enemy3_1', 'enemy3_2'], assets_manager, *groups)
+    def __init__(self, pos, *groups):
+        super().__init__(pos, ['enemy3_1', 'enemy3_2'], *groups)
         self.life = 5
         self.weight = 3
-        self.life = 5
         self.speed = self.speed * 0.5
         self.xy_direction = choice([-1, 1])
 
-    def move(self, dt, player, assets):
+    def move(self, dt):
         weight = 3
-        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): player.setLife(player.getLife() - 1)
+        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): 
+            g_engine.player.setLife(g_engine.player.getLife() - 1)
 
         if randint(0, 500 * weight) < 1:
             self.y_direction = True
@@ -200,5 +201,5 @@ class Enemy3(EnemyBase):
                 self.y = config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE
                 self.y_direction = False
     
-    def update(self, dt, player, assets, enemy_bullets_group, all_sprites_group):
-        super().update(dt, player, assets, enemy_bullets_group, all_sprites_group)
+    def update(self, dt):
+        super().update(dt)

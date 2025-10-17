@@ -2,6 +2,7 @@ import sys
 import pygame
 from pygame.locals import *
 
+from game_engine import g_engine
 from .GameState import GameState
 from .States_util import vertical, menu_maker
 from classes.particles.Fall import Fall
@@ -12,32 +13,31 @@ class Exit(GameState):
         super().__init__()
         self.next_state = 'Pause'
         
-
     def start(self):
         self.selected = 0
 
-    def update(self, assets):
+    def update(self):
         pass
         
-    def draw(self, surf, assets):
-        menu_maker(['EXIT TO MAIN-MENU', 'EXIT TO DESKTOP', 'BACK'], __class__.__name__, self.selected, surf, assets)
+    def draw(self, surf):
+        menu_maker(['EXIT TO MAIN-MENU', 'EXIT TO DESKTOP', 'BACK'], __class__.__name__, self.selected, surf)
 
-    def get_event(self, event, assets):
+    def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
                 if self.selected == 2:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
                 if self.selected == 0:
                     self.selected = 2
                 else:
                     self.selected -= 1
             if event.key in CONTROLS['START']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_confirm'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_confirm'))
                 if self.selected == 0:
                     self.next_state = 'Menu'
                     self.done = True
@@ -48,7 +48,7 @@ class Exit(GameState):
                     self.next_state = 'Pause'
                     self.done = True
             if event.key in CONTROLS['ESC']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
                 self.next_state = 'Pause'
                 self.done = True
 
@@ -62,34 +62,33 @@ class GameOver(GameState):
         self.selected = 0
         self.fall = Fall(100)
 
-    def update(self, assets):
+    def update(self):
         self.fall.update(-2, 3)
         
-    def draw(self, surf, assets):
+    def draw(self, surf):
         vertical(surf)
         self.fall.draw(surf, GAME_COLOR)
-        menu_maker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf, assets)
+        menu_maker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf)
         
-    def get_event(self, event, assets):
+    def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS['DOWN']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
                 if self.selected == 1:
                     self.selected = 0
                 else:
                     self.selected += 1
             if event.key in CONTROLS['UP']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_select'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
                 if self.selected == 0:
                     self.selected = 1
                 else:
                     self.selected -= 1
             if event.key in CONTROLS['START']:
-                pygame.mixer.Sound.play(assets.get_sound('menu_confirm'))
+                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_confirm'))
                 if self.selected == 0:
                     self.next_state = 'Menu'
                     self.done = True
                 elif self.selected == 1:
                     self.next_state = 'Exit'
                     self.done = True
-

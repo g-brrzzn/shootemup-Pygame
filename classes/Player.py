@@ -2,27 +2,26 @@ import pygame
 from time import time
 from pygame.locals import *
 
+from game_engine import g_engine
 from classes.Bullet import Bullet
 from classes.particles.Explosion import Explosion
 from constants.global_var import MAX_LIFE, CONTROLS, config, SPRITE_SIZE, PLAYER_COLOR_GREEN
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, assets_manager, *groups): 
+    def __init__(self, pos, *groups): 
         super().__init__(*groups)
-        self.assets = assets_manager
         self.shot_delay = 0.25
         self.moving_right = False
         self.moving_left = False
         self.moving_up = False
         self.moving_down = False
         self.firing = False
-        self.rect = pygame.math.Vector2()
         self.last_time = time()
         self.last_shot = self.last_time
 
         self.sprites = [
-            self.assets.get_image('player_idle1'),
-            self.assets.get_image('player_idle2')
+            g_engine.assets.get_image('player_idle1'),
+            g_engine.assets.get_image('player_idle2')
         ]
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
@@ -60,7 +59,7 @@ class Player(pygame.sprite.Sprite):
             self.speed += 1
         if event.key == K_k:
             if self.speed >= 7:
-                self.speed -= 1        
+                self.speed -= 1      
     
 
     def get_input_keyup(self, event):
@@ -75,17 +74,17 @@ class Player(pygame.sprite.Sprite):
         if event.key in CONTROLS['FIRE']:
             self.firing = False
 
-    def fire(self, assets, bullet_group, all_sprites_group):
+    def fire(self):
         Bullet.create_bullets(
             pattern='single',
             pos=self.rect.center,
             is_from_player=True,
-            groups=(bullet_group, all_sprites_group),
+            groups=(g_engine.player_bullets, g_engine.all_sprites),
             options={'angle': 90}  
         )
-        pygame.mixer.Sound.play(assets.get_sound('shoot'))
+        pygame.mixer.Sound.play(g_engine.assets.get_sound('shoot'))
 
-    def update(self, dt, assets, player_bullets, all_sprites):
+    def update(self, dt):
         self.last_time = time() 
         self.explosion.update(dt)
         self.animate()
@@ -100,22 +99,21 @@ class Player(pygame.sprite.Sprite):
         if self.rect[1] < 0: self.rect[1] = 0
         
         if self.firing and self.last_time - self.last_shot > self.shot_delay:
-            self.fire(assets, player_bullets, all_sprites)
+            self.fire()
             self.last_shot = self.last_time
     
                 
-    def draw(self, surf, assets):
+    def draw(self, surf):
         surf.blit(self.image, self.rect)
         self.explosion.draw(surf)
         
-    def take_damage(self, assets):
+    def take_damage(self):
         self.life -= 1
         self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN, speed=-5)
-        pygame.mixer.Sound.play(assets.get_sound('hit'))
+        pygame.mixer.Sound.play(g_engine.assets.get_sound('hit'))
 
-    def getLife(self):       return self.life
+    def getLife(self):      return self.life
     def setLife(self, life): self.life = life
     
-    def getX(self):       return self.rect.x
-    def getY(self):       return self.rect.y
-
+    def getX(self):         return self.rect.x
+    def getY(self):         return self.rect.y
