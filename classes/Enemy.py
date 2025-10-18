@@ -16,6 +16,7 @@ class EnemyBase(pygame.sprite.Sprite):
         self.x, self.y = pos
         self.instancelist.append(self)
         self.sprites = self.load_sprites(sprite_files_keys) 
+        self.white_sprites = [self.create_white_surface(s) for s in self.sprites]
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect()
@@ -26,15 +27,23 @@ class EnemyBase(pygame.sprite.Sprite):
         self.explosion.create(self.rect.centerx, self.rect.centery, speed=-5)
         
         self.last_time = time()
-        self.last_damage = self.last_time
         
         self.life = 3
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.005
         self.weight = 1
         
+        self.last_hit = 0
+        self.hit_flash_duration = 100
+        
     @classmethod
     def load_assets(cls, assets_manager):
         cls.hit_sound = assets_manager.get_sound('hit')
+
+    def create_white_surface(self, surface):
+        mask = pygame.mask.from_surface(surface)
+        white_surface = mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))
+        white_surface.set_colorkey((0, 0, 0))
+        return white_surface
 
     def load_sprites(self, sprite_keys):
         sprites = []
@@ -42,11 +51,6 @@ class EnemyBase(pygame.sprite.Sprite):
             sprite = g_engine.assets.get_image(key) 
             sprites.append(sprite)
         return sprites
-
-    def animate(self):
-        self.current_sprite += 0.07
-        if self.current_sprite >= len(self.sprites): self.current_sprite = 0
-        self.image = self.sprites[int(self.current_sprite)]
 
     def kill(self):
         super().kill() 
@@ -56,10 +60,13 @@ class EnemyBase(pygame.sprite.Sprite):
             pass
         
     def damage(self):
+        self.last_hit = pygame.time.get_ticks()
         self.explosion.create(self.x, self.y)
-        if self.life <= 1: self.kill()
-        else: self.life -= 1
-                
+        if self.life <= 1: 
+            self.kill()
+        else: 
+            self.life -= 1
+                  
     def shoot(self):
         for _ in range(self.weight):
             if randint(0, 1000) < 2:
@@ -98,7 +105,14 @@ class EnemyBase(pygame.sprite.Sprite):
         self.explosion.update(dt)
 
         self.rect.topleft = (self.x, self.y)
-        self.animate()
+        
+        self.current_sprite += 0.07
+        if self.current_sprite >= len(self.sprites): self.current_sprite = 0
+
+        if pygame.time.get_ticks() - self.last_hit < self.hit_flash_duration:
+            self.image = self.white_sprites[int(self.current_sprite)]
+        else:
+            self.image = self.sprites[int(self.current_sprite)]
 
     def draw(self, surf):
         surf.blit(self.image, self.rect)

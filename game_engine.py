@@ -7,5 +7,6 @@ class GameEngine:
         self.enemy_bullets = None
         self.assets = None
         self.level = 1
+        self.screen_shake = 0
 
 g_engine = GameEngine()

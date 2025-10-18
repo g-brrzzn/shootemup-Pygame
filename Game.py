@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import sys
 from time import time
+import random
 
 from game_engine import g_engine
 from classes.Bullet import Bullet
@@ -70,7 +71,7 @@ class Game(GameState):
             g_engine.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), g_engine.all_sprites)
             self.next_state = "Pause"
 
-        if not self.level_done:      
+        if not self.level_done:     
             EnemyBase.spawn_enemy(g_engine.level * 5, Enemy1)
             self.level_done = False
 
@@ -103,6 +104,7 @@ class Game(GameState):
         if player_crashes:
             g_engine.player.take_damage()
             for enemy in player_crashes:
+                g_engine.screen_shake = max(g_engine.screen_shake, 5)
                 enemy.kill() 
 
         if not g_engine.all_enemies:
@@ -126,7 +128,7 @@ class Game(GameState):
             enemy.explosion.draw(surf)
             
         draw_text(surf, f'Level {g_engine.level}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 30, use_smaller_font=False)
-        draw_text(surf, f'Life    {g_engine.player.getLife()}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 60, use_smaller_font=False)
+        draw_text(surf, f'Life   {g_engine.player.getLife()}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 60, use_smaller_font=False)
         if config.show_fps:
             draw_text(surf, f'FPS {(int(clock.get_fps()))}', 50, 30, use_smaller_font=False)
 
@@ -176,8 +178,15 @@ class GameRunner(object):
         pygame.display.set_caption(f'Shoot \'em Up - Pygame. FPS: {int(clock.get_fps())}')
         
         self.state.draw(self.game_surface)
+        
+        render_offset = [0, 0]
+        if g_engine.screen_shake > 0:
+            g_engine.screen_shake -= 1
+            render_offset[0] = random.randint(-4, 4)
+            render_offset[1] = random.randint(-4, 4)
+            
         scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
-        self.screen.blit(scaled_surface, (0, 0))
+        self.screen.blit(scaled_surface, render_offset)
         pygame.display.update()
         clock.tick(FRAME_RATE)
 

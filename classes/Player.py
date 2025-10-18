@@ -23,6 +23,7 @@ class Player(pygame.sprite.Sprite):
             g_engine.assets.get_image('player_idle1'),
             g_engine.assets.get_image('player_idle2')
         ]
+        self.white_sprites = [self.create_white_surface(s) for s in self.sprites]
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect(center=pos)
@@ -30,13 +31,20 @@ class Player(pygame.sprite.Sprite):
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
         
         self.life = MAX_LIFE
-        self.last_damage = self.last_time
         self.explosion = Explosion()
+
+        self.last_hit = 0
+        self.invincibility_duration = 100
+
+    def create_white_surface(self, surface):
+        mask = pygame.mask.from_surface(surface)
+        white_surface = mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))
+        white_surface.set_colorkey((0, 0, 0))
+        return white_surface
 
     def animate(self):
         self.current_sprite += 0.07
         if self.current_sprite >= len(self.sprites): self.current_sprite = 0
-        self.image = self.sprites[int(self.current_sprite)]
 
     def get_input(self, event):
         if event.key in CONTROLS['LEFT']:
@@ -59,7 +67,7 @@ class Player(pygame.sprite.Sprite):
             self.speed += 1
         if event.key == K_k:
             if self.speed >= 7:
-                self.speed -= 1      
+                self.speed -= 1   
     
 
     def get_input_keyup(self, event):
@@ -88,6 +96,15 @@ class Player(pygame.sprite.Sprite):
         self.last_time = time() 
         self.explosion.update(dt)
         self.animate()
+
+        current_time = pygame.time.get_ticks()
+        is_invincible = current_time - self.last_hit < self.invincibility_duration
+        
+        if is_invincible and (pygame.time.get_ticks() // 100) % 2 == 1:
+            self.image = self.white_sprites[int(self.current_sprite)]
+        else:
+            self.image = self.sprites[int(self.current_sprite)]
+
         if self.moving_right: self.rect[0]  +=  round(self.speed * dt)
         if self.moving_left: self.rect[0]   -=  round(self.speed * dt)
         if self.moving_up: self.rect[1]     -=  round(self.speed * dt)
@@ -102,18 +119,22 @@ class Player(pygame.sprite.Sprite):
             self.fire()
             self.last_shot = self.last_time
     
-                
+            
     def draw(self, surf):
         surf.blit(self.image, self.rect)
         self.explosion.draw(surf)
         
     def take_damage(self):
-        self.life -= 1
-        self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN, speed=-5)
-        pygame.mixer.Sound.play(g_engine.assets.get_sound('hit'))
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_hit > self.invincibility_duration:
+            self.life -= 1
+            self.last_hit = current_time
+            self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN, speed=-5)
+            pygame.mixer.Sound.play(g_engine.assets.get_sound('hit'))
+            g_engine.screen_shake = 15
 
-    def getLife(self):      return self.life
+    def getLife(self):     return self.life
     def setLife(self, life): self.life = life
     
-    def getX(self):         return self.rect.x
-    def getY(self):         return self.rect.y
+    def getX(self):        return self.rect.x
+    def getY(self):        return self.rect.y
