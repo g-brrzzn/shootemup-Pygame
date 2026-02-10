@@ -35,6 +35,7 @@ class Player(pygame.sprite.Sprite):
 
         self.last_hit = 0
         self.invincibility_duration = 100
+        self.power_level = 1
 
     def create_white_surface(self, surface):
         mask = pygame.mask.from_surface(surface)
@@ -83,14 +84,30 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def fire(self):
+        options = {'angle': 90}
+        pattern = 'single'
+        
+        if self.power_level == 2:
+            pattern = 'spread'
+            options['count'] = 2
+            options['spread_arc'] = 15
+        elif self.power_level >= 3:
+            pattern = 'spread'
+            options['count'] = 3
+            options['spread_arc'] = 30
+
         Bullet.create_bullets(
-            pattern='single',
+            pattern=pattern,
             pos=self.rect.center,
             is_from_player=True,
             groups=(g_engine.player_bullets, g_engine.all_sprites),
-            options={'angle': 90}  
+            options=options  
         )
         pygame.mixer.Sound.play(g_engine.assets.get_sound('shoot'))
+
+    def upgrade(self):
+            self.power_level = min(self.power_level + 1, 3)
+            self.shot_delay = max(0.1, self.shot_delay - 0.02)
 
     def update(self, dt):
         self.last_time = time() 
@@ -128,13 +145,23 @@ class Player(pygame.sprite.Sprite):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_hit > self.invincibility_duration:
             self.life -= 1
+            self.power_level = 1
             self.last_hit = current_time
             self.explosion.create(self.rect.center[0] - SPRITE_SIZE / 2, self.rect.center[1] - SPRITE_SIZE, PLAYER_COLOR_GREEN, speed=-5)
             pygame.mixer.Sound.play(g_engine.assets.get_sound('hit'))
             g_engine.screen_shake = 15
 
-    def getLife(self):     return self.life
-    def setLife(self, life): self.life = life
+    def getLife(self):       
+        return self.life
+    def setLife(self, life): 
+        self.life = life
     
-    def getX(self):        return self.rect.x
-    def getY(self):        return self.rect.y
+    def getPowerLevel(self): 
+        return self.power_level
+    def setPowerLevel(self, power_level): 
+        self.power_level = power_level
+    
+    def getX(self):          
+        return self.rect.x
+    def getY(self):          
+        return self.rect.y

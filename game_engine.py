@@ -5,6 +5,7 @@ class GameEngine:
         self.all_enemies = None
         self.player_bullets = None
         self.enemy_bullets = None
+        self.powerups = None
         self.assets = None
         self.level = 1
         self.screen_shake = 0

@@ -51,6 +51,7 @@ class Game(GameState):
         g_engine.all_enemies = pygame.sprite.Group()
         g_engine.player_bullets = pygame.sprite.Group()
         g_engine.enemy_bullets = pygame.sprite.Group()
+        g_engine.powerups = pygame.sprite.Group()
         
         g_engine.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), g_engine.all_sprites)
         self.explosion = Explosion()
@@ -67,9 +68,11 @@ class Game(GameState):
             g_engine.player.kill() 
             for enemy in g_engine.all_enemies:
                 enemy.kill()
+            for p in g_engine.powerups:
+                p.kill()
             g_engine.level = 1
             g_engine.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), g_engine.all_sprites)
-            self.next_state = "Pause"
+            self.next_state = "Pause"  
 
         if not self.level_done:     
             EnemyBase.spawn_enemy(g_engine.level * 5, Enemy1)
@@ -99,6 +102,11 @@ class Game(GameState):
         player_hits = pygame.sprite.spritecollide(g_engine.player, g_engine.enemy_bullets, True)
         if player_hits:
             g_engine.player.take_damage()
+            
+        powerup_hits = pygame.sprite.spritecollide(g_engine.player, g_engine.powerups, True)
+        for powerup in powerup_hits:
+            g_engine.player.upgrade()
+            pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_confirm'))
             
         player_crashes = pygame.sprite.spritecollide(g_engine.player, g_engine.all_enemies, False)
         if player_crashes:

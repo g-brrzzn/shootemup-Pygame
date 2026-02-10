@@ -6,6 +6,7 @@ from time import time
 from game_engine import g_engine
 from classes.Bullet import Bullet
 from classes.particles.Explosion import Explosion
+from classes.PowerUp import PowerUp
 from constants.global_var import config, SCALED_SPRITE_SIZE
 
 class EnemyBase(pygame.sprite.Sprite):
@@ -63,6 +64,8 @@ class EnemyBase(pygame.sprite.Sprite):
         self.last_hit = pygame.time.get_ticks()
         self.explosion.create(self.x, self.y)
         if self.life <= 1: 
+            if randint(0, 100) < 5 and g_engine.player.getPowerLevel() < 3:
+                PowerUp(self.rect.center, g_engine.powerups, g_engine.all_sprites)
             self.kill()
         else: 
             self.life -= 1
