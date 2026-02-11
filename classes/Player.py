@@ -155,6 +155,8 @@ class Player(pygame.sprite.Sprite):
         return self.life
     def setLife(self, life): 
         self.life = life
+    def gain_life(self):
+        self.life += 1
     
     def getPowerLevel(self): 
         return self.power_level

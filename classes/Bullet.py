@@ -59,27 +59,37 @@ class Bullet(pygame.sprite.Sprite):
         base_speed = config.INTERNAL_RESOLUTION[1]
         self.speed = base_speed * speed_scale
         
-        self.image = self.player_image if is_from_player else self.enemy_image
-        if self.image is None:
+        original_image = self.player_image if is_from_player else self.enemy_image
+        if original_image is None:
             size = (4, 4)
-            self.image = pygame.Surface(size, pygame.SRCALPHA)
+            original_image = pygame.Surface(size, pygame.SRCALPHA)
             color = (255, 200, 0) if is_from_player else (200, 50, 50)
-            pygame.draw.circle(self.image, color, (size[0] // 2, size[1] // 2), size[0] // 2)
+            pygame.draw.circle(original_image, color, (size[0] // 2, size[1] // 2), size[0] // 2)
+
+        
+        if direction_vector.length() > 0:
+            angle = direction_vector.angle_to(Vector2(1, 0))
+            
+            self.image = pygame.transform.rotate(original_image, angle - 90)
+            
+            
+            self.image.set_colorkey((0, 0, 0)) 
+            
+            self.vel = direction_vector.normalize() * self.speed
+        else:
+            self.image = original_image
+            
+            default_vel_y = -self.speed if is_from_player else self.speed
+            self.vel = Vector2(0, default_vel_y)
 
         self.rect = self.image.get_rect(center=pos)
         self.pos = Vector2(pos)
-        
-        if direction_vector.length() > 0:
-            self.vel = direction_vector.normalize() * self.speed
-        else:
-            default_vel_y = -self.speed if is_from_player else self.speed
-            self.vel = Vector2(0, default_vel_y)
 
     def update(self, dt: float) -> None:
         self.pos += self.vel * dt
         self.rect.center = (round(self.pos.x), round(self.pos.y))
         
         world_w, world_h = config.INTERNAL_RESOLUTION
-        game_world_rect = pygame.Rect(0, 0, world_w, world_h)
+        game_world_rect = pygame.Rect(-50, -50, world_w + 100, world_h + 100)
         if not game_world_rect.colliderect(self.rect):
             self.kill()

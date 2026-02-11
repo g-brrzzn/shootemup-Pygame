@@ -12,3 +12,13 @@ def delta_time(last_time):
     last_time = time()
     return dt, last_time
 
+def get_high_score():
+    try:
+        with open("highscore.txt", "r") as f:
+            return int(f.read())
+    except:
+        return 0
+
+def save_high_score(score):
+    with open("highscore.txt", "w") as f:
+        f.write(str(score))

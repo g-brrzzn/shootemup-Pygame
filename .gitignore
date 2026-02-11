@@ -68,3 +68,4 @@ __pycache__
 /pycache/*
 code2text.py
 code2text_output.txt
+highscore.txt

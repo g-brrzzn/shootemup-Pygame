@@ -8,6 +8,8 @@ class GameEngine:
         self.powerups = None
         self.assets = None
         self.level = 1
+        self.score = 0
+        self.high_score = 0
         self.screen_shake = 0
 
 g_engine = GameEngine()

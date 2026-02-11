@@ -6,10 +6,10 @@ from random import randint
 
 from game_engine import g_engine
 from .GameState import GameState
-from .States_util import title_text, vertical, menu_maker
+from .States_util import title_text, vertical, menu_maker, draw_text
 from classes.particles.Fall import Fall
 from constants.Utils import delta_time
-from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
+from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2, TITLE_YELLOW_1
 
 class Menu(GameState):
     def __init__(self):
@@ -29,6 +29,9 @@ class Menu(GameState):
         self.fall.draw(surf, (200, 200, 200))
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         title_text(surf, "Shoot'em Up - Pygame",  randint(1,5) + config.INTERNAL_RESOLUTION[0]/2, self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33)
+        hs_y_pos = (self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33) + 60
+        if g_engine.high_score > 0:
+            draw_text(surf, f"HIGH SCORE: {g_engine.high_score:07d}", config.INTERNAL_RESOLUTION[0]/2, hs_y_pos, TITLE_YELLOW_1) 
         menu_maker(['START', 'OPTIONS', 'EXIT'], __class__.__name__, self.selected, surf)
 
     def get_event(self, event):

@@ -1,6 +1,6 @@
 import pygame
 import math
-from random import choice, randint
+from random import choice, randint, uniform
 from time import time
 
 from game_engine import g_engine
@@ -14,27 +14,28 @@ class EnemyBase(pygame.sprite.Sprite):
 
     def __init__(self, pos, sprite_files_keys, *groups):
         super().__init__(*groups) 
-        self.x, self.y = pos
+        self.x, self.y = float(pos[0]), float(pos[1])
         self.instancelist.append(self)
+        
         self.sprites = self.load_sprites(sprite_files_keys) 
         self.white_sprites = [self.create_white_surface(s) for s in self.sprites]
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x, self.y)
-        self.direction = choice([True, False])
-        self.y_direction = False
+        
         self.explosion = Explosion()
-        self.explosion.create(self.rect.centerx, self.rect.centery, speed=-5)
         
-        self.last_time = time()
-        
-        self.life = 3
-        self.speed = config.INTERNAL_RESOLUTION[1] * 0.005
+        self.life = 1
+        self.base_speed = config.INTERNAL_RESOLUTION[1] * 0.003 
         self.weight = 1
+        self.score_value = 100
         
         self.last_hit = 0
         self.hit_flash_duration = 100
+        
+        self.spawn_time = pygame.time.get_ticks()
+        self.random_offset = uniform(0, 100) 
         
     @classmethod
     def load_assets(cls, assets_manager):
@@ -63,53 +64,39 @@ class EnemyBase(pygame.sprite.Sprite):
     def damage(self):
         self.last_hit = pygame.time.get_ticks()
         self.explosion.create(self.x, self.y)
+        
         if self.life <= 1: 
-            if randint(0, 100) < 5 and g_engine.player.getPowerLevel() < 3:
-                PowerUp(self.rect.center, g_engine.powerups, g_engine.all_sprites)
+            g_engine.score += self.score_value
+            roll = randint(0, 100)
+            if roll < 10:
+                PowerUp(self.rect.center, 'life', (200, 50, 50), g_engine.powerups, g_engine.all_sprites)
+            elif roll < 15 and g_engine.player.getPowerLevel() < 3:
+                from constants.global_var import PLAYER_COLOR_GREEN 
+                PowerUp(self.rect.center, 'weapon', PLAYER_COLOR_GREEN, g_engine.powerups, g_engine.all_sprites)
+
             self.kill()
         else: 
             self.life -= 1
                   
     def shoot(self):
-        for _ in range(self.weight):
-            if randint(0, 1000) < 2:
-                Bullet.create_bullets(
-                    pattern='single',
-                    pos=self.rect.center,
-                    is_from_player=False,
-                    groups=(g_engine.enemy_bullets, g_engine.all_sprites),
-                    options={'angle': -90}
-                )
+        pass
             
     def move(self, dt):
-        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): 
-            g_engine.player.take_damage()
-        if randint(0, 500 * self.weight) < 1:
-            self.y_direction = True
-            self.old_y = self.y
-        if self.y_direction:
-            if self.y < self.old_y + SCALED_SPRITE_SIZE:
-                self.y += self.speed * dt
-            else:
-                self.y_direction = False
-        else:
-            if self.direction:
-                self.x += self.speed * dt
-                if self.x > config.INTERNAL_RESOLUTION[0] - (config.INTERNAL_RESOLUTION[0] * (self.weight * 0.1)):
-                    self.direction = False
-            else:
-                self.x -= self.speed * dt
-                if self.x < (config.INTERNAL_RESOLUTION[0] * (self.weight * 0.1)):
-                    self.direction = True
-    
+        self.y += self.base_speed * dt
+
+    def check_bounds(self):
+        if self.y > config.INTERNAL_RESOLUTION[1] + 100:
+             self.kill() 
+
     def update(self, dt):
         self.move(dt)   
         self.shoot() 
+        self.check_bounds()
         self.explosion.update(dt)
 
         self.rect.topleft = (self.x, self.y)
         
-        self.current_sprite += 0.07
+        self.current_sprite += 0.1 
         if self.current_sprite >= len(self.sprites): self.current_sprite = 0
 
         if pygame.time.get_ticks() - self.last_hit < self.hit_flash_duration:
@@ -125,7 +112,7 @@ class EnemyBase(pygame.sprite.Sprite):
     def spawn_enemy(n, enemy_class): 
         for _ in range(n):
             x = randint(0, config.INTERNAL_RESOLUTION[0])
-            y = config.INTERNAL_RESOLUTION[1] / 2 - 320
+            y = randint(-200, -50)
             enemy_class((x, y), g_engine.all_enemies, g_engine.all_sprites) 
 
 class Enemy1(EnemyBase):
@@ -133,90 +120,69 @@ class Enemy1(EnemyBase):
         super().__init__(pos, ['enemy1_1', 'enemy1_2'], *groups)
         self.life = 1
         self.weight = 1
+        self.base_speed = config.INTERNAL_RESOLUTION[1] * 0.005 
+        self.score_value = 100
 
     def move(self, dt):
-        return super().move(dt)
-    
-    def update(self, dt):
-        super().update(dt)
+        speed = self.base_speed * 3 if self.y < 0 else self.base_speed
+        self.y += speed * dt
+        self.x += math.sin(pygame.time.get_ticks() * 0.05 + self.random_offset) * 0.5 * dt
 
+    def shoot(self):
+        if randint(0, 1000) < 5:
+            Bullet.create_bullets('single', self.rect.center, False, 
+                                (g_engine.enemy_bullets, g_engine.all_sprites), 
+                                {'angle': -90, 'speed_scale': 0.01}) 
 
 class Enemy2(EnemyBase):
     def __init__(self, pos, *groups):
         super().__init__(pos, ['enemy2_1', 'enemy2_2'], *groups)
         self.life = 3
         self.weight = 2
-        self.speed = self.speed * 0.75
-        self.x_direction = 1
+        self.base_speed = config.INTERNAL_RESOLUTION[1] * 0.002
+        self.score_value = 300
+        self.initial_x = self.x 
 
     def move(self, dt):
-        weight = 2
-        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): 
-            g_engine.player.setLife(g_engine.player.getLife() - 1)
-
-        if randint(0, 500 * weight) < 1:
-            self.y_direction = True
-            self.old_y = self.y
-            self.x_direction = choice([-1, 1])
-
-        if self.y_direction:
-            if self.y < self.old_y + SCALED_SPRITE_SIZE:
-                self.y += self.speed * dt
-            else:
-                self.y_direction = False
-        else:
-            time_elapsed = pygame.time.get_ticks() / 1000.0
-            frequency = 0.5 
-            
-            self.x += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed) * self.x_direction
-            self.y += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed)
-            
-            if self.x < 0: self.x = 0
-            elif self.x > config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE: self.x = config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE
-            
-            if self.y > config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE:
-                self.y = config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE
-                self.y_direction = False
-    
-    def update(self, dt):
-        super().update(dt)
+        speed = self.base_speed * 3 if self.y < 0 else self.base_speed
+        self.y += speed * dt
         
-        
+        t = pygame.time.get_ticks() * 0.003
+        self.x = self.initial_x + math.sin(t + self.random_offset) * 150 
+        self.x = max(0, min(self.x, config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE))
+
+    def shoot(self):
+        if randint(0, 1000) < 5:
+             Bullet.create_bullets('spread', self.rect.center, False, 
+                                 (g_engine.enemy_bullets, g_engine.all_sprites), 
+                                 {'count': 2, 'spread_arc': 20, 'angle': -90, 'speed_scale': 0.006})
+
 class Enemy3(EnemyBase):
     def __init__(self, pos, *groups):
         super().__init__(pos, ['enemy3_1', 'enemy3_2'], *groups)
         self.life = 5
         self.weight = 3
-        self.speed = self.speed * 0.5
-        self.xy_direction = choice([-1, 1])
+        self.base_speed = config.INTERNAL_RESOLUTION[1] * 0.0015 
+        self.score_value = 500
+        self.horizontal_speed = 2.0
 
     def move(self, dt):
-        weight = 3
-        if self.y > (config.INTERNAL_RESOLUTION[1] - (SCALED_SPRITE_SIZE + 10)): 
-            g_engine.player.setLife(g_engine.player.getLife() - 1)
+        speed = self.base_speed * 3 if self.y < 0 else self.base_speed
+        self.y += speed * dt
+        
+        if self.y > 0: 
+            target_x = g_engine.player.rect.centerx
+            if self.x < target_x:
+                self.x += self.horizontal_speed * dt
+            elif self.x > target_x:
+                self.x -= self.horizontal_speed * dt
 
-        if randint(0, 500 * weight) < 1:
-            self.y_direction = True
-            self.old_y = self.y
-
-        if self.y_direction:
-            if self.y < self.old_y + SCALED_SPRITE_SIZE:
-                self.y += self.speed * dt
-            else:
-                self.y_direction = False
-        else:
-            time_elapsed = pygame.time.get_ticks() / 1000.0
-            frequency = 0.5 
+    def shoot(self):
+        if randint(0, 1000) < 5:
+            dx = g_engine.player.rect.centerx - self.rect.centerx
+            dy = g_engine.player.rect.centery - self.rect.centery
+            angle = math.degrees(math.atan2(-dy, dx))
             
-            self.x += self.speed * dt * math.sin(2 * math.pi * frequency * time_elapsed) * self.xy_direction
-            self.y += self.speed * dt * math.cos(2 * math.pi * frequency * time_elapsed) * self.xy_direction
-            
-            if self.x < 0: self.x = 0
-            elif self.x > config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE: self.x = config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE
-            
-            if self.y > config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE:
-                self.y = config.INTERNAL_RESOLUTION[1] - SCALED_SPRITE_SIZE
-                self.y_direction = False
-    
-    def update(self, dt):
-        super().update(dt)
+            Bullet.create_bullets('single', self.rect.center, False, 
+                                (g_engine.enemy_bullets, g_engine.all_sprites), 
+                                {'angle': angle, 'speed_scale': 0.008})

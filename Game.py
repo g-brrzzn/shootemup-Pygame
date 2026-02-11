@@ -7,9 +7,11 @@ import random
 from game_engine import g_engine
 from classes.Bullet import Bullet
 from classes.Enemy import EnemyBase, Enemy1, Enemy2, Enemy3
+from classes.Boss import Boss 
 from classes.Player import Player
 from classes.particles.Fall import Fall
 from classes.particles.Explosion import Explosion
+from classes.EnemyFormations import FormationManager 
 from assets.AssetManager import AssetManager
 
 from states.Menu import Menu
@@ -20,7 +22,7 @@ from states.GameOver import GameOver, Exit
 from states.States_util import vertical, draw_text
 
 from constants.global_var import SCALE, config, FRAME_RATE, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2, CONTROLS
-from constants.Utils import delta_time
+from constants.Utils import delta_time, get_high_score, save_high_score
 
 
 pygame.init()
@@ -59,11 +61,18 @@ class Game(GameState):
         self.particles = pygame.sprite.Group()
         
         self.next_state = "Pause"
-        self.last_time = last_time
+        self.last_time = time()
         g_engine.level = 1
         self.level_done = False
+        self.boss_active = False
+        
+        self.formations_to_spawn = 0
+        self.current_wave_delay = 0
+        self.wave_timer = 0 
 
     def start(self):
+        self.last_time = time()
+        
         if g_engine.player.getLife() <= 0:
             g_engine.player.kill() 
             for enemy in g_engine.all_enemies:
@@ -71,12 +80,30 @@ class Game(GameState):
             for p in g_engine.powerups:
                 p.kill()
             g_engine.level = 1
+            g_engine.score = 0
+            self.boss_active = False 
             g_engine.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), g_engine.all_sprites)
             self.next_state = "Pause"  
 
-        if not self.level_done:     
-            EnemyBase.spawn_enemy(g_engine.level * 5, Enemy1)
-            self.level_done = False
+        if not self.boss_active and len(g_engine.all_enemies) == 0:
+             self.start_next_level_waves()
+
+    def start_next_level_waves(self):
+        self.formations_to_spawn = 3 + (g_engine.level * 2)
+        self.spawn_next_formation()
+        self.wave_timer = 0
+
+    def spawn_next_formation(self):
+        if self.formations_to_spawn > 0:
+            options = ['V_SHAPE', 'LINE_HORIZONTAL', 'DIAGONAL_LEFT', 'DIAGONAL_RIGHT', 'CIRCLE_CLUSTER', 'RANDOM_RAIN']
+            choice_idx = min(len(options), 2 + g_engine.level) 
+            ftype = random.choice(options[:choice_idx])
+            
+            FormationManager.spawn_formation(ftype, g_engine.level)
+            self.formations_to_spawn -= 1
+            self.current_wave_delay = 120 
+        else:
+            self.level_done = True
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -88,6 +115,7 @@ class Game(GameState):
 
     def update(self):
         dt, self.last_time = delta_time(self.last_time)
+        if dt > 3.0: dt = 3.0 
     
         g_engine.all_sprites.update(dt)
         self.background_fall.update(gravity=g_engine.level*3/3)
@@ -96,8 +124,13 @@ class Game(GameState):
 
         enemy_hits = pygame.sprite.groupcollide(g_engine.all_enemies, g_engine.player_bullets, False, True)
         for enemy in enemy_hits:
-            self.explosion.create(enemy.rect.centerx, enemy.rect.centery)
-            enemy.damage()
+            if isinstance(enemy, Boss):
+                self.explosion.create(enemy.rect.centerx, enemy.rect.centery + random.randint(-20, 20))
+                enemy.damage()
+
+            else:
+                self.explosion.create(enemy.rect.centerx, enemy.rect.centery)
+                enemy.damage()
 
         player_hits = pygame.sprite.spritecollide(g_engine.player, g_engine.enemy_bullets, True)
         if player_hits:
@@ -105,7 +138,10 @@ class Game(GameState):
             
         powerup_hits = pygame.sprite.spritecollide(g_engine.player, g_engine.powerups, True)
         for powerup in powerup_hits:
-            g_engine.player.upgrade()
+            if powerup.p_type == 'weapon':
+                g_engine.player.upgrade()
+            elif powerup.p_type == 'life':
+                g_engine.player.gain_life()
             pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_confirm'))
             
         player_crashes = pygame.sprite.spritecollide(g_engine.player, g_engine.all_enemies, False)
@@ -113,16 +149,34 @@ class Game(GameState):
             g_engine.player.take_damage()
             for enemy in player_crashes:
                 g_engine.screen_shake = max(g_engine.screen_shake, 5)
-                enemy.kill() 
+                if not isinstance(enemy, Boss):
+                    enemy.kill() 
+        if self.formations_to_spawn > 0:
+            is_clear = len(g_engine.all_enemies) == 0
+            if self.current_wave_delay > 0:
+                self.current_wave_delay -= dt
+            
+            if self.current_wave_delay <= 0 or (is_clear and self.current_wave_delay < 100):
+                self.spawn_next_formation()
 
-        if not g_engine.all_enemies:
-            g_engine.level += 1
-            EnemyBase.spawn_enemy(g_engine.level * 5, Enemy1)
-            EnemyBase.spawn_enemy(g_engine.level * 2, Enemy2)
-            EnemyBase.spawn_enemy(g_engine.level * 1, Enemy3)
-            self.level_done = True
+        elif len(g_engine.all_enemies) == 0:
+            if self.boss_active:
+                self.boss_active = False
+                g_engine.level += 1
+                self.start_next_level_waves()
+                
+            else:
+                if g_engine.level % 3 == 0:
+                    self.boss_active = True
+                    Boss((config.INTERNAL_RESOLUTION[0]/2, -100), g_engine.all_enemies, g_engine.all_sprites)
+                else:
+                    g_engine.level += 1
+                    self.start_next_level_waves()
             
         if g_engine.player.getLife() <= 0:
+            if g_engine.score > g_engine.high_score:
+                g_engine.high_score = g_engine.score
+                save_high_score(g_engine.high_score)
             self.next_state = "GameOver"
             self.done = True
 
@@ -130,11 +184,17 @@ class Game(GameState):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
         self.background_fall.draw(surf)
         g_engine.all_sprites.draw(surf)
+        
+        for enemy in g_engine.all_enemies:
+             if isinstance(enemy, Boss):
+                 enemy.draw(surf)
+
         g_engine.player.explosion.draw(surf)
         self.explosion.draw(surf)
         for enemy in g_engine.all_enemies:
             enemy.explosion.draw(surf)
             
+        draw_text(surf, f'Score {g_engine.score:06d}', config.INTERNAL_RESOLUTION[0] / 2, 30, use_smaller_font=False) 
         draw_text(surf, f'Level {g_engine.level}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 30, use_smaller_font=False)
         draw_text(surf, f'Life   {g_engine.player.getLife()}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 60, use_smaller_font=False)
         if config.show_fps:
@@ -200,6 +260,7 @@ class GameRunner(object):
 
 
 if __name__ == "__main__":
+    g_engine.high_score = get_high_score()
     states = {
         "Menu":     Menu(),
         "Game":     Game(),
