@@ -14,7 +14,7 @@ from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACK
 class Menu(GameState):
     def __init__(self):
         super().__init__()
-        self.fall = Fall(100)
+        self.fall = Fall(amount=120, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=3)
 
     def start(self):
         self.selected = 0
@@ -26,7 +26,7 @@ class Menu(GameState):
         self.title_pos_y_offset = config.INTERNAL_RESOLUTION[1] * 0.04 * math.sin(2 * math.pi * pygame.time.get_ticks()/1000)
                 
     def draw(self, surf):
-        self.fall.draw(surf, (200, 200, 200))
+        self.fall.draw(surf)
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         title_text(surf, "Shoot'em Up - Pygame",  randint(1,5) + config.INTERNAL_RESOLUTION[0]/2, self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33)
         hs_y_pos = (self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33) + 60

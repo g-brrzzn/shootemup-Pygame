@@ -11,6 +11,7 @@ from classes.Boss import Boss
 from classes.Player import Player
 from classes.particles.Fall import Fall
 from classes.particles.Explosion import Explosion
+from classes.particles.Spark import Spark
 from classes.EnemyFormations import FormationManager 
 from assets.AssetManager import AssetManager
 
@@ -58,7 +59,11 @@ class Game(GameState):
         g_engine.player = Player((config.INTERNAL_RESOLUTION[0] / 2, (config.INTERNAL_RESOLUTION[1] / 2)+150), g_engine.all_sprites)
         self.explosion = Explosion()
         self.background_fall = Fall(300)
+        self.stars_back = Fall(amount=150, min_s=0.1, max_s=0.2, color=(150, 150, 150), size=1, alpha=200)
+        self.stars_mid = Fall(amount=60, min_s=0.5, max_s=1.0, color=(180, 180, 200), size=2, alpha=150)
+        self.stars_front = Fall(amount=20, min_s=4.0, max_s=6.0, color=(200, 220, 255), size=4, alpha=60)
         self.particles = pygame.sprite.Group()
+        g_engine.sparks = []
         
         self.next_state = "Pause"
         self.last_time = time()
@@ -118,7 +123,11 @@ class Game(GameState):
         if dt > 3.0: dt = 3.0 
     
         g_engine.all_sprites.update(dt)
-        self.background_fall.update(gravity=g_engine.level*3/3)
+        base_speed = g_engine.level * 0.5
+        
+        self.stars_back.update(gravity=base_speed * 0.1, dt=dt)  
+        self.stars_mid.update(gravity=base_speed * 0.5, dt=dt)  
+        self.stars_front.update(gravity=base_speed * 1.5, dt=dt) 
         self.explosion.update(dt)
         self.particles.update(dt)
 
@@ -131,6 +140,14 @@ class Game(GameState):
             else:
                 self.explosion.create(enemy.rect.centerx, enemy.rect.centery)
                 enemy.damage()
+                
+            
+            for _ in range(random.randint(4, 8)):
+                
+                
+                
+                spk = Spark(enemy.rect.center, random.randint(0, 360), random.randint(3, 10), (255, 255, 180), scale=1.5)
+                g_engine.sparks.append(spk)
 
         player_hits = pygame.sprite.spritecollide(g_engine.player, g_engine.enemy_bullets, True)
         if player_hits:
@@ -143,6 +160,11 @@ class Game(GameState):
             elif powerup.p_type == 'life':
                 g_engine.player.gain_life()
             pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_confirm'))
+            
+        for spk in g_engine.sparks[:]:
+            spk.update(dt)
+            if spk.life <= 0:
+                g_engine.sparks.remove(spk)
             
         player_crashes = pygame.sprite.spritecollide(g_engine.player, g_engine.all_enemies, False)
         if player_crashes:
@@ -182,21 +204,52 @@ class Game(GameState):
 
     def draw(self, surf):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
-        self.background_fall.draw(surf)
+        
+        self.stars_back.draw(surf)
+        self.stars_mid.draw(surf)
+        
+        
+        
+        
+        
+        player_glow = g_engine.assets.get_image('glow_player')
+        surf.blit(player_glow, player_glow.get_rect(center=g_engine.player.rect.center), special_flags=pygame.BLEND_ADD)
+
+        
+        for bullet in g_engine.player_bullets:
+             glow_rect = bullet.glow_image.get_rect(center=bullet.rect.center)
+             surf.blit(bullet.glow_image, glow_rect, special_flags=pygame.BLEND_ADD)
+             
+        
+        for bullet in g_engine.enemy_bullets:
+             glow_rect = bullet.glow_image.get_rect(center=bullet.rect.center)
+             surf.blit(bullet.glow_image, glow_rect, special_flags=pygame.BLEND_ADD)
+
+        
+        g_engine.player.draw_particles(surf)  
+        g_engine.player.draw_muzzle_flash(surf)
         g_engine.all_sprites.draw(surf)
         
         for enemy in g_engine.all_enemies:
              if isinstance(enemy, Boss):
                  enemy.draw(surf)
 
-        g_engine.player.explosion.draw(surf)
+        
+        
+        for spk in g_engine.sparks:
+            spk.draw(surf)
+
         self.explosion.draw(surf)
         for enemy in g_engine.all_enemies:
             enemy.explosion.draw(surf)
             
+        self.stars_front.draw(surf)
+            
         draw_text(surf, f'Score {g_engine.score:06d}', config.INTERNAL_RESOLUTION[0] / 2, 30, use_smaller_font=False) 
         draw_text(surf, f'Level {g_engine.level}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 30, use_smaller_font=False)
+        
         draw_text(surf, f'Life   {g_engine.player.getLife()}', config.INTERNAL_RESOLUTION[0] - 50, config.INTERNAL_RESOLUTION[1] - 60, use_smaller_font=False)
+        
         if config.show_fps:
             draw_text(surf, f'FPS {(int(clock.get_fps()))}', 50, 30, use_smaller_font=False)
 

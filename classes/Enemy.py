@@ -70,7 +70,7 @@ class EnemyBase(pygame.sprite.Sprite):
             roll = randint(0, 100)
             if roll < 10:
                 PowerUp(self.rect.center, 'life', (200, 50, 50), g_engine.powerups, g_engine.all_sprites)
-            elif roll < 15 and g_engine.player.getPowerLevel() < 3:
+            elif roll < 15 and g_engine.player.getPowerLevel() < 4:
                 from constants.global_var import PLAYER_COLOR_GREEN 
                 PowerUp(self.rect.center, 'weapon', PLAYER_COLOR_GREEN, g_engine.powerups, g_engine.all_sprites)
 

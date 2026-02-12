@@ -11,7 +11,7 @@ from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACK
 class Options(GameState):
     def __init__(self):
         super().__init__()
-        self.fall = Fall(100)
+        self.fall = Fall(amount=80, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=2)
 
     def start(self):
         self.selected = 0
@@ -26,7 +26,7 @@ class Options(GameState):
                         f'FULLSCREEN: {get_on_off_status(config.set_fullscreen)}', 'APPLY RESOLUTION', 'BACK']
             
     def draw(self, surf):
-        self.fall.draw(surf, (200, 200, 200))
+        self.fall.draw(surf)
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         menu_maker(self.options, __class__.__name__, self.selected, surf)
 

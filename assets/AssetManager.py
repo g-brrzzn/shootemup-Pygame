@@ -1,5 +1,8 @@
 import pygame
 import os
+from constants.Utils import create_glow_surface
+
+from constants.global_var import PLAYER_COLOR_GREEN, TITLE_YELLOW_1
 
 ASSET_DIR = os.path.join(os.path.dirname(__file__))
 
@@ -8,6 +11,7 @@ class AssetManager:
         self.images = {}
         self.sounds = {}
         self.fonts = {}
+        self._generate_glows()
 
     def load_assets(self, scale_factor):
         self._load_images(scale_factor)
@@ -82,3 +86,10 @@ class AssetManager:
 
     def _load_font(self, path, size):
         return pygame.font.Font(os.path.join(ASSET_DIR, path), size)
+    
+    def _generate_glows(self):
+        magenta = (255, 0, 255) 
+        radius = 25
+        self.images['glow_bullet_player'] = create_glow_surface(radius, magenta)
+        self.images['glow_bullet_enemy'] = create_glow_surface(radius, TITLE_YELLOW_1)
+        self.images['glow_player'] = create_glow_surface(45, PLAYER_COLOR_GREEN)

@@ -60,14 +60,14 @@ class GameOver(GameState):
 
     def start(self):
         self.selected = 0
-        self.fall = Fall(100)
+        self.fall = Fall(amount=50, min_s=0.1, max_s=0.3, color=GAME_COLOR, size=4)
 
     def update(self):
         self.fall.update(-2, 3)
         
     def draw(self, surf):
         vertical(surf)
-        self.fall.draw(surf, GAME_COLOR)
+        self.fall.draw(surf)
         menu_maker(['RESTART', 'EXIT'], __class__.__name__, self.selected, surf)
         
     def get_event(self, event):

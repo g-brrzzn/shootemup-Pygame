@@ -1,11 +1,12 @@
 import pygame
 from time import time
 from pygame.locals import *
+from random import randint, choice
 
 from game_engine import g_engine
 from classes.Bullet import Bullet
 from classes.particles.Explosion import Explosion
-from constants.global_var import MAX_LIFE, CONTROLS, config, SPRITE_SIZE, PLAYER_COLOR_GREEN
+from constants.global_var import MAX_LIFE, CONTROLS, config, SPRITE_SIZE, PLAYER_COLOR_GREEN, GAME_COLOR
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, *groups): 
@@ -19,14 +20,19 @@ class Player(pygame.sprite.Sprite):
         self.last_time = time()
         self.last_shot = self.last_time
 
-        self.sprites = [
+        self.original_sprites = [
             g_engine.assets.get_image('player_idle1'),
             g_engine.assets.get_image('player_idle2')
         ]
-        self.white_sprites = [self.create_white_surface(s) for s in self.sprites]
-        self.current_sprite = 0
-        self.image = self.sprites[self.current_sprite]
+        
+        self.original_white_sprites = [self.create_white_surface(s) for s in self.original_sprites]
+        
+        self.current_sprite_index = 0
+
+        self.image = self.original_sprites[self.current_sprite_index]
+        self.image.set_colorkey((0, 0, 0)) 
         self.rect = self.image.get_rect(center=pos)
+        
         self.movement = pygame.math.Vector2()
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
         
@@ -37,15 +43,18 @@ class Player(pygame.sprite.Sprite):
         self.invincibility_duration = 100
         self.power_level = 1
 
+        self.angle = 0
+        self.target_angle = 0
+        self.exhaust_particles = [] 
+        
+        self.muzzle_flashes = [] 
+        
+
     def create_white_surface(self, surface):
         mask = pygame.mask.from_surface(surface)
         white_surface = mask.to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))
         white_surface.set_colorkey((0, 0, 0))
         return white_surface
-
-    def animate(self):
-        self.current_sprite += 0.07
-        if self.current_sprite >= len(self.sprites): self.current_sprite = 0
 
     def get_input(self, event):
         if event.key in CONTROLS['LEFT']:
@@ -58,19 +67,16 @@ class Player(pygame.sprite.Sprite):
             self.moving_up = True
         if event.key in CONTROLS['FIRE']:
             self.firing = True
+        
         if event.key == K_o:
-            if self.shot_delay >= 0.1:
-                self.shot_delay -= 0.1
+            if self.shot_delay >= 0.1: self.shot_delay -= 0.1
         if event.key == K_l:
-            if self.shot_delay < 0.25:
-                self.shot_delay += 0.1
+            if self.shot_delay < 0.25: self.shot_delay += 0.1
         if event.key == K_i:
             self.speed += 1
         if event.key == K_k:
-            if self.speed >= 7:
-                self.speed -= 1   
+            if self.speed >= 7: self.speed -= 1    
     
-
     def get_input_keyup(self, event):
         if event.key in CONTROLS['LEFT']:
             self.moving_left = False
@@ -83,7 +89,10 @@ class Player(pygame.sprite.Sprite):
         if event.key in CONTROLS['FIRE']:
             self.firing = False
 
-    def fire(self):
+    def fire(self):         
+        for _ in range(2):       
+             self.muzzle_flashes.append([randint(-2, 2), randint(2, 6), randint(3, 5)])
+
         options = {'angle': 90}
         pattern = 'single'
         
@@ -109,37 +118,107 @@ class Player(pygame.sprite.Sprite):
             self.power_level = min(self.power_level + 1, 3)
             self.shot_delay = max(0.1, self.shot_delay - 0.02)
 
+    def update_particles(self):
+        offset_x = randint(-12, 12) 
+        p_x = self.rect.centerx + offset_x
+        p_y = self.rect.bottom - 20 
+        
+        color = choice([(167, 94, 67), (198, 128, 127)])
+        radius = randint(6, 10) 
+        
+        if self.moving_up: 
+            radius += 4 
+        
+        self.exhaust_particles.append([p_x, p_y, radius, color, 255])
+
+        for p in self.exhaust_particles[:]:
+            p[1] += 5   
+            p[2] -= 0.5 
+            p[4] -= 15  
+            
+            if p[2] <= 0 or p[4] <= 0:
+                try:
+                    self.exhaust_particles.remove(p)
+                except ValueError:
+                    pass
+
     def update(self, dt):
         self.last_time = time() 
         self.explosion.update(dt)
-        self.animate()
+        self.update_particles()
+
+        max_flash_radius = 25
+        for flash in self.muzzle_flashes[:]:
+             flash[1] += flash[2] 
+             if flash[1] > max_flash_radius:
+                  self.muzzle_flashes.remove(flash)
+
+        self.current_sprite_index += 0.07
+        if self.current_sprite_index >= len(self.original_sprites): self.current_sprite_index = 0
+
+        if self.moving_right: self.rect.x += round(self.speed * dt)
+        if self.moving_left: self.rect.x -= round(self.speed * dt)
+        if self.moving_up: self.rect.y -= round(self.speed * dt)
+        if self.moving_down: self.rect.y += round(self.speed * dt)
+
+        if self.rect.right > config.INTERNAL_RESOLUTION[0]: self.rect.right = config.INTERNAL_RESOLUTION[0]
+        if self.rect.left < 0: self.rect.left = 0
+        if self.rect.bottom > config.INTERNAL_RESOLUTION[1]: self.rect.bottom = config.INTERNAL_RESOLUTION[1]
+        if self.rect.top < 0: self.rect.top = 0
+        
+        
+        target_angle = 0
+        if self.moving_left: target_angle = 10
+        if self.moving_right: target_angle = -10
+        
+        self.angle += (target_angle - self.angle) * 0.1 * dt
 
         current_time = pygame.time.get_ticks()
         is_invincible = current_time - self.last_hit < self.invincibility_duration
         
-        if is_invincible and (pygame.time.get_ticks() // 100) % 2 == 1:
-            self.image = self.white_sprites[int(self.current_sprite)]
+        idx = int(self.current_sprite_index)
+        if is_invincible and (current_time // 100) % 2 == 1:
+            base_image = self.original_white_sprites[idx]
         else:
-            self.image = self.sprites[int(self.current_sprite)]
-
-        if self.moving_right: self.rect[0]  +=  round(self.speed * dt)
-        if self.moving_left: self.rect[0]   -=  round(self.speed * dt)
-        if self.moving_up: self.rect[1]     -=  round(self.speed * dt)
-        if self.moving_down: self.rect[1]   +=  round(self.speed * dt)
-
-        if self.rect[0] > config.INTERNAL_RESOLUTION[0] - self.rect.width: self.rect[0] = config.INTERNAL_RESOLUTION[0] - self.rect.width
-        if self.rect[0] < 0: self.rect[0] = 0
-        if self.rect[1] > config.INTERNAL_RESOLUTION[1] - self.rect.height: self.rect[1] = config.INTERNAL_RESOLUTION[1] - self.rect.height
-        if self.rect[1] < 0: self.rect[1] = 0
+            base_image = self.original_sprites[idx]
+            
+        self.image = pygame.transform.rotate(base_image, self.angle)
+        self.image.set_colorkey((0, 0, 0)) 
         
+        self.rect = self.image.get_rect(center=self.rect.center)
+
         if self.firing and self.last_time - self.last_shot > self.shot_delay:
             self.fire()
             self.last_shot = self.last_time
-    
+     
+    def draw_particles(self, surf):
+        
+        for p in self.exhaust_particles:
+            x, y, r, c, a = p
+            radius_int = int(r)
+            if radius_int <= 0: continue 
             
-    def draw(self, surf):
-        surf.blit(self.image, self.rect)
+            particle_surf = pygame.Surface((radius_int*2, radius_int*2), pygame.SRCALPHA)
+            pygame.draw.circle(particle_surf, (*c, int(a)), (radius_int, radius_int), radius_int)
+            surf.blit(particle_surf, (x - radius_int, y - radius_int))
+
         self.explosion.draw(surf)
+
+    def draw_muzzle_flash(self, surf):
+        max_flash_radius = 25.0
+        center_x = self.rect.centerx
+        
+        for flash in self.muzzle_flashes:
+            offset_y, radius, speed = flash
+            center_y = self.rect.top + offset_y
+            
+            alpha = int(255 * (1.0 - (radius / max_flash_radius)))
+            if alpha <= 0: continue
+            rad_int = int(radius)
+            flash_surf = pygame.Surface((rad_int*2, rad_int*2), pygame.SRCALPHA)
+            pygame.draw.circle(flash_surf, (*GAME_COLOR, alpha), (rad_int, rad_int), rad_int, 3)
+            surf.blit(flash_surf, (center_x - rad_int, center_y - rad_int))
+    
         
     def take_damage(self):
         current_time = pygame.time.get_ticks()
@@ -151,7 +230,7 @@ class Player(pygame.sprite.Sprite):
             pygame.mixer.Sound.play(g_engine.assets.get_sound('hit'))
             g_engine.screen_shake = 15
 
-    def getLife(self):       
+    def getLife(self):        
         return self.life
     def setLife(self, life): 
         self.life = life
@@ -163,7 +242,7 @@ class Player(pygame.sprite.Sprite):
     def setPowerLevel(self, power_level): 
         self.power_level = power_level
     
-    def getX(self):          
+    def getX(self):           
         return self.rect.x
-    def getY(self):          
+    def getY(self):           
         return self.rect.y

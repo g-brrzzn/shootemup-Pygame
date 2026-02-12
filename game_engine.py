@@ -11,5 +11,7 @@ class GameEngine:
         self.score = 0
         self.high_score = 0
         self.screen_shake = 0
+        self.sparks = None
+        self.glow_cache = {}
 
 g_engine = GameEngine()

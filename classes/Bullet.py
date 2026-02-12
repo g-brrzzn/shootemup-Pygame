@@ -7,11 +7,18 @@ import math
 class Bullet(pygame.sprite.Sprite):
     player_image: Optional[pygame.Surface] = None
     enemy_image: Optional[pygame.Surface] = None
+    
+    glow_player: Optional[pygame.Surface] = None
+    glow_enemy: Optional[pygame.Surface] = None
 
     @classmethod
     def load_assets(cls, assets_manager) -> None:
         cls.player_image = assets_manager.get_image('bullet_player')
         cls.enemy_image = assets_manager.get_image('bullet_enemy')
+        
+        
+        cls.glow_player = assets_manager.get_image('glow_bullet_player')
+        cls.glow_enemy = assets_manager.get_image('glow_bullet_enemy')
 
     @classmethod
     def create_bullets(cls, pattern: str, pos: tuple, is_from_player: bool, groups: tuple, options: dict = {}) -> List['Bullet']:
@@ -60,6 +67,12 @@ class Bullet(pygame.sprite.Sprite):
         self.speed = base_speed * speed_scale
         
         original_image = self.player_image if is_from_player else self.enemy_image
+        
+        if self.is_from_player:
+            self.glow_image = self.glow_player
+        else:
+            self.glow_image = self.glow_enemy
+
         if original_image is None:
             size = (4, 4)
             original_image = pygame.Surface(size, pygame.SRCALPHA)
@@ -71,7 +84,6 @@ class Bullet(pygame.sprite.Sprite):
             angle = direction_vector.angle_to(Vector2(1, 0))
             
             self.image = pygame.transform.rotate(original_image, angle - 90)
-            
             
             self.image.set_colorkey((0, 0, 0)) 
             
