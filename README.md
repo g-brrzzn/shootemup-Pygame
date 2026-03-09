@@ -1,4 +1,4 @@
-# 🚀 Shoot 'em Up - Pygame Engine
+# 👾 Shoot 'em Up - Pygame Engine
 
 > A fully custom, object-oriented vertical Shoot 'em Up built from scratch in Python. It features modular state management, advanced particle physics, dynamic enemy wave generation, and a complete retro arcade aesthetic.
 
@@ -57,7 +57,7 @@ The game features standard arcade controls, plus hidden developer keys used for 
 
 1. **Clone the repository:**
    ```console
-   git clone [https://github.com/g-brrzzn/shootemup-Pygame](https://github.com/g-brrzzn/shootemup-Pygame)
+   git clone https://github.com/g-brrzzn/shootemup-Pygame
    cd shootemup-Pygame
 
 
@@ -82,7 +82,7 @@ The game features standard arcade controls, plus hidden developer keys used for 
 
 * * * * *
 
-🤝 Contributing (Beginner Friendly!)
+🤝 Contributing (Beginner Friendly)
 ------------------------------------
 
 This project is highly modular, making it very easy to add new features without breaking everything else.
