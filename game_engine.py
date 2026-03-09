@@ -13,5 +13,7 @@ class GameEngine:
         self.screen_shake = 0
         self.sparks = None
         self.glow_cache = {}
+        self.joystick = None
+
 
 g_engine = GameEngine()
