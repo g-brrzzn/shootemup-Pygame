@@ -9,12 +9,21 @@ from .GameState import GameState
 from .States_util import title_text, vertical, menu_maker, draw_text
 from classes.particles.Fall import Fall
 from constants.Utils import delta_time
-from constants.global_var import config, CONTROLS, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2, TITLE_YELLOW_1
+from constants.global_var import (
+    config,
+    CONTROLS,
+    BACKGROUND_COLOR_MENU_1,
+    BACKGROUND_COLOR_MENU_2,
+    TITLE_YELLOW_1,
+)
+
 
 class Menu(GameState):
     def __init__(self):
         super().__init__()
-        self.fall = Fall(amount=120, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=3)
+        self.fall = Fall(
+            amount=120, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=3
+        )
 
     def start(self):
         self.selected = 0
@@ -23,39 +32,98 @@ class Menu(GameState):
     def update(self):
         dt, self.last_time = delta_time(self.last_time)
         self.fall.update(-3, 0)
-        self.title_pos_y_offset = config.INTERNAL_RESOLUTION[1] * 0.04 * math.sin(2 * math.pi * pygame.time.get_ticks()/1000)
-                
+        self.title_pos_y_offset = (
+            config.INTERNAL_RESOLUTION[1]
+            * 0.04
+            * math.sin(2 * math.pi * pygame.time.get_ticks() / 1000)
+        )
+
     def draw(self, surf):
         self.fall.draw(surf)
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
-        title_text(surf, "Shoot'em Up - Pygame",  randint(1,5) + config.INTERNAL_RESOLUTION[0]/2, self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33)
-        hs_y_pos = (self.title_pos_y_offset + config.INTERNAL_RESOLUTION[1] / 2 - config.INTERNAL_RESOLUTION[1]*0.33) + 60
+        title_text(
+            surf,
+            "Shoot'em Up - Pygame",
+            randint(1, 5) + config.INTERNAL_RESOLUTION[0] / 2,
+            self.title_pos_y_offset
+            + config.INTERNAL_RESOLUTION[1] / 2
+            - config.INTERNAL_RESOLUTION[1] * 0.33,
+        )
+        hs_y_pos = (
+            self.title_pos_y_offset
+            + config.INTERNAL_RESOLUTION[1] / 2
+            - config.INTERNAL_RESOLUTION[1] * 0.33
+        ) + 60
         if g_engine.high_score > 0:
-            draw_text(surf, f"HIGH SCORE: {g_engine.high_score:07d}", config.INTERNAL_RESOLUTION[0]/2, hs_y_pos, TITLE_YELLOW_1) 
-        menu_maker(['START', 'OPTIONS', 'EXIT'], __class__.__name__, self.selected, surf)
+            draw_text(
+                surf,
+                f"HIGH SCORE: {g_engine.high_score:07d}",
+                config.INTERNAL_RESOLUTION[0] / 2,
+                hs_y_pos,
+                TITLE_YELLOW_1,
+            )
+        menu_maker(
+            ["START", "OPTIONS", "EXIT"], __class__.__name__, self.selected, surf
+        )
 
     def get_event(self, event):
         if event.type == KEYDOWN:
-            if event.key in CONTROLS['DOWN']:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
+            if event.key in CONTROLS["DOWN"]:
+                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                 if self.selected == 2:
                     self.selected = 0
                 else:
                     self.selected += 1
-            if event.key in CONTROLS['UP']:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_select'))
+            if event.key in CONTROLS["UP"]:
+                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                 if self.selected == 0:
                     self.selected = 2
                 else:
                     self.selected -= 1
-            if event.key in CONTROLS['START']:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound('menu_confirm'))
+            if event.key in CONTROLS["START"]:
+                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = 'Game'
+                    self.next_state = "Game"
                     self.done = True
                 elif self.selected == 1:
-                    self.next_state = 'Options'
+                    self.next_state = "Options"
                     self.done = True
                 elif self.selected == 2:
                     pygame.quit()
                     sys.exit()
+
+        if event.type == JOYHATMOTION:
+            if event.hat == 0:
+                x, y = event.value
+
+                if y == -1:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    if self.selected == 2:
+                        self.selected = 0
+                    else:
+                        self.selected += 1
+                elif y == 1:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    if self.selected == 0:
+                        self.selected = 2
+                    else:
+                        self.selected -= 1
+
+        if event.type == JOYBUTTONDOWN:
+            if event.button == 0:
+                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
+                if self.selected == 0:
+                    self.next_state = "Game"
+                    self.done = True
+                elif self.selected == 1:
+                    self.next_state = "Options"
+                    self.done = True
+                elif self.selected == 2:
+                    pygame.quit()
+                    sys.exit()
+
+        if event.type == JOYDEVICEADDED:
+            joystick = pygame.joystick.Joystick(event.device_index)
+            g_engine.joystick = joystick
+        if event.type == JOYDEVICEREMOVED:
+            g_engine.joystick = None

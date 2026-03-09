@@ -116,28 +116,31 @@ class Player(pygame.sprite.Sprite):
             if self.speed >= 7:
                 self.speed -= 1
 
-    def get_joyaxismotion_input(self, event):
-        hat_x, hat_y = g_engine.joystick.get_hat(0)
-        right_trigger = g_engine.joystick.get_axis(5)
-        if hat_x == -1:
+    def get_joyhat_input(self, event):
+        if event.hat == 0:
+            x, y = event.value
+
+        if x == -1:
             self.moving_left = True
-        elif hat_x == 1:
+        elif x == 1:
             self.moving_right = True
         else:
             self.moving_left = False
             self.moving_right = False
-        if hat_y == -1:
+        if y == -1:
             self.moving_down = True
-        elif hat_y == 1:
+        elif y == 1:
             self.moving_up = True
         else:
             self.moving_down = False
             self.moving_up = False
 
-        if abs(right_trigger) > 0.1:
-            self.firing = True
-        else:
-            self.firing = False
+    def get_joyaxismotion_input(self, event):
+        if event.axis == 5:
+            if event.value > 0.5:
+                self.firing = True
+            else:
+                self.firing = False
 
     def fire(self):
         for _ in range(2):

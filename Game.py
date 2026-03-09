@@ -100,7 +100,6 @@ class Game(GameState):
         ]
         if joysticks:
             g_engine.joystick = joysticks[0]
-        print(joysticks)
 
     def start(self):
         self.last_time = time()
@@ -163,6 +162,8 @@ class Game(GameState):
                 self.done = True
         if event.type == JOYAXISMOTION:
             g_engine.player.get_joyaxismotion_input(event)
+        if event.type == JOYHATMOTION:
+            g_engine.player.get_joyhat_input(event)
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
             g_engine.joystick = joystick
