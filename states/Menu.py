@@ -28,6 +28,7 @@ class Menu(GameState):
     def start(self):
         self.selected = 0
         self.last_time = pygame.time.get_ticks()
+        self.title_pos_y_offset = 0
 
     def update(self):
         dt, self.last_time = delta_time(self.last_time)

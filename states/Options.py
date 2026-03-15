@@ -1,5 +1,7 @@
 import pygame
 from pygame.locals import *
+import sys
+import os
 
 from game_engine import g_engine
 from .GameState import GameState
@@ -12,7 +14,6 @@ from constants.global_var import (
     BACKGROUND_COLOR_MENU_2,
 )
 
-
 class Options(GameState):
     def __init__(self):
         super().__init__()
@@ -21,23 +22,21 @@ class Options(GameState):
     def start(self):
         self.selected = 0
         self.config_res = config.window_size
+        self.update_options_list()
+
+    def update_options_list(self):
         self.options = [
             f"RESOLUTION - {self.config_res}",
             f"SHOW FPS: {get_on_off_status(config.show_fps)}",
             f"FULLSCREEN: {get_on_off_status(config.set_fullscreen)}",
-            "APPLY RESOLUTION",
+            f"USE OPENGL: {get_on_off_status(config.use_opengl)}",
+            "APPLY SETTINGS",
             "BACK",
         ]
 
     def update(self):
         self.fall.update(-3, 0)
-        self.options = [
-            f"RESOLUTION - {self.config_res}",
-            f"SHOW FPS: {get_on_off_status(config.show_fps)}",
-            f"FULLSCREEN: {get_on_off_status(config.set_fullscreen)}",
-            "APPLY RESOLUTION",
-            "BACK",
-        ]
+        self.update_options_list()
 
     def draw(self, surf):
         self.fall.draw(surf)
@@ -68,19 +67,18 @@ class Options(GameState):
                     else:
                         self.config_res = config.RESOLUTIONS[selec - 1]
                         selec -= 1
+                config.window_size = self.config_res
 
             if event.key in CONTROLS["LEFT"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                 if self.selected == 0:
                     selec = config.RESOLUTIONS.index(self.config_res)
                     if selec == len(config.RESOLUTIONS) - 1:
-                        self.config_res = config.RESOLUTIONS[
-                            len(config.RESOLUTIONS) - 1
-                        ]
+                        self.config_res = config.RESOLUTIONS[len(config.RESOLUTIONS) - 1]
                     else:
                         self.config_res = config.RESOLUTIONS[selec + 1]
                         selec += 1
-            config.window_size = self.config_res
+                config.window_size = self.config_res
 
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
@@ -91,15 +89,17 @@ class Options(GameState):
                 elif self.selected == 2:
                     config.set_fullscreen = not config.set_fullscreen
                 elif self.selected == 3:
-                    if config.set_fullscreen:
-                        screen = pygame.display.set_mode(
-                            config.window_size, pygame.FULLSCREEN
-                        )
-                    else:
-                        screen = pygame.display.set_mode(config.window_size)
+                    config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
+                    config.save()
+                    args = sys.argv.copy()
+                    if "--options" not in args:
+                        args.append("--options")
+                    os.execl(sys.executable, sys.executable, *args)
+                elif self.selected == 5:
                     self.next_state = "Menu"
                     self.done = True
+
             if event.key in CONTROLS["ESC"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                 self.next_state = "Menu"
@@ -131,19 +131,18 @@ class Options(GameState):
                         else:
                             self.config_res = config.RESOLUTIONS[selec - 1]
                             selec -= 1
+                    config.window_size = self.config_res
 
                 elif x == -1:
                     pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                     if self.selected == 0:
                         selec = config.RESOLUTIONS.index(self.config_res)
                         if selec == len(config.RESOLUTIONS) - 1:
-                            self.config_res = config.RESOLUTIONS[
-                                len(config.RESOLUTIONS) - 1
-                            ]
+                            self.config_res = config.RESOLUTIONS[len(config.RESOLUTIONS) - 1]
                         else:
                             self.config_res = config.RESOLUTIONS[selec + 1]
                             selec += 1
-                config.window_size = self.config_res
+                    config.window_size = self.config_res
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
@@ -155,13 +154,14 @@ class Options(GameState):
                 elif self.selected == 2:
                     config.set_fullscreen = not config.set_fullscreen
                 elif self.selected == 3:
-                    if config.set_fullscreen:
-                        screen = pygame.display.set_mode(
-                            config.window_size, pygame.FULLSCREEN
-                        )
-                    else:
-                        screen = pygame.display.set_mode(config.window_size)
+                    config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
+                    config.save()
+                    args = sys.argv.copy()
+                    if "--options" not in args:
+                        args.append("--options")
+                    os.execl(sys.executable, sys.executable, *args)
+                elif self.selected == 5:
                     self.next_state = "Menu"
                     self.done = True
 
