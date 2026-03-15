@@ -1,20 +1,49 @@
 import pygame
+import json
+import os
 
+CONFIG_FILE = "settings.json"
 
 class Configs:
     def __init__(self):
-        UHD = (3840, 2160)  # 5
-        WQHD = (2560, 1440)  # 4
-        FHD = (1920, 1080)  # 3
-        HD = (1280, 720)  # 2
-        XGA = (1024, 768)  # 1
-        QHD = (960, 540)  # 0
-        self.RESOLUTIONS = [QHD, XGA, HD, FHD, WQHD, UHD]
+        self.UHD = (3840, 2160)
+        self.WQHD = (2560, 1440)
+        self.FHD = (1920, 1080)
+        self.HD = (1280, 720)
+        self.XGA = (1024, 768)
+        self.QHD = (960, 540)
+        self.RESOLUTIONS = [self.QHD, self.XGA, self.HD, self.FHD, self.WQHD, self.UHD]
         self.INTERNAL_RESOLUTION = (1600, 900)
 
         self.SHOW_FPS = False
         self.SET_FULLSCREEN = False
-        self.WINDOW_SIZE = self.RESOLUTIONS[2]
+        self.USE_OPENGL = True
+        self.WINDOW_SIZE = self.HD
+        
+        self.load()
+
+    def load(self):
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r") as f:
+                try:
+                    data = json.load(f)
+                    self.SHOW_FPS = data.get("show_fps", self.SHOW_FPS)
+                    self.SET_FULLSCREEN = data.get("fullscreen", self.SET_FULLSCREEN)
+                    self.USE_OPENGL = data.get("use_opengl", self.USE_OPENGL)
+                    win_size = data.get("window_size", self.WINDOW_SIZE)
+                    self.WINDOW_SIZE = tuple(win_size)
+                except:
+                    pass
+
+    def save(self):
+        data = {
+            "show_fps": self.SHOW_FPS,
+            "fullscreen": self.SET_FULLSCREEN,
+            "use_opengl": self.USE_OPENGL,
+            "window_size": self.WINDOW_SIZE
+        }
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(data, f, indent=4)
 
     @property
     def show_fps(self):
@@ -31,6 +60,14 @@ class Configs:
     @set_fullscreen.setter
     def set_fullscreen(self, set):
         self.SET_FULLSCREEN = bool(set)
+
+    @property
+    def use_opengl(self):
+        return self.USE_OPENGL
+
+    @use_opengl.setter
+    def use_opengl(self, use):
+        self.USE_OPENGL = bool(use)
 
     @property
     def window_size(self):
@@ -87,7 +124,6 @@ BACKGROUND_COLOR_MENU_2 = (
 TITLE_YELLOW_1 = (221, 245, 154)
 TITLE_YELLOW_2 = (185, 174, 115)
 PLAYER_COLOR_GREEN = (28, 162, 111)
-
 
 CONTROLS = {
     "UP": [pygame.K_w, pygame.K_UP],

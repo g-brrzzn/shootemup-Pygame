@@ -22,8 +22,6 @@ from states.Options import Options
 from states.GameOver import GameOver, Exit
 from states.States_util import vertical, draw_text
 
-import constants.moderngl_utils as moderngl_utils
-
 from constants.global_var import (
     SCALE,
     config,
@@ -32,50 +30,29 @@ from constants.global_var import (
     BACKGROUND_COLOR_GAME_2,
     CONTROLS,
 )
+
 from constants.Utils import delta_time, get_high_score, save_high_score
-
-CRT_FRAGMENT_SHADER = """
-#version 330
-
-uniform sampler2D surface;
-
-in vec2 uvs;
-out vec4 f_color;
-
-vec2 curve(vec2 uv) {
-	uv = (uv - 0.5) * 2.0;
-	uv *= 1.1;	
-	uv.x *= 1.0 + pow((abs(uv.y) / 5.0), 2.0);
-	uv.y *= 1.0 + pow((abs(uv.x) / 4.0), 2.0);
-	uv  = (uv / 2.0) + 0.5;
-	uv =  uv *0.92 + 0.04;
-	return uv;
-};
-
-vec2 _uv;
-
-void main() {
-    _uv = uvs;
-    _uv = curve(_uv);
-
-    f_color.r = texture(surface, vec2(_uv.x - 0.001, _uv.y)).r;
-    f_color.g = texture(surface, vec2(_uv.x + 0.001, _uv.y)).g;
-    f_color.b = texture(surface, vec2(_uv.x + 0.000, _uv.y)).b;
-    f_color.a = 1;
-}
-"""
+from constants.ShaderManager import ShaderManager
 
 pygame.init()
 clock = pygame.time.Clock()
 last_time = time()
 
+display_flags = pygame.DOUBLEBUF
 if config.set_fullscreen:
-    screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN|pygame.OPENGL|pygame.DOUBLEBUF, vsync=True)
+    display_flags |= pygame.FULLSCREEN
+
+if config.use_opengl:
+    display_flags |= pygame.OPENGL
+    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
+    shader_manager = ShaderManager(config.INTERNAL_RESOLUTION, screen.get_size())
+    game_surface = shader_manager.get_draw_surface()
+    g_engine.shader_manager = shader_manager 
 else:
-    screen = pygame.display.set_mode(config.window_size, pygame.OPENGL|pygame.DOUBLEBUF, vsync=True)
-moderngl_utils.initialize_context()
-texture_handler = moderngl_utils.TextureHandler(10)
-game_surface = moderngl_utils.GLSurface(config.INTERNAL_RESOLUTION, screen.get_size(), texture_handler, fragment_shader=CRT_FRAGMENT_SHADER)
+    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
+    shader_manager = None
+    g_engine.shader_manager = None 
+    game_surface = pygame.Surface(config.INTERNAL_RESOLUTION, pygame.SRCALPHA)
 
 g_engine.assets = AssetManager()
 g_engine.assets.load_assets(SCALE)
@@ -124,6 +101,8 @@ class Game(GameState):
         g_engine.level = 1
         self.level_done = False
         self.boss_active = False
+        self.player_is_dead = False
+        self.death_fade_timer = 0
 
         self.formations_to_spawn = 0
         self.current_wave_delay = 0
@@ -147,6 +126,7 @@ class Game(GameState):
             g_engine.level = 1
             g_engine.score = 0
             self.boss_active = False
+            self.player_is_dead = False
             g_engine.player = Player(
                 (
                     config.INTERNAL_RESOLUTION[0] / 2,
@@ -209,6 +189,13 @@ class Game(GameState):
         if dt > 3.0:
             dt = 3.0
 
+        if g_engine.hit_stop_frames > 0:
+            g_engine.hit_stop_frames -= 1
+            self.explosion.update(dt)
+            for spk in g_engine.sparks:
+                spk.update(dt)
+            return
+
         g_engine.all_sprites.update(dt)
         base_speed = g_engine.level * 0.5
 
@@ -227,13 +214,12 @@ class Game(GameState):
                     enemy.rect.centerx, enemy.rect.centery + random.randint(-20, 20)
                 )
                 enemy.damage()
-
+                g_engine.hit_stop_frames = 2 
             else:
                 self.explosion.create(enemy.rect.centerx, enemy.rect.centery)
                 enemy.damage()
 
             for _ in range(random.randint(4, 8)):
-
                 spk = Spark(
                     enemy.rect.center,
                     random.randint(0, 360),
@@ -248,6 +234,7 @@ class Game(GameState):
         )
         if player_hits:
             g_engine.player.take_damage()
+            g_engine.hit_stop_frames = 5
 
         powerup_hits = pygame.sprite.spritecollide(
             g_engine.player, g_engine.powerups, True
@@ -269,10 +256,12 @@ class Game(GameState):
         )
         if player_crashes:
             g_engine.player.take_damage()
+            g_engine.hit_stop_frames = 5
             for enemy in player_crashes:
                 g_engine.screen_shake = max(g_engine.screen_shake, 5)
                 if not isinstance(enemy, Boss):
                     enemy.kill()
+
         if self.formations_to_spawn > 0:
             is_clear = len(g_engine.all_enemies) == 0
             if self.current_wave_delay > 0:
@@ -288,7 +277,6 @@ class Game(GameState):
                 self.boss_active = False
                 g_engine.level += 1
                 self.start_next_level_waves()
-
             else:
                 if g_engine.level % 3 == 0:
                     self.boss_active = True
@@ -302,11 +290,17 @@ class Game(GameState):
                     self.start_next_level_waves()
 
         if g_engine.player.getLife() <= 0:
-            if g_engine.score > g_engine.high_score:
-                g_engine.high_score = g_engine.score
-                save_high_score(g_engine.high_score)
-            self.next_state = "GameOver"
-            self.done = True
+            if not self.player_is_dead:
+                self.player_is_dead = True
+                self.death_fade_timer = 20
+                if g_engine.score > g_engine.high_score:
+                    g_engine.high_score = g_engine.score
+                    save_high_score(g_engine.high_score)
+            
+            self.death_fade_timer -= dt * 0.2
+            if self.death_fade_timer <= 0:
+                self.next_state = "GameOver"
+                self.done = True
 
     def draw(self, surf):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
@@ -314,12 +308,16 @@ class Game(GameState):
         self.stars_back.draw(surf)
         self.stars_mid.draw(surf)
 
-        player_glow = g_engine.assets.get_image("glow_player")
-        surf.blit(
-            player_glow,
-            player_glow.get_rect(center=g_engine.player.rect.center),
-            special_flags=pygame.BLEND_ADD,
-        )
+        if not self.player_is_dead:
+            player_glow = g_engine.assets.get_image("glow_player")
+            surf.blit(
+                player_glow,
+                player_glow.get_rect(center=g_engine.player.rect.center),
+                special_flags=pygame.BLEND_ADD,
+            )
+
+            g_engine.player.draw_particles(surf)
+            g_engine.player.draw_muzzle_flash(surf)
 
         for bullet in g_engine.player_bullets:
             glow_rect = bullet.glow_image.get_rect(center=bullet.rect.center)
@@ -329,8 +327,6 @@ class Game(GameState):
             glow_rect = bullet.glow_image.get_rect(center=bullet.rect.center)
             surf.blit(bullet.glow_image, glow_rect, special_flags=pygame.BLEND_ADD)
 
-        g_engine.player.draw_particles(surf)
-        g_engine.player.draw_muzzle_flash(surf)
         g_engine.all_sprites.draw(surf)
 
         for enemy in g_engine.all_enemies:
@@ -363,7 +359,7 @@ class Game(GameState):
 
         draw_text(
             surf,
-            f"Life   {g_engine.player.getLife()}",
+            f"Life   {max(0, g_engine.player.getLife())}",
             config.INTERNAL_RESOLUTION[0] - 50,
             config.INTERNAL_RESOLUTION[1] - 60,
             use_smaller_font=False,
@@ -376,9 +372,10 @@ class Game(GameState):
 
 
 class GameRunner(object):
-    def __init__(self, screen, game_surface, states, start_state):
+    def __init__(self, screen, shader_manager, game_surface, states, start_state):
         self.screen = screen
-        self.game_gl_surface = game_surface
+        self.shader_manager = shader_manager
+        self.game_surface = game_surface
         self.states = states
         self.start_state = start_state
         self.state = self.states[self.start_state]
@@ -416,14 +413,15 @@ class GameRunner(object):
         sys.exit()
 
     def draw(self):
-        texture_handler.clear_memory()
-
         pygame.display.set_icon(g_engine.assets.get_image("icon"))
         pygame.display.set_caption(
             f"Shoot 'em Up - Pygame. FPS: {int(clock.get_fps())}"
         )
 
-        self.state.draw(self.game_gl_surface.surface)
+        if not self.shader_manager:
+            self.game_surface.fill((0, 0, 0, 0))
+
+        self.state.draw(self.game_surface)
 
         render_offset = [0, 0]
         if g_engine.screen_shake > 0:
@@ -431,12 +429,11 @@ class GameRunner(object):
             render_offset[0] = random.randint(-4, 4)
             render_offset[1] = random.randint(-4, 4)
 
-        # scaled_surface = pygame.transform.scale(
-        #     self.game_surface, self.screen.get_size()
-        # )
-        # self.screen.blit(scaled_surface, render_offset)
-
-        self.game_gl_surface.draw()
+        if self.shader_manager:
+            self.shader_manager.draw(offset=render_offset)
+        else:
+            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
+            self.screen.blit(scaled_surface, render_offset)
 
         pygame.display.flip()
         clock.tick(FRAME_RATE)
@@ -452,4 +449,9 @@ if __name__ == "__main__":
         "Options": Options(),
         "GameOver": GameOver(),
     }
-    game = GameRunner(screen, game_surface, states, "Menu")
+    
+    start_state = "Menu"
+    if "--options" in sys.argv:
+        start_state = "Options"
+        
+    game = GameRunner(screen, shader_manager, game_surface, states, start_state)
