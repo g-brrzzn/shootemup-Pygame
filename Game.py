@@ -22,6 +22,8 @@ from states.Options import Options
 from states.GameOver import GameOver, Exit
 from states.States_util import vertical, draw_text
 
+import constants.moderngl_utils as moderngl_utils
+
 from constants.global_var import (
     SCALE,
     config,
@@ -32,16 +34,48 @@ from constants.global_var import (
 )
 from constants.Utils import delta_time, get_high_score, save_high_score
 
+CRT_FRAGMENT_SHADER = """
+#version 330
+
+uniform sampler2D surface;
+
+in vec2 uvs;
+out vec4 f_color;
+
+vec2 curve(vec2 uv) {
+	uv = (uv - 0.5) * 2.0;
+	uv *= 1.1;	
+	uv.x *= 1.0 + pow((abs(uv.y) / 5.0), 2.0);
+	uv.y *= 1.0 + pow((abs(uv.x) / 4.0), 2.0);
+	uv  = (uv / 2.0) + 0.5;
+	uv =  uv *0.92 + 0.04;
+	return uv;
+};
+
+vec2 _uv;
+
+void main() {
+    _uv = uvs;
+    _uv = curve(_uv);
+
+    f_color.r = texture(surface, vec2(_uv.x - 0.001, _uv.y)).r;
+    f_color.g = texture(surface, vec2(_uv.x + 0.001, _uv.y)).g;
+    f_color.b = texture(surface, vec2(_uv.x + 0.000, _uv.y)).b;
+    f_color.a = 1;
+}
+"""
 
 pygame.init()
 clock = pygame.time.Clock()
 last_time = time()
 
 if config.set_fullscreen:
-    screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN, vsync=True)
+    screen = pygame.display.set_mode(config.window_size, pygame.FULLSCREEN|pygame.OPENGL|pygame.DOUBLEBUF, vsync=True)
 else:
-    screen = pygame.display.set_mode(config.window_size, vsync=True)
-game_surface = pygame.Surface(config.INTERNAL_RESOLUTION)
+    screen = pygame.display.set_mode(config.window_size, pygame.OPENGL|pygame.DOUBLEBUF, vsync=True)
+moderngl_utils.initialize_context()
+texture_handler = moderngl_utils.TextureHandler(10)
+game_surface = moderngl_utils.GLSurface(config.INTERNAL_RESOLUTION, screen.get_size(), texture_handler, fragment_shader=CRT_FRAGMENT_SHADER)
 
 g_engine.assets = AssetManager()
 g_engine.assets.load_assets(SCALE)
@@ -344,7 +378,7 @@ class Game(GameState):
 class GameRunner(object):
     def __init__(self, screen, game_surface, states, start_state):
         self.screen = screen
-        self.game_surface = game_surface
+        self.game_gl_surface = game_surface
         self.states = states
         self.start_state = start_state
         self.state = self.states[self.start_state]
@@ -382,12 +416,14 @@ class GameRunner(object):
         sys.exit()
 
     def draw(self):
+        texture_handler.clear_memory()
+
         pygame.display.set_icon(g_engine.assets.get_image("icon"))
         pygame.display.set_caption(
             f"Shoot 'em Up - Pygame. FPS: {int(clock.get_fps())}"
         )
 
-        self.state.draw(self.game_surface)
+        self.state.draw(self.game_gl_surface.surface)
 
         render_offset = [0, 0]
         if g_engine.screen_shake > 0:
@@ -395,11 +431,14 @@ class GameRunner(object):
             render_offset[0] = random.randint(-4, 4)
             render_offset[1] = random.randint(-4, 4)
 
-        scaled_surface = pygame.transform.scale(
-            self.game_surface, self.screen.get_size()
-        )
-        self.screen.blit(scaled_surface, render_offset)
-        pygame.display.update()
+        # scaled_surface = pygame.transform.scale(
+        #     self.game_surface, self.screen.get_size()
+        # )
+        # self.screen.blit(scaled_surface, render_offset)
+
+        self.game_gl_surface.draw()
+
+        pygame.display.flip()
         clock.tick(FRAME_RATE)
 
 
