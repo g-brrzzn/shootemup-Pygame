@@ -101,8 +101,6 @@ class Game(GameState):
         g_engine.level = 1
         self.level_done = False
         self.boss_active = False
-        self.player_is_dead = False
-        self.death_fade_timer = 0
 
         self.formations_to_spawn = 0
         self.current_wave_delay = 0
@@ -126,7 +124,6 @@ class Game(GameState):
             g_engine.level = 1
             g_engine.score = 0
             self.boss_active = False
-            self.player_is_dead = False
             g_engine.player = Player(
                 (
                     config.INTERNAL_RESOLUTION[0] / 2,
@@ -204,6 +201,15 @@ class Game(GameState):
         self.stars_front.update(gravity=base_speed * 1.5, dt=dt)
         self.explosion.update(dt)
         self.particles.update(dt)
+
+        for bullet in g_engine.enemy_bullets:
+            if not getattr(bullet, 'grazed', False):
+                dist = pygame.math.Vector2(bullet.rect.center).distance_to(g_engine.player.rect.center)
+                if dist < 45:
+                    bullet.grazed = True
+                    g_engine.score += 50
+                    spk = Spark(bullet.rect.center, random.randint(0, 360), random.randint(3, 7), (100, 200, 255), scale=1.2)
+                    g_engine.sparks.append(spk)
 
         enemy_hits = pygame.sprite.groupcollide(
             g_engine.all_enemies, g_engine.player_bullets, False, True
@@ -290,17 +296,12 @@ class Game(GameState):
                     self.start_next_level_waves()
 
         if g_engine.player.getLife() <= 0:
-            if not self.player_is_dead:
-                self.player_is_dead = True
-                self.death_fade_timer = 20
-                if g_engine.score > g_engine.high_score:
-                    g_engine.high_score = g_engine.score
-                    save_high_score(g_engine.high_score)
+            if g_engine.score > g_engine.high_score:
+                g_engine.high_score = g_engine.score
+                save_high_score(g_engine.high_score)
             
-            self.death_fade_timer -= dt * 0.2
-            if self.death_fade_timer <= 0:
-                self.next_state = "GameOver"
-                self.done = True
+            self.next_state = "GameOver"
+            self.done = True
 
     def draw(self, surf):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
@@ -308,16 +309,15 @@ class Game(GameState):
         self.stars_back.draw(surf)
         self.stars_mid.draw(surf)
 
-        if not self.player_is_dead:
-            player_glow = g_engine.assets.get_image("glow_player")
-            surf.blit(
-                player_glow,
-                player_glow.get_rect(center=g_engine.player.rect.center),
-                special_flags=pygame.BLEND_ADD,
-            )
+        player_glow = g_engine.assets.get_image("glow_player")
+        surf.blit(
+            player_glow,
+            player_glow.get_rect(center=g_engine.player.rect.center),
+            special_flags=pygame.BLEND_ADD,
+        )
 
-            g_engine.player.draw_particles(surf)
-            g_engine.player.draw_muzzle_flash(surf)
+        g_engine.player.draw_particles(surf)
+        g_engine.player.draw_muzzle_flash(surf)
 
         for bullet in g_engine.player_bullets:
             glow_rect = bullet.glow_image.get_rect(center=bullet.rect.center)
