@@ -102,20 +102,23 @@ class Player(pygame.sprite.Sprite):
             self.moving_up = False
         if event.key in CONTROLS["FIRE"]:
             self.firing = False
-            
 
     def get_controller_input(self, event):
-        if event.button == 0:  # a button on xbox
-            if self.shot_delay >= 0.1:
-                self.shot_delay -= 0.1
-        if event.button == 1:  # b button on xbox
-            if self.shot_delay < 0.25:
-                self.shot_delay += 0.1
+        if event.button == 0:  # A button on xbox
+            self.firing = True
+        if event.button == 1:  # B button on xbox
+            self.firing = True
         if event.button == 5:  # right bumper
             self.speed += 1
         if event.button == 4:  # left bumper
             if self.speed >= 7:
                 self.speed -= 1
+                
+    def get_controller_keyup(self, event):
+        if event.button == 0:  # A button on xbox
+            self.firing = False
+        if event.button == 1:  # B button on xbox
+            self.firing = False
 
     def get_joyhat_input(self, event):
         if event.hat == 0:
@@ -137,6 +140,32 @@ class Player(pygame.sprite.Sprite):
             self.moving_up = False
 
     def get_joyaxismotion_input(self, event):
+        if not config.use_analog_stick and event.axis in (0, 1):
+            return
+        deadzone = 0.3
+        
+        if event.axis == 0:
+            if event.value < -deadzone:
+                self.moving_left = True
+                self.moving_right = False
+            elif event.value > deadzone:
+                self.moving_right = True
+                self.moving_left = False
+            else:
+                self.moving_left = False
+                self.moving_right = False
+                
+        if event.axis == 1:
+            if event.value < -deadzone:
+                self.moving_up = True
+                self.moving_down = False
+            elif event.value > deadzone:
+                self.moving_down = True
+                self.moving_up = False
+            else:
+                self.moving_up = False
+                self.moving_down = False
+
         if event.axis == 5:
             if event.value > 0.5:
                 self.firing = True
@@ -167,6 +196,8 @@ class Player(pygame.sprite.Sprite):
             options=options,
         )
         pygame.mixer.Sound.play(g_engine.assets.get_sound("shoot"))
+        if config.apply_controller_vibration and g_engine.joystick:
+            g_engine.joystick.rumble(5, 50, 20)
 
     def upgrade(self):
         self.power_level = min(self.power_level + 1, 3)
@@ -265,7 +296,9 @@ class Player(pygame.sprite.Sprite):
             if radius > 0:
                 surf_trail = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
                 alpha = int((i / len(self.trail)) * 120)
-                pygame.draw.circle(surf_trail, (*PLAYER_COLOR_GREEN, alpha), (radius, radius), radius)
+                pygame.draw.circle(
+                    surf_trail, (*PLAYER_COLOR_GREEN, alpha), (radius, radius), radius
+                )
                 surf.blit(surf_trail, (tx - radius, ty - radius))
 
         for p in self.exhaust_particles:
@@ -274,8 +307,12 @@ class Player(pygame.sprite.Sprite):
             if radius_int <= 0:
                 continue
 
-            particle_surf = pygame.Surface((radius_int * 2, radius_int * 2), pygame.SRCALPHA)
-            pygame.draw.circle(particle_surf, (*c, int(a)), (radius_int, radius_int), radius_int)
+            particle_surf = pygame.Surface(
+                (radius_int * 2, radius_int * 2), pygame.SRCALPHA
+            )
+            pygame.draw.circle(
+                particle_surf, (*c, int(a)), (radius_int, radius_int), radius_int
+            )
             surf.blit(particle_surf, (x - radius_int, y - radius_int))
 
         self.explosion.draw(surf)

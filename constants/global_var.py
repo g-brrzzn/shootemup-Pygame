@@ -4,6 +4,7 @@ import os
 
 CONFIG_FILE = "settings.json"
 
+
 class Configs:
     def __init__(self):
         self.UHD = (3840, 2160)
@@ -19,7 +20,9 @@ class Configs:
         self.SET_FULLSCREEN = False
         self.USE_OPENGL = True
         self.WINDOW_SIZE = self.HD
-        
+        self.APPLY_CONTROLLER_VIBRATION = True
+        self.USE_ANALOG_STICK = True
+
         self.load()
 
     def load(self):
@@ -31,6 +34,10 @@ class Configs:
                     self.SET_FULLSCREEN = data.get("fullscreen", self.SET_FULLSCREEN)
                     self.USE_OPENGL = data.get("use_opengl", self.USE_OPENGL)
                     win_size = data.get("window_size", self.WINDOW_SIZE)
+                    self.APPLY_CONTROLLER_VIBRATION = data.get(
+                        "apply_controller_vibration", self.APPLY_CONTROLLER_VIBRATION
+                    )
+                    self.USE_ANALOG_STICK = data.get("use_analog_stick", self.USE_ANALOG_STICK)
                     self.WINDOW_SIZE = tuple(win_size)
                 except:
                     pass
@@ -40,7 +47,9 @@ class Configs:
             "show_fps": self.SHOW_FPS,
             "fullscreen": self.SET_FULLSCREEN,
             "use_opengl": self.USE_OPENGL,
-            "window_size": self.WINDOW_SIZE
+            "window_size": self.WINDOW_SIZE,
+            "apply_controller_vibration": self.APPLY_CONTROLLER_VIBRATION,
+            "use_analog_stick": self.USE_ANALOG_STICK,
         }
         with open(CONFIG_FILE, "w") as f:
             json.dump(data, f, indent=4)
@@ -76,6 +85,22 @@ class Configs:
     @window_size.setter
     def window_size(self, size):
         self.WINDOW_SIZE = size
+
+    @property
+    def apply_controller_vibration(self):
+        return self.APPLY_CONTROLLER_VIBRATION
+
+    @apply_controller_vibration.setter
+    def apply_controller_vibration(self, apply):
+        self.APPLY_CONTROLLER_VIBRATION = bool(apply)
+        
+    @property
+    def use_analog_stick(self):
+        return self.USE_ANALOG_STICK
+
+    @use_analog_stick.setter
+    def use_analog_stick(self, apply):
+        self.USE_ANALOG_STICK = bool(apply)
 
 
 config = Configs()
