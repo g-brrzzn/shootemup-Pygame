@@ -87,238 +87,79 @@ def vertical(
 
 
 def menu_maker(options, title, selected, surf, is_settings):
-    half_internal_res_width = config.INTERNAL_RESOLUTION[0] / 2
-    half_internal_res_height = config.INTERNAL_RESOLUTION[1] / 2
-    five_percent_internal_res = config.INTERNAL_RESOLUTION[0] * 0.05
-    ten_percent_internal_res = config.INTERNAL_RESOLUTION[0] * 0.1
-    fifteen_percent_internal_res = config.INTERNAL_RESOLUTION[0] * 0.15
-    five_percent_internal_res_height = config.INTERNAL_RESOLUTION[1] * 0.05
+    internal_w, internal_h = config.INTERNAL_RESOLUTION
+    half_w = internal_w / 2
+    half_h = internal_h / 2
+    
+    pct_5_w = internal_w * 0.05
+    pct_10_w = internal_w * 0.1
+    pct_15_w = internal_w * 0.15
+    pct_5_h = internal_h * 0.05
 
     if is_settings:
-        lowest_y = fifteen_percent_internal_res
+        lowest_y = pct_15_w
     else:
-        lowest_y = ten_percent_internal_res
+        lowest_y = pct_10_w
 
     vertical(surf)
-    for i in range(200):
-        # Title background
-        title_background_rect_x = half_internal_res_width - five_percent_internal_res
-        title_background_rect_y = (
-            half_internal_res_height - five_percent_internal_res_height * 4.15
-        )
-        title_background_rect_width = ten_percent_internal_res + 5
-        title_background_rect_height = five_percent_internal_res_height
-        pygame.draw.rect(
-            surf,
-            BACKGROUND_COLOR_MENU_1,
-            (
-                title_background_rect_x,
-                title_background_rect_y,
-                title_background_rect_width,
-                title_background_rect_height,
-            ),
-        )
 
-    draw_text(
-        surf,
-        title,
-        half_internal_res_width,
-        half_internal_res_height - ten_percent_internal_res * 1.0,
+    # Title background
+    title_bg_rect = (
+        half_w - pct_5_w,
+        half_h - pct_5_h * 4.15,
+        pct_10_w + 5,
+        pct_5_h
     )
+    pygame.draw.rect(surf, BACKGROUND_COLOR_MENU_1, title_bg_rect)
 
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width - five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 1.8,
-        ),  # Title Bottom outline
-        (
-            half_internal_res_width + five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 1.8,
-        ),
-        4,
-    )  # Title Bottom outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width + five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 1.8,
-        ),  # Title Top-left outline
-        (
-            half_internal_res_width + five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 2.3,
-        ),
-        4,
-    )  # Title Top-left outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width - five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 1.8,
-        ),  # Title Top-right outline
-        (
-            half_internal_res_width - five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 2.3,
-        ),
-        4,
-    )  # Title Top-right outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width - five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 2.3,
-        ),  # Title Top outline
-        (
-            half_internal_res_width + five_percent_internal_res,
-            half_internal_res_height - five_percent_internal_res * 2.3,
-        ),
-        4,
-    )  # Title Top outline
+    draw_text(surf, title, half_w, half_h - pct_10_w * 1.0)
 
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width + five_percent_internal_res,
-            half_internal_res_height - ten_percent_internal_res,
-        ),  # Top-right outline
-        (
-            half_internal_res_width + ten_percent_internal_res,
-            half_internal_res_height - ten_percent_internal_res,
-        ),
-        4,
-    )  # Top-right outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width - five_percent_internal_res,
-            half_internal_res_height - ten_percent_internal_res,
-        ),  # Top-left outline
-        (
-            half_internal_res_width - ten_percent_internal_res,
-            half_internal_res_height - ten_percent_internal_res,
-        ),
-        4,
-    )  # Top-left outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width + ten_percent_internal_res,
-            half_internal_res_height - ten_percent_internal_res,
-        ),  # Left outline
-        (
-            half_internal_res_width + ten_percent_internal_res,
-            half_internal_res_height + lowest_y,
-        ),
-        4,
-    )  # Left outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width - ten_percent_internal_res,
-            half_internal_res_height - ten_percent_internal_res,
-        ),  # Right outline
-        (
-            half_internal_res_width - ten_percent_internal_res,
-            half_internal_res_height + lowest_y,
-        ),
-        4,
-    )  # Right outline
-    pygame.draw.line(
-        surf,
-        (200, 200, 200),
-        (
-            half_internal_res_width - ten_percent_internal_res,
-            half_internal_res_height + lowest_y,
-        ),  # Bottom outline
-        (
-            half_internal_res_width + ten_percent_internal_res,
-            half_internal_res_height + lowest_y,
-        ),
-        4,
-    )  # Bottom outline
+    outline_color = (200, 200, 200)
+    outline_thickness = 4
 
-    options_items_quantity = len(options)
-    if options_items_quantity >= 4:
-        y_gap = five_percent_internal_res * 0.9
-    elif options_items_quantity >= 6:
-        y_gap = five_percent_internal_res * 1.1
+    # Title outline
+    title_outline_rect = (
+        half_w - pct_5_w,
+        half_h - pct_5_w * 2.3,
+        pct_5_w * 2,
+        pct_5_w * 0.5
+    )
+    pygame.draw.rect(surf, outline_color, title_outline_rect, outline_thickness)
+
+    menu_lines = [
+        ((half_w + pct_5_w, half_h - pct_10_w), (half_w + pct_10_w, half_h - pct_10_w)),  # Top-right outline
+        ((half_w - pct_5_w, half_h - pct_10_w), (half_w - pct_10_w, half_h - pct_10_w)),  # Top-left outline
+        ((half_w + pct_10_w, half_h - pct_10_w), (half_w + pct_10_w, half_h + lowest_y)), # Right outline
+        ((half_w - pct_10_w, half_h - pct_10_w), (half_w - pct_10_w, half_h + lowest_y)), # Left outline
+        ((half_w - pct_10_w, half_h + lowest_y), (half_w + pct_10_w, half_h + lowest_y)), # Bottom outline
+    ]
+
+    for start_pos, end_pos in menu_lines:
+        pygame.draw.line(surf, outline_color, start_pos, end_pos, outline_thickness)
+
+    options_qty = len(options)
+    if options_qty >= 6:
+        y_gap = pct_5_w * 1.1
+    elif options_qty >= 4:
+        y_gap = pct_5_w * 0.9
     else:
-        y_gap = five_percent_internal_res / 2
+        y_gap = pct_5_w / 2
 
-    for option in options:
-        if selected == options.index(option):
-            draw_text(
-                surf,
-                option,
-                half_internal_res_width,
-                (half_internal_res_height - y_gap)
-                + five_percent_internal_res / 2 * options.index(option),
-                GAME_COLOR,
-            )
+    for i, option in enumerate(options):
+        item_y = (half_h - y_gap) + (pct_5_w / 2) * i
+
+        if i == selected:
+            draw_text(surf, option, half_w, item_y, GAME_COLOR)
+            
             if len(option) < 10:
-                draw_text(
-                    surf,
-                    "|",
-                    half_internal_res_width + five_percent_internal_res,
-                    (half_internal_res_height - y_gap - 5)
-                    + five_percent_internal_res / 2 * options.index(option),
-                    GAME_COLOR,
-                )
-                draw_text(
-                    surf,
-                    "|",
-                    half_internal_res_width - five_percent_internal_res,
-                    (half_internal_res_height - y_gap - 5)
-                    + five_percent_internal_res / 2 * options.index(option),
-                    GAME_COLOR,
-                )
+                x_offset = pct_5_w
             elif len(option) < 20:
-                draw_text(
-                    surf,
-                    "|",
-                    half_internal_res_width + five_percent_internal_res * 1.5,
-                    (half_internal_res_height - y_gap - 5)
-                    + five_percent_internal_res / 2 * options.index(option),
-                    GAME_COLOR,
-                )
-                draw_text(
-                    surf,
-                    "|",
-                    half_internal_res_width - five_percent_internal_res * 1.5,
-                    (half_internal_res_height - y_gap - 5)
-                    + five_percent_internal_res / 2 * options.index(option),
-                    GAME_COLOR,
-                )
+                x_offset = pct_5_w * 1.5
             else:
-                draw_text(
-                    surf,
-                    "|",
-                    half_internal_res_width + five_percent_internal_res * 1.9,
-                    (half_internal_res_height - y_gap - 5)
-                    + five_percent_internal_res / 2 * options.index(option),
-                    GAME_COLOR,
-                )
-                draw_text(
-                    surf,
-                    "|",
-                    half_internal_res_width - five_percent_internal_res * 1.9,
-                    (half_internal_res_height - y_gap - 5)
-                    + five_percent_internal_res / 2 * options.index(option),
-                    GAME_COLOR,
-                )
+                x_offset = pct_5_w * 1.9
+                
+            cursor_y = item_y - 5
+            draw_text(surf, "|", half_w + x_offset, cursor_y, GAME_COLOR)
+            draw_text(surf, "|", half_w - x_offset, cursor_y, GAME_COLOR)
         else:
-            draw_text(
-                surf,
-                option,
-                half_internal_res_width,
-                (half_internal_res_height - y_gap)
-                + five_percent_internal_res / 2 * options.index(option),
-            )
+            draw_text(surf, option, half_w, item_y)
