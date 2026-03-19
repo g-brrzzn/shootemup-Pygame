@@ -171,6 +171,8 @@ class Game(GameState):
             g_engine.player.get_controller_input(event)
             if event.button == 7:
                 self.done = True
+        if event.type == JOYBUTTONUP:
+            g_engine.player.get_controller_keyup(event)
         if event.type == JOYAXISMOTION:
             g_engine.player.get_joyaxismotion_input(event)
         if event.type == JOYHATMOTION:

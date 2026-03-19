@@ -104,17 +104,21 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def get_controller_input(self, event):
-        if event.button == 0:  # a button on xbox
-            if self.shot_delay >= 0.1:
-                self.shot_delay -= 0.1
-        if event.button == 1:  # b button on xbox
-            if self.shot_delay < 0.25:
-                self.shot_delay += 0.1
+        if event.button == 0:  # A button on xbox
+            self.firing = True
+        if event.button == 1:  # B button on xbox
+            self.firing = True
         if event.button == 5:  # right bumper
             self.speed += 1
         if event.button == 4:  # left bumper
             if self.speed >= 7:
                 self.speed -= 1
+                
+    def get_controller_keyup(self, event):
+        if event.button == 0:  # A button on xbox
+            self.firing = False
+        if event.button == 1:  # B button on xbox
+            self.firing = False
 
     def get_joyhat_input(self, event):
         if event.hat == 0:
@@ -136,6 +140,32 @@ class Player(pygame.sprite.Sprite):
             self.moving_up = False
 
     def get_joyaxismotion_input(self, event):
+        if not config.use_analog_stick and event.axis in (0, 1):
+            return
+        deadzone = 0.3
+        
+        if event.axis == 0:
+            if event.value < -deadzone:
+                self.moving_left = True
+                self.moving_right = False
+            elif event.value > deadzone:
+                self.moving_right = True
+                self.moving_left = False
+            else:
+                self.moving_left = False
+                self.moving_right = False
+                
+        if event.axis == 1:
+            if event.value < -deadzone:
+                self.moving_up = True
+                self.moving_down = False
+            elif event.value > deadzone:
+                self.moving_down = True
+                self.moving_up = False
+            else:
+                self.moving_up = False
+                self.moving_down = False
+
         if event.axis == 5:
             if event.value > 0.5:
                 self.firing = True

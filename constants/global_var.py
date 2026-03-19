@@ -21,6 +21,7 @@ class Configs:
         self.USE_OPENGL = True
         self.WINDOW_SIZE = self.HD
         self.APPLY_CONTROLLER_VIBRATION = True
+        self.USE_ANALOG_STICK = True
 
         self.load()
 
@@ -36,6 +37,7 @@ class Configs:
                     self.APPLY_CONTROLLER_VIBRATION = data.get(
                         "apply_controller_vibration", self.APPLY_CONTROLLER_VIBRATION
                     )
+                    self.USE_ANALOG_STICK = data.get("use_analog_stick", self.USE_ANALOG_STICK)
                     self.WINDOW_SIZE = tuple(win_size)
                 except:
                     pass
@@ -47,6 +49,7 @@ class Configs:
             "use_opengl": self.USE_OPENGL,
             "window_size": self.WINDOW_SIZE,
             "apply_controller_vibration": self.APPLY_CONTROLLER_VIBRATION,
+            "use_analog_stick": self.USE_ANALOG_STICK,
         }
         with open(CONFIG_FILE, "w") as f:
             json.dump(data, f, indent=4)
@@ -90,6 +93,14 @@ class Configs:
     @apply_controller_vibration.setter
     def apply_controller_vibration(self, apply):
         self.APPLY_CONTROLLER_VIBRATION = bool(apply)
+        
+    @property
+    def use_analog_stick(self):
+        return self.USE_ANALOG_STICK
+
+    @use_analog_stick.setter
+    def use_analog_stick(self, apply):
+        self.USE_ANALOG_STICK = bool(apply)
 
 
 config = Configs()
