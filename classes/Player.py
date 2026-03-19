@@ -102,7 +102,6 @@ class Player(pygame.sprite.Sprite):
             self.moving_up = False
         if event.key in CONTROLS["FIRE"]:
             self.firing = False
-            
 
     def get_controller_input(self, event):
         if event.button == 0:  # a button on xbox
@@ -167,6 +166,8 @@ class Player(pygame.sprite.Sprite):
             options=options,
         )
         pygame.mixer.Sound.play(g_engine.assets.get_sound("shoot"))
+        if config.apply_controller_vibration and g_engine.joystick:
+            g_engine.joystick.rumble(5, 50, 20)
 
     def upgrade(self):
         self.power_level = min(self.power_level + 1, 3)
@@ -265,7 +266,9 @@ class Player(pygame.sprite.Sprite):
             if radius > 0:
                 surf_trail = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
                 alpha = int((i / len(self.trail)) * 120)
-                pygame.draw.circle(surf_trail, (*PLAYER_COLOR_GREEN, alpha), (radius, radius), radius)
+                pygame.draw.circle(
+                    surf_trail, (*PLAYER_COLOR_GREEN, alpha), (radius, radius), radius
+                )
                 surf.blit(surf_trail, (tx - radius, ty - radius))
 
         for p in self.exhaust_particles:
@@ -274,8 +277,12 @@ class Player(pygame.sprite.Sprite):
             if radius_int <= 0:
                 continue
 
-            particle_surf = pygame.Surface((radius_int * 2, radius_int * 2), pygame.SRCALPHA)
-            pygame.draw.circle(particle_surf, (*c, int(a)), (radius_int, radius_int), radius_int)
+            particle_surf = pygame.Surface(
+                (radius_int * 2, radius_int * 2), pygame.SRCALPHA
+            )
+            pygame.draw.circle(
+                particle_surf, (*c, int(a)), (radius_int, radius_int), radius_int
+            )
             surf.blit(particle_surf, (x - radius_int, y - radius_int))
 
         self.explosion.draw(surf)

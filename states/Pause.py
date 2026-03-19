@@ -19,7 +19,7 @@ class Pause(GameState):
         pass
 
     def draw(self, surf):
-        menu_maker(["CONTINUE", "EXIT"], __class__.__name__, self.selected, surf)
+        menu_maker(["CONTINUE", "EXIT"], __class__.__name__, self.selected, surf, False)
 
     def get_event(self, event):
         if event.type == KEYDOWN:

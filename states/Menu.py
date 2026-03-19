@@ -64,7 +64,7 @@ class Menu(GameState):
                 TITLE_YELLOW_1,
             )
         menu_maker(
-            ["START", "OPTIONS", "EXIT"], __class__.__name__, self.selected, surf
+            ["START", "OPTIONS", "EXIT"], __class__.__name__, self.selected, surf, False
         )
 
     def get_event(self, event):

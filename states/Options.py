@@ -14,6 +14,7 @@ from constants.global_var import (
     BACKGROUND_COLOR_MENU_2,
 )
 
+
 class Options(GameState):
     def __init__(self):
         super().__init__()
@@ -30,6 +31,7 @@ class Options(GameState):
             f"SHOW FPS: {get_on_off_status(config.show_fps)}",
             f"FULLSCREEN: {get_on_off_status(config.set_fullscreen)}",
             f"USE OPENGL: {get_on_off_status(config.use_opengl)}",
+            f"VIBRATION: {get_on_off_status(config.apply_controller_vibration)}",
             "APPLY SETTINGS",
             "BACK",
         ]
@@ -41,7 +43,7 @@ class Options(GameState):
     def draw(self, surf):
         self.fall.draw(surf)
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
-        menu_maker(self.options, __class__.__name__, self.selected, surf)
+        menu_maker(self.options, __class__.__name__, self.selected, surf, True)
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -74,7 +76,9 @@ class Options(GameState):
                 if self.selected == 0:
                     selec = config.RESOLUTIONS.index(self.config_res)
                     if selec == len(config.RESOLUTIONS) - 1:
-                        self.config_res = config.RESOLUTIONS[len(config.RESOLUTIONS) - 1]
+                        self.config_res = config.RESOLUTIONS[
+                            len(config.RESOLUTIONS) - 1
+                        ]
                     else:
                         self.config_res = config.RESOLUTIONS[selec + 1]
                         selec += 1
@@ -91,12 +95,16 @@ class Options(GameState):
                 elif self.selected == 3:
                     config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
+                    config.apply_controller_vibration = (
+                        not config.apply_controller_vibration
+                    )
+                elif self.selected == 5:
                     config.save()
                     args = sys.argv.copy()
                     if "--options" not in args:
                         args.append("--options")
                     os.execl(sys.executable, sys.executable, *args)
-                elif self.selected == 5:
+                elif self.selected == 6:
                     self.next_state = "Menu"
                     self.done = True
 
@@ -138,7 +146,9 @@ class Options(GameState):
                     if self.selected == 0:
                         selec = config.RESOLUTIONS.index(self.config_res)
                         if selec == len(config.RESOLUTIONS) - 1:
-                            self.config_res = config.RESOLUTIONS[len(config.RESOLUTIONS) - 1]
+                            self.config_res = config.RESOLUTIONS[
+                                len(config.RESOLUTIONS) - 1
+                            ]
                         else:
                             self.config_res = config.RESOLUTIONS[selec + 1]
                             selec += 1
@@ -156,12 +166,16 @@ class Options(GameState):
                 elif self.selected == 3:
                     config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
+                    config.apply_controller_vibration = (
+                        not config.apply_controller_vibration
+                    )
+                elif self.selected == 5:
                     config.save()
                     args = sys.argv.copy()
                     if "--options" not in args:
                         args.append("--options")
                     os.execl(sys.executable, sys.executable, *args)
-                elif self.selected == 5:
+                elif self.selected == 6:
                     self.next_state = "Menu"
                     self.done = True
 

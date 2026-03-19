@@ -26,6 +26,7 @@ class Exit(GameState):
             __class__.__name__,
             self.selected,
             surf,
+            False,
         )
 
     def get_event(self, event):
@@ -116,7 +117,7 @@ class GameOver(GameState):
     def draw(self, surf):
         vertical(surf)
         self.fall.draw(surf)
-        menu_maker(["RESTART", "EXIT"], __class__.__name__, self.selected, surf)
+        menu_maker(["RESTART", "EXIT"], __class__.__name__, self.selected, surf, False)
 
     def get_event(self, event):
         if event.type == KEYDOWN:

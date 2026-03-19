@@ -47,11 +47,11 @@ if config.use_opengl:
     screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
     shader_manager = ShaderManager(config.INTERNAL_RESOLUTION, screen.get_size())
     game_surface = shader_manager.get_draw_surface()
-    g_engine.shader_manager = shader_manager 
+    g_engine.shader_manager = shader_manager
 else:
     screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
     shader_manager = None
-    g_engine.shader_manager = None 
+    g_engine.shader_manager = None
     game_surface = pygame.Surface(config.INTERNAL_RESOLUTION, pygame.SRCALPHA)
 
 g_engine.assets = AssetManager()
@@ -203,12 +203,20 @@ class Game(GameState):
         self.particles.update(dt)
 
         for bullet in g_engine.enemy_bullets:
-            if not getattr(bullet, 'grazed', False):
-                dist = pygame.math.Vector2(bullet.rect.center).distance_to(g_engine.player.rect.center)
+            if not getattr(bullet, "grazed", False):
+                dist = pygame.math.Vector2(bullet.rect.center).distance_to(
+                    g_engine.player.rect.center
+                )
                 if dist < 45:
                     bullet.grazed = True
                     g_engine.score += 50
-                    spk = Spark(bullet.rect.center, random.randint(0, 360), random.randint(3, 7), (100, 200, 255), scale=1.2)
+                    spk = Spark(
+                        bullet.rect.center,
+                        random.randint(0, 360),
+                        random.randint(3, 7),
+                        (100, 200, 255),
+                        scale=1.2,
+                    )
                     g_engine.sparks.append(spk)
 
         enemy_hits = pygame.sprite.groupcollide(
@@ -220,7 +228,7 @@ class Game(GameState):
                     enemy.rect.centerx, enemy.rect.centery + random.randint(-20, 20)
                 )
                 enemy.damage()
-                g_engine.hit_stop_frames = 2 
+                g_engine.hit_stop_frames = 2
             else:
                 self.explosion.create(enemy.rect.centerx, enemy.rect.centery)
                 enemy.damage()
@@ -241,6 +249,8 @@ class Game(GameState):
         if player_hits:
             g_engine.player.take_damage()
             g_engine.hit_stop_frames = 5
+            if config.apply_controller_vibration and g_engine.joystick:
+                g_engine.joystick.rumble(50, 200, 100)
 
         powerup_hits = pygame.sprite.spritecollide(
             g_engine.player, g_engine.powerups, True
@@ -263,6 +273,8 @@ class Game(GameState):
         if player_crashes:
             g_engine.player.take_damage()
             g_engine.hit_stop_frames = 5
+            if config.apply_controller_vibration and g_engine.joystick:
+                g_engine.joystick.rumble(50, 200, 100)
             for enemy in player_crashes:
                 g_engine.screen_shake = max(g_engine.screen_shake, 5)
                 if not isinstance(enemy, Boss):
@@ -299,7 +311,7 @@ class Game(GameState):
             if g_engine.score > g_engine.high_score:
                 g_engine.high_score = g_engine.score
                 save_high_score(g_engine.high_score)
-            
+
             self.next_state = "GameOver"
             self.done = True
 
@@ -432,7 +444,9 @@ class GameRunner(object):
         if self.shader_manager:
             self.shader_manager.draw(offset=render_offset)
         else:
-            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
+            scaled_surface = pygame.transform.scale(
+                self.game_surface, self.screen.get_size()
+            )
             self.screen.blit(scaled_surface, render_offset)
 
         pygame.display.flip()
@@ -449,9 +463,9 @@ if __name__ == "__main__":
         "Options": Options(),
         "GameOver": GameOver(),
     }
-    
+
     start_state = "Menu"
     if "--options" in sys.argv:
         start_state = "Options"
-        
+
     game = GameRunner(screen, shader_manager, game_surface, states, start_state)
