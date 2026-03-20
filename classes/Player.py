@@ -4,8 +4,6 @@ from pygame.locals import *
 from random import randint, choice
 
 from game_engine import g_engine
-from classes.Bullet import Bullet
-from classes.particles.Explosion import Explosion
 from constants.global_var import (
     MAX_LIFE,
     CONTROLS,
@@ -14,7 +12,6 @@ from constants.global_var import (
     PLAYER_COLOR_GREEN,
     GAME_COLOR,
 )
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, *groups):
@@ -47,7 +44,6 @@ class Player(pygame.sprite.Sprite):
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
 
         self.life = MAX_LIFE
-        self.explosion = Explosion()
 
         self.last_hit = 0
         self.invincibility_duration = 100
@@ -104,22 +100,22 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def get_controller_input(self, event):
-        if event.button == 0:  # A button on xbox
+        if event.button == 0: # A button on xbox
             self.firing = True
-        if event.button == 1:  # B button on xbox
+        if event.button == 1: # B button on xbox
             self.firing = True
-        if event.button == 5:  # right bumper
-            self.speed += 1
-        if event.button == 4:  # left bumper
+        if event.button == 5: # Right trigger on xbox
+            self.speed += 1 
+        if event.button == 4: # Left trigger on xbox
             if self.speed >= 7:
                 self.speed -= 1
                 
     def get_controller_keyup(self, event):
-        if event.button == 0:  # A button on xbox
+        if event.button == 0: # A button on xbox
             self.firing = False
-        if event.button == 1:  # B button on xbox
+        if event.button == 1: # B button on xbox
             self.firing = False
-
+    
     def get_joyhat_input(self, event):
         if event.hat == 0:
             x, y = event.value
@@ -188,11 +184,9 @@ class Player(pygame.sprite.Sprite):
             options["count"] = 3
             options["spread_arc"] = 30
 
-        Bullet.create_bullets(
+        g_engine.player_bullets.emit_pattern(
             pattern=pattern,
             pos=self.rect.center,
-            is_from_player=True,
-            groups=(g_engine.player_bullets, g_engine.all_sprites),
             options=options,
         )
         pygame.mixer.Sound.play(g_engine.assets.get_sound("shoot"))
@@ -233,7 +227,6 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt):
         self.last_time = time()
-        self.explosion.update(dt)
         self.update_particles()
 
         max_flash_radius = 25
@@ -315,7 +308,6 @@ class Player(pygame.sprite.Sprite):
             )
             surf.blit(particle_surf, (x - radius_int, y - radius_int))
 
-        self.explosion.draw(surf)
 
     def draw_muzzle_flash(self, surf):
         max_flash_radius = 25.0
@@ -341,7 +333,7 @@ class Player(pygame.sprite.Sprite):
             self.life -= 1
             self.power_level = 1
             self.last_hit = current_time
-            self.explosion.create(
+            g_engine.explosion_system.create(
                 self.rect.center[0] - SPRITE_SIZE / 2,
                 self.rect.center[1] - SPRITE_SIZE,
                 PLAYER_COLOR_GREEN,

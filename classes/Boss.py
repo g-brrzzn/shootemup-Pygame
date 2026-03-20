@@ -3,9 +3,7 @@ import math
 from random import randint
 from game_engine import g_engine
 from classes.Enemy import EnemyBase
-from classes.Bullet import Bullet
-from classes.particles.Explosion import Explosion
-from constants.global_var import config, GAME_COLOR
+from constants.global_var import config
 
 class Boss(EnemyBase):
     def __init__(self, pos, *groups):
@@ -29,8 +27,6 @@ class Boss(EnemyBase):
         
         self.last_hit = 0
         self.hit_flash_duration = 50
-        
-        self.explosion = Explosion()
 
     def update(self, dt):
         if self.y < self.target_y:
@@ -43,7 +39,6 @@ class Boss(EnemyBase):
         self.rect.topleft = (self.x, self.y)
         self.shoot()
         
-        self.explosion.update(dt)
         self.current_sprite += 0.07
         if self.current_sprite >= len(self.sprites): self.current_sprite = 0
         if pygame.time.get_ticks() - self.last_hit < self.hit_flash_duration:
@@ -53,21 +48,25 @@ class Boss(EnemyBase):
 
     def shoot(self):
         if randint(0, 100) < 2:
-             Bullet.create_bullets('single', self.rect.center, False, 
-                                 (g_engine.enemy_bullets, g_engine.all_sprites), 
-                                 {'angle': -90, 'speed_scale': 0.008})
+            g_engine.enemy_bullets.emit_pattern(
+                'single', 
+                self.rect.center, 
+                {'angle': -90, 'speed_scale': 0.008}
+            )
         
         if randint(0, 200) < 2:
-            Bullet.create_bullets('spread', (self.rect.centerx, self.rect.bottom), False,
-                                (g_engine.enemy_bullets, g_engine.all_sprites),
-                                {'count': 5, 'spread_arc': 60, 'angle': -90})
+            g_engine.enemy_bullets.emit_pattern(
+                'spread', 
+                (self.rect.centerx, self.rect.bottom), 
+                {'count': 5, 'spread_arc': 60, 'angle': -90}
+            )
 
     def damage(self):
         self.last_hit = pygame.time.get_ticks()
         if self.life <= 1:
             g_engine.score += self.score_value
             g_engine.screen_shake = 30
-            self.explosion.create(self.rect.centerx, self.rect.centery, count=150, speed=15)
+            g_engine.explosion_system.create(self.rect.centerx, self.rect.centery, count=150, speed=15)
             self.kill()
         else:
             self.life -= 1

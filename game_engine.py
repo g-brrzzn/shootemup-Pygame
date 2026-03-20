@@ -12,7 +12,8 @@ class GameEngine:
         self.high_score = 0
         self.screen_shake = 0
         self.hit_stop_frames = 0
-        self.sparks = None
+        self.spark_system = None
+        self.explosion_system = None
         self.glow_cache = {}
         self.joystick = None
         self.shader_manager = None

@@ -1,11 +1,8 @@
 import pygame
 import math
-from random import choice, randint, uniform
-from time import time
+from random import randint, uniform
 
 from game_engine import g_engine
-from classes.Bullet import Bullet
-from classes.particles.Explosion import Explosion
 from classes.PowerUp import PowerUp
 from constants.global_var import config, SCALED_SPRITE_SIZE
 
@@ -23,8 +20,6 @@ class EnemyBase(pygame.sprite.Sprite):
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect()
         self.rect.topleft = (self.x, self.y)
-        
-        self.explosion = Explosion()
         
         self.life = 1
         self.base_speed = config.INTERNAL_RESOLUTION[1] * 0.003 
@@ -63,7 +58,6 @@ class EnemyBase(pygame.sprite.Sprite):
         
     def damage(self):
         self.last_hit = pygame.time.get_ticks()
-        self.explosion.create(self.x, self.y)
         
         if self.life <= 1: 
             g_engine.score += self.score_value
@@ -92,7 +86,6 @@ class EnemyBase(pygame.sprite.Sprite):
         self.move(dt)   
         self.shoot() 
         self.check_bounds()
-        self.explosion.update(dt)
 
         self.rect.topleft = (self.x, self.y)
         
@@ -106,7 +99,7 @@ class EnemyBase(pygame.sprite.Sprite):
 
     def draw(self, surf):
         surf.blit(self.image, self.rect)
-        self.explosion.draw(surf)
+
 
     @staticmethod
     def spawn_enemy(n, enemy_class): 
@@ -130,9 +123,11 @@ class Enemy1(EnemyBase):
 
     def shoot(self):
         if randint(0, 1000) < 5:
-            Bullet.create_bullets('single', self.rect.center, False, 
-                                (g_engine.enemy_bullets, g_engine.all_sprites), 
-                                {'angle': -90, 'speed_scale': 0.01}) 
+            g_engine.enemy_bullets.emit_pattern(
+                'single', 
+                self.rect.center, 
+                {'angle': -90, 'speed_scale': 0.01}
+            )
 
 class Enemy2(EnemyBase):
     def __init__(self, pos, *groups):
@@ -153,9 +148,11 @@ class Enemy2(EnemyBase):
 
     def shoot(self):
         if randint(0, 1000) < 5:
-             Bullet.create_bullets('spread', self.rect.center, False, 
-                                 (g_engine.enemy_bullets, g_engine.all_sprites), 
-                                 {'count': 2, 'spread_arc': 20, 'angle': -90, 'speed_scale': 0.006})
+            g_engine.enemy_bullets.emit_pattern(
+                'spread', 
+                self.rect.center, 
+                {'count': 2, 'spread_arc': 20, 'angle': -90, 'speed_scale': 0.006}
+            )
 
 class Enemy3(EnemyBase):
     def __init__(self, pos, *groups):
@@ -183,6 +180,8 @@ class Enemy3(EnemyBase):
             dy = g_engine.player.rect.centery - self.rect.centery
             angle = math.degrees(math.atan2(-dy, dx))
             
-            Bullet.create_bullets('single', self.rect.center, False, 
-                                (g_engine.enemy_bullets, g_engine.all_sprites), 
-                                {'angle': angle, 'speed_scale': 0.008})
+            g_engine.enemy_bullets.emit_pattern(
+                'single', 
+                self.rect.center, 
+                {'angle': angle, 'speed_scale': 0.008}
+            )

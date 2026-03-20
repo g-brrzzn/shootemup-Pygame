@@ -1,47 +1,49 @@
 import pygame
-from dataclasses import dataclass
-from typing import Tuple, List
-from random import randint, uniform
-from pygame.math import Vector2
+import numpy as np
 from constants.global_var import config
-@dataclass
-class Drop:
-    pos: Vector2
-    fall_speed: float
+
 class Fall:
-    
-    def __init__(self, amount: int, min_s: float = 0.1, max_s: float = 0.9, color: Tuple[int, int, int] = (70, 70, 70), size: int = 3, alpha: int = 255):
-        self.drops: List[Drop] = []
-        width, height = config.INTERNAL_RESOLUTION       
+    def __init__(self, amount: int, min_s: float = 0.1, max_s: float = 0.9, color: tuple = (70, 70, 70), size: int = 3, alpha: int = 255):
+        self.amount = amount
+        self.pos = np.zeros((amount, 2), dtype=np.float32)
+        self.fall_speed = np.zeros(amount, dtype=np.float32)
+        
+        width, height = config.INTERNAL_RESOLUTION
+        
+        self.pos[:, 0] = np.random.randint(1, width, size=amount)
+        self.pos[:, 1] = np.random.randint(1, height, size=amount)
+        self.fall_speed[:] = np.random.uniform(min_s, max_s, size=amount)
+        
         self.image = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, (*color, alpha), (size, size), size)
-        
-        for _ in range(amount):
-            x = randint(1, width - 1)
-            y = randint(1, height - 1)
-            fall_speed = uniform(min_s, max_s)
-            self.drops.append(Drop(pos=Vector2(x, y), fall_speed=fall_speed))
 
     def update(self, gravity: float = 0.3, wind: float = 0.3, dt: float = 1.0) -> None:
         width, height = config.INTERNAL_RESOLUTION
-        for drop in self.drops:
-            drop.pos.y += (gravity + drop.fall_speed) * dt
+        
+        self.pos[:, 1] += (gravity + self.fall_speed) * dt
+        
+        if wind != 0:
+            self.pos[:, 0] += wind * dt
 
-            if wind != 0:
-                drop.pos.x += wind * dt
+        out_y = self.pos[:, 1] > height
+        num_out_y = np.count_nonzero(out_y)
+        if num_out_y > 0:
+            self.pos[out_y, 1] = -10
+            self.pos[out_y, 0] = np.random.randint(0, width, size=num_out_y)
 
-            if drop.pos.y > height:
-                drop.pos.y = -10 
-                drop.pos.x = randint(0, width - 1)
-            elif drop.pos.y < -20: 
-                drop.pos.y = height
+        out_y_top = self.pos[:, 1] < -20
+        if np.any(out_y_top):
+            self.pos[out_y_top, 1] = height
 
-            if drop.pos.x > width:
-                drop.pos.x = 0
-            elif drop.pos.x < 0:
-                drop.pos.x = width
+        out_x_right = self.pos[:, 0] > width
+        if np.any(out_x_right):
+            self.pos[out_x_right, 0] = 0
+
+        out_x_left = self.pos[:, 0] < 0
+        if np.any(out_x_left):
+            self.pos[out_x_left, 0] = width
 
     def draw(self, surf: pygame.Surface) -> None:
-        for drop in self.drops:
-            
-            surf.blit(self.image, (int(drop.pos.x), int(drop.pos.y)))
+        pos_list = self.pos.astype(int).tolist()
+        for p in pos_list:
+            surf.blit(self.image, p)

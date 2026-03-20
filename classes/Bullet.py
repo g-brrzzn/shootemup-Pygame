@@ -1,107 +1,135 @@
 import pygame
-from pygame.math import Vector2
-from typing import Optional, Iterable, Tuple, List
-from constants.global_var import config
+import numpy as np
 import math
+from constants.global_var import config
 
-class Bullet(pygame.sprite.Sprite):
-    player_image: Optional[pygame.Surface] = None
-    enemy_image: Optional[pygame.Surface] = None
-    
-    glow_player: Optional[pygame.Surface] = None
-    glow_enemy: Optional[pygame.Surface] = None
+class BulletSystem:
+    player_images = []
+    enemy_images = []
+    glow_player = None
+    glow_enemy = None
 
     @classmethod
-    def load_assets(cls, assets_manager) -> None:
-        cls.player_image = assets_manager.get_image('bullet_player')
-        cls.enemy_image = assets_manager.get_image('bullet_enemy')
+    def load_assets(cls, assets_manager):
+        p_img = assets_manager.get_image('bullet_player')
+        e_img = assets_manager.get_image('bullet_enemy')
         
+        if p_img is None:
+            p_img = pygame.Surface((4, 4), pygame.SRCALPHA)
+            pygame.draw.circle(p_img, (255, 200, 0), (2, 2), 2)
+        if e_img is None:
+            e_img = pygame.Surface((4, 4), pygame.SRCALPHA)
+            pygame.draw.circle(e_img, (200, 50, 50), (2, 2), 2)
+
+        cls.player_images = []
+        for a in range(360):
+            rotated = pygame.transform.rotate(p_img, a - 90)
+            rotated.set_colorkey((0, 0, 0))
+            cls.player_images.append(rotated)
+            
+        cls.enemy_images = []
+        for a in range(360):
+            rotated = pygame.transform.rotate(e_img, a - 90)
+            rotated.set_colorkey((0, 0, 0))
+            cls.enemy_images.append(rotated)
         
         cls.glow_player = assets_manager.get_image('glow_bullet_player')
         cls.glow_enemy = assets_manager.get_image('glow_bullet_enemy')
 
-    @classmethod
-    def create_bullets(cls, pattern: str, pos: tuple, is_from_player: bool, groups: tuple, options: dict = {}) -> List['Bullet']:
-        bullets = []
+    def __init__(self, max_particles, is_player):
+        self.max_particles = max_particles
+        self.is_player = is_player
+        self.active_count = 0
         
-        if pattern == 'single':
-            angle = options.get('angle', 90 if is_from_player else 270)
-            direction = Vector2(math.cos(math.radians(angle)), -math.sin(math.radians(angle)))
-            bullets.append(cls(pos, direction, is_from_player, *groups, **options))
+        self.pos = np.zeros((max_particles, 2), dtype=np.float32)
+        self.vel = np.zeros((max_particles, 2), dtype=np.float32)
+        self.angle = np.zeros(max_particles, dtype=np.int32)
+        self.grazed = np.zeros(max_particles, dtype=bool)
 
+        self.base_speed = config.INTERNAL_RESOLUTION[1]
+
+    def emit_pattern(self, pattern, pos, options):
+        if pattern == 'single':
+            angle = options.get('angle', 90 if self.is_player else 270)
+            speed_scale = options.get('speed_scale', 0.012 if self.is_player else 0.004)
+            self.emit(pos, angle, speed_scale)
         elif pattern == 'spread':
             count = options.get('count', 3)
             spread_arc = options.get('spread_arc', 30)
-            base_angle = options.get('angle', 90 if is_from_player else 270)
-            
+            base_angle = options.get('angle', 90 if self.is_player else 270)
+            speed_scale = options.get('speed_scale', 0.012 if self.is_player else 0.004)
+
             if count <= 1:
-                return cls.create_bullets('single', pos, is_from_player, groups, options)
-            
+                self.emit(pos, base_angle, speed_scale)
+                return
+
             angle_step = spread_arc / (count - 1)
             start_angle = base_angle - spread_arc / 2
-            
+
             for i in range(count):
-                angle = start_angle + i * angle_step
-                direction = Vector2(math.cos(math.radians(angle)), -math.sin(math.radians(angle)))
-                bullets.append(cls(pos, direction, is_from_player, *groups, **options))
-        
-        return bullets
+                self.emit(pos, start_angle + i * angle_step, speed_scale)
 
-    def __init__(
-        self,
-        pos: Tuple[float, float],
-        direction_vector: Vector2,
-        is_from_player: bool,
-        *groups: Iterable[pygame.sprite.Group],
-        **kwargs
-    ) -> None:
-        super().__init__(*groups)
-        
-        self.is_from_player = is_from_player
-        
-        speed_scale = kwargs.get('speed_scale')
-        if speed_scale is None:
-            speed_scale = 0.012 if is_from_player else 0.004
+    def emit(self, pos, angle, speed_scale):
+        if self.active_count >= self.max_particles:
+            return
 
-        base_speed = config.INTERNAL_RESOLUTION[1]
-        self.speed = base_speed * speed_scale
+        idx = self.active_count
+        self.pos[idx, 0] = pos[0]
+        self.pos[idx, 1] = pos[1]
         
-        original_image = self.player_image if is_from_player else self.enemy_image
+        angle_deg = int(angle) % 360
+        self.angle[idx] = angle_deg
         
-        if self.is_from_player:
-            self.glow_image = self.glow_player
-        else:
-            self.glow_image = self.glow_enemy
+        angle_rad = math.radians(angle)
+        speed = self.base_speed * speed_scale
+        self.vel[idx, 0] = math.cos(angle_rad) * speed
+        self.vel[idx, 1] = -math.sin(angle_rad) * speed
+        
+        self.grazed[idx] = False
+        self.active_count += 1
 
-        if original_image is None:
-            size = (4, 4)
-            original_image = pygame.Surface(size, pygame.SRCALPHA)
-            color = (255, 200, 0) if is_from_player else (200, 50, 50)
-            pygame.draw.circle(original_image, color, (size[0] // 2, size[1] // 2), size[0] // 2)
-
-        
-        if direction_vector.length() > 0:
-            angle = direction_vector.angle_to(Vector2(1, 0))
+    def update(self, dt):
+        if self.active_count == 0:
+            return
             
-            self.image = pygame.transform.rotate(original_image, angle - 90)
-            
-            self.image.set_colorkey((0, 0, 0)) 
-            
-            self.vel = direction_vector.normalize() * self.speed
-        else:
-            self.image = original_image
-            
-            default_vel_y = -self.speed if is_from_player else self.speed
-            self.vel = Vector2(0, default_vel_y)
-
-        self.rect = self.image.get_rect(center=pos)
-        self.pos = Vector2(pos)
-
-    def update(self, dt: float) -> None:
-        self.pos += self.vel * dt
-        self.rect.center = (round(self.pos.x), round(self.pos.y))
+        n = self.active_count
+        self.pos[:n] += self.vel[:n] * dt
         
         world_w, world_h = config.INTERNAL_RESOLUTION
-        game_world_rect = pygame.Rect(-50, -50, world_w + 100, world_h + 100)
-        if not game_world_rect.colliderect(self.rect):
-            self.kill()
+        out_x = (self.pos[:n, 0] < -50) | (self.pos[:n, 0] > world_w + 100)
+        out_y = (self.pos[:n, 1] < -50) | (self.pos[:n, 1] > world_h + 100)
+        out_mask = out_x | out_y
+        
+        dead_indices = np.nonzero(out_mask)[0]
+        for i in reversed(dead_indices):
+            self.kill_bullet(i)
+
+    def kill_bullet(self, idx):
+        self.active_count -= 1
+        last_idx = self.active_count
+        if idx != last_idx:
+            self.pos[idx] = self.pos[last_idx]
+            self.vel[idx] = self.vel[last_idx]
+            self.angle[idx] = self.angle[last_idx]
+            self.grazed[idx] = self.grazed[last_idx]
+
+    def draw(self, surf):
+        if self.active_count == 0:
+            return
+            
+        n = self.active_count
+        pos_list = self.pos[:n].astype(int).tolist()
+        angle_list = self.angle[:n].tolist()
+        
+        glow_img = self.glow_player if self.is_player else self.glow_enemy
+        glow_w = glow_img.get_width() // 2
+        glow_h = glow_img.get_height() // 2
+        
+        images = self.player_images if self.is_player else self.enemy_images
+
+        for i in range(n):
+            px, py = pos_list[i]
+            surf.blit(glow_img, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
+            
+            img = images[angle_list[i]]
+            surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2), special_flags=pygame.BLEND_ADD)
