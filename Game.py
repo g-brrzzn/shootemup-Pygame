@@ -44,6 +44,9 @@ if config.set_fullscreen:
 
 if config.use_opengl:
     display_flags |= pygame.OPENGL
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
+    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
     screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
     shader_manager = ShaderManager(config.INTERNAL_RESOLUTION, screen.get_size())
     game_surface = shader_manager.get_draw_surface()
