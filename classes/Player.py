@@ -39,6 +39,7 @@ class Player(pygame.sprite.Sprite):
         self.image = self.original_sprites[self.current_sprite_index]
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect(center=pos)
+        self.hitbox = self.rect.copy()
 
         self.movement = pygame.math.Vector2()
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
@@ -102,20 +103,24 @@ class Player(pygame.sprite.Sprite):
     def get_controller_input(self, event):
         if event.button == 0: # A button on xbox
             self.firing = True
-        if event.button == 1: # B button on xbox
+        if event.button == 1: # B button on xbox  
             self.firing = True
-        if event.button == 5: # Right trigger on xbox
-            self.speed += 1 
-        if event.button == 4: # Left trigger on xbox
-            if self.speed >= 7:
-                self.speed -= 1
+        if event.button == 5: # Right trigger on xbox  
+            self.firing = True
+        if event.button == 4: # Left trigger on xbox  
+            self.firing = True
+                
                 
     def get_controller_keyup(self, event):
-        if event.button == 0: # A button on xbox
+        if event.button == 0:  
             self.firing = False
-        if event.button == 1: # B button on xbox
+        if event.button == 1:  
             self.firing = False
-    
+        if event.button == 5:  
+            self.firing = False
+        if event.button == 4:  
+            self.firing = False
+
     def get_joyhat_input(self, event):
         if event.hat == 0:
             x, y = event.value
@@ -195,7 +200,6 @@ class Player(pygame.sprite.Sprite):
 
     def upgrade(self):
         self.power_level = min(self.power_level + 1, 3)
-        self.shot_delay = max(0.1, self.shot_delay - 0.02)
 
     def update_particles(self):
         offset_x = randint(-12, 12)
@@ -277,7 +281,11 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(base_image, self.angle)
         self.image.set_colorkey((0, 0, 0))
 
-        self.rect = self.image.get_rect(center=self.rect.center)
+        original_center = self.rect.center
+        self.rect = self.image.get_rect(center=original_center)
+        
+        self.hitbox = self.rect.inflate(-20, -10)
+        self.hitbox.y += 15
 
         if self.firing and self.last_time - self.last_shot > self.shot_delay:
             self.fire()
@@ -334,8 +342,8 @@ class Player(pygame.sprite.Sprite):
             self.power_level = 1
             self.last_hit = current_time
             g_engine.explosion_system.create(
-                self.rect.center[0] - SPRITE_SIZE / 2,
-                self.rect.center[1] - SPRITE_SIZE,
+                self.rect.centerx,
+                self.rect.centery,
                 PLAYER_COLOR_GREEN,
                 speed=-5,
             )

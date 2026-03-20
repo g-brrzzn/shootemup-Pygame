@@ -129,7 +129,7 @@ class BulletSystem:
 
         for i in range(n):
             px, py = pos_list[i]
-            surf.blit(glow_img, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
-            
             img = images[angle_list[i]]
-            surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2), special_flags=pygame.BLEND_ADD)
+            
+            surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2))
+            surf.blit(glow_img, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
