@@ -42,7 +42,9 @@ class AssetManager:
         self.images['boss_1_2'] = self._load_sprite(os.path.join('sprites', 'enemies', 'boss_1', 'boss_1_2.png'), scale=scale_factor * 2, flip_y=True)
         
         # Other
-        self.images['icon'] = self._load_image(os.path.join('sprites', 'player', 'player_idle1.png'))
+        self.images["icon"] = self._load_sprite(
+            os.path.join("sprites", "player", "player_idle1.png"), (32, 32)
+        )
 
 
     def _load_sounds(self):
