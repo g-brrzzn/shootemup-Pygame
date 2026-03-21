@@ -58,25 +58,17 @@ class Options(GameState):
             if event.key in CONTROLS["RIGHT"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                 if self.selected == 0:
-                    selec = config.RESOLUTIONS.index(self.config_res)
-                    if selec == 0:
-                        self.config_res = config.RESOLUTIONS[0]
-                    else:
-                        self.config_res = config.RESOLUTIONS[selec - 1]
-                        selec -= 1
+                    selected_res = config.RESOLUTIONS.index(self.config_res)
+                    selected_res = max(0, selected_res - 1)
+                    self.config_res = config.RESOLUTIONS[selected_res]
                 config.window_size = self.config_res
 
             if event.key in CONTROLS["LEFT"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                 if self.selected == 0:
-                    selec = config.RESOLUTIONS.index(self.config_res)
-                    if selec == len(config.RESOLUTIONS) - 1:
-                        self.config_res = config.RESOLUTIONS[
-                            len(config.RESOLUTIONS) - 1
-                        ]
-                    else:
-                        self.config_res = config.RESOLUTIONS[selec + 1]
-                        selec += 1
+                    selected_res = config.RESOLUTIONS.index(self.config_res)
+                    selected_res = min(len(config.RESOLUTIONS) - 1, selected_res + 1)
+                    self.config_res = config.RESOLUTIONS[selected_res]
                 config.window_size = self.config_res
 
             if event.key in CONTROLS["START"]:
@@ -124,25 +116,19 @@ class Options(GameState):
                 if x == 1:
                     pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                     if self.selected == 0:
-                        selec = config.RESOLUTIONS.index(self.config_res)
-                        if selec == 0:
-                            self.config_res = config.RESOLUTIONS[0]
-                        else:
-                            self.config_res = config.RESOLUTIONS[selec - 1]
-                            selec -= 1
+                        selected_res = config.RESOLUTIONS.index(self.config_res)
+                        selected_res = max(0, selected_res - 1)
+                        self.config_res = config.RESOLUTIONS[selected_res]
                     config.window_size = self.config_res
 
                 elif x == -1:
                     pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                     if self.selected == 0:
-                        selec = config.RESOLUTIONS.index(self.config_res)
-                        if selec == len(config.RESOLUTIONS) - 1:
-                            self.config_res = config.RESOLUTIONS[
-                                len(config.RESOLUTIONS) - 1
-                            ]
-                        else:
-                            self.config_res = config.RESOLUTIONS[selec + 1]
-                            selec += 1
+                        selected_res = config.RESOLUTIONS.index(self.config_res)
+                        selected_res = min(
+                            len(config.RESOLUTIONS) - 1, selected_res + 1
+                        )
+                        self.config_res = config.RESOLUTIONS[selected_res]
                     config.window_size = self.config_res
 
         if event.type == JOYBUTTONDOWN:
