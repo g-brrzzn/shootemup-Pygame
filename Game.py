@@ -4,6 +4,7 @@ import sys
 from time import time
 import random
 import numpy as np
+from platform import system
 
 from game_engine import g_engine
 from classes.Bullet import BulletSystem
@@ -21,7 +22,7 @@ from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
 from states.GameOver import GameOver, Exit
-from states.States_util import vertical, draw_text
+from states.States_util import vertical, draw_text, intercept_macos_controller
 
 from constants.global_var import (
     SCALE,
@@ -38,6 +39,8 @@ from constants.ShaderManager import ShaderManager
 pygame.init()
 clock = pygame.time.Clock()
 last_time = time()
+
+g_engine.platform = system()
 
 display_flags = pygame.DOUBLEBUF
 if config.set_fullscreen:
@@ -456,6 +459,8 @@ class GameRunner(object):
 
     def get_events(self):
         for event in pygame.event.get():
+            if g_engine.platform == "Darwin":
+                intercept_macos_controller(event)
             if event.type == pygame.QUIT:
                 self.quit()
             self.state.get_event(event)

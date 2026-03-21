@@ -1,4 +1,5 @@
 import pygame
+from pygame.locals import *
 from game_engine import g_engine
 from constants.global_var import (
     config,
@@ -8,6 +9,7 @@ from constants.global_var import (
     TITLE_YELLOW_2,
     BACKGROUND_COLOR_MENU_1,
     GAME_COLOR,
+    CONTROLS,
 )
 
 
@@ -90,7 +92,7 @@ def menu_maker(options, title, selected, surf, is_settings):
     internal_w, internal_h = config.INTERNAL_RESOLUTION
     half_w = internal_w / 2
     half_h = internal_h / 2
-    
+
     pct_5_w = internal_w * 0.05
     pct_10_w = internal_w * 0.1
     pct_15_w = internal_w * 0.15
@@ -104,12 +106,7 @@ def menu_maker(options, title, selected, surf, is_settings):
     vertical(surf)
 
     # Title background
-    title_bg_rect = (
-        half_w - pct_5_w,
-        half_h - pct_5_h * 4.15,
-        pct_10_w + 5,
-        pct_5_h
-    )
+    title_bg_rect = (half_w - pct_5_w, half_h - pct_5_h * 4.15, pct_10_w + 5, pct_5_h)
     pygame.draw.rect(surf, BACKGROUND_COLOR_MENU_1, title_bg_rect)
 
     draw_text(surf, title, half_w, half_h - pct_10_w * 1.0)
@@ -122,16 +119,31 @@ def menu_maker(options, title, selected, surf, is_settings):
         half_w - pct_5_w,
         half_h - pct_5_w * 2.3,
         pct_5_w * 2,
-        pct_5_w * 0.5
+        pct_5_w * 0.5,
     )
     pygame.draw.rect(surf, outline_color, title_outline_rect, outline_thickness)
 
     menu_lines = [
-        ((half_w + pct_5_w, half_h - pct_10_w), (half_w + pct_10_w, half_h - pct_10_w)),  # Top-right outline
-        ((half_w - pct_5_w, half_h - pct_10_w), (half_w - pct_10_w, half_h - pct_10_w)),  # Top-left outline
-        ((half_w + pct_10_w, half_h - pct_10_w), (half_w + pct_10_w, half_h + lowest_y)), # Right outline
-        ((half_w - pct_10_w, half_h - pct_10_w), (half_w - pct_10_w, half_h + lowest_y)), # Left outline
-        ((half_w - pct_10_w, half_h + lowest_y), (half_w + pct_10_w, half_h + lowest_y)), # Bottom outline
+        (
+            (half_w + pct_5_w, half_h - pct_10_w),
+            (half_w + pct_10_w, half_h - pct_10_w),
+        ),  # Top-right outline
+        (
+            (half_w - pct_5_w, half_h - pct_10_w),
+            (half_w - pct_10_w, half_h - pct_10_w),
+        ),  # Top-left outline
+        (
+            (half_w + pct_10_w, half_h - pct_10_w),
+            (half_w + pct_10_w, half_h + lowest_y),
+        ),  # Right outline
+        (
+            (half_w - pct_10_w, half_h - pct_10_w),
+            (half_w - pct_10_w, half_h + lowest_y),
+        ),  # Left outline
+        (
+            (half_w - pct_10_w, half_h + lowest_y),
+            (half_w + pct_10_w, half_h + lowest_y),
+        ),  # Bottom outline
     ]
 
     for start_pos, end_pos in menu_lines:
@@ -150,16 +162,40 @@ def menu_maker(options, title, selected, surf, is_settings):
 
         if i == selected:
             draw_text(surf, option, half_w, item_y, GAME_COLOR)
-            
+
             if len(option) < 10:
                 x_offset = pct_5_w
             elif len(option) < 20:
                 x_offset = pct_5_w * 1.5
             else:
                 x_offset = pct_5_w * 1.9
-                
+
             cursor_y = item_y - 5
             draw_text(surf, "|", half_w + x_offset, cursor_y, GAME_COLOR)
             draw_text(surf, "|", half_w - x_offset, cursor_y, GAME_COLOR)
         else:
             draw_text(surf, option, half_w, item_y)
+
+
+def intercept_macos_controller(event):
+    if event.type == JOYBUTTONDOWN:
+        if event.button == 6:
+            pygame.event.post(pygame.event.Event(JOYBUTTONDOWN, button=7))
+        if event.button == 11:
+            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["UP"][0]))
+        if event.button == 12:
+            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["DOWN"][0]))
+        if event.button == 13:
+            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["LEFT"][0]))
+        if event.button == 14:
+            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["RIGHT"][0]))
+
+    if event.type == JOYBUTTONUP:
+        if event.button == 11:
+            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["UP"][0]))
+        if event.button == 12:
+            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["DOWN"][0]))
+        if event.button == 13:
+            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["LEFT"][0]))
+        if event.button == 14:
+            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["RIGHT"][0]))
