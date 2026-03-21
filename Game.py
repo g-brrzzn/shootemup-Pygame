@@ -47,7 +47,9 @@ if config.use_opengl:
     display_flags |= pygame.OPENGL
     pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MAJOR_VERSION, 3)
     pygame.display.gl_set_attribute(pygame.GL_CONTEXT_MINOR_VERSION, 3)
-    pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
+    pygame.display.gl_set_attribute(
+        pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
+    )
     screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
     shader_manager = ShaderManager(config.INTERNAL_RESOLUTION, screen.get_size())
     game_surface = shader_manager.get_draw_surface()
@@ -60,6 +62,7 @@ else:
 
 g_engine.assets = AssetManager()
 g_engine.assets.load_assets(SCALE)
+pygame.display.set_icon(g_engine.assets.get_image("icon"))
 BulletSystem.load_assets(g_engine.assets)
 EnemyBase.load_assets(g_engine.assets)
 
@@ -98,7 +101,7 @@ class Game(GameState):
             amount=20, min_s=4.0, max_s=6.0, color=(200, 220, 255), size=4, alpha=60
         )
         self.particles = pygame.sprite.Group()
-        
+
         g_engine.spark_system = SparkSystem(max_particles=5000)
         g_engine.explosion_system = ExplosionSystem(max_particles=5000)
 
@@ -205,13 +208,13 @@ class Game(GameState):
         g_engine.all_sprites.update(dt)
         g_engine.player_bullets.update(dt)
         g_engine.enemy_bullets.update(dt)
-        
+
         base_speed = g_engine.level * 0.5
 
         self.stars_back.update(gravity=base_speed * 0.1, dt=dt)
         self.stars_mid.update(gravity=base_speed * 0.5, dt=dt)
         self.stars_front.update(gravity=base_speed * 1.5, dt=dt)
-        
+
         g_engine.explosion_system.update(dt)
         self.particles.update(dt)
 
@@ -220,25 +223,37 @@ class Game(GameState):
             n = g_engine.enemy_bullets.active_count
             b_x = g_engine.enemy_bullets.pos[:n, 0]
             b_y = g_engine.enemy_bullets.pos[:n, 1]
-            
+
             not_grazed = ~g_engine.enemy_bullets.grazed[:n]
-            grazes = np.nonzero((b_x >= p_rect.left - 40) & (b_x <= p_rect.right + 40) & 
-                                (b_y >= p_rect.top - 40) & (b_y <= p_rect.bottom + 40) & not_grazed)[0]
-            
+            grazes = np.nonzero(
+                (b_x >= p_rect.left - 40)
+                & (b_x <= p_rect.right + 40)
+                & (b_y >= p_rect.top - 40)
+                & (b_y <= p_rect.bottom + 40)
+                & not_grazed
+            )[0]
+
             for g in grazes:
                 g_engine.enemy_bullets.grazed[g] = True
                 g_engine.score += 50
                 g_engine.spark_system.emit(
-                    pos=(g_engine.enemy_bullets.pos[g, 0], g_engine.enemy_bullets.pos[g, 1]),
+                    pos=(
+                        g_engine.enemy_bullets.pos[g, 0],
+                        g_engine.enemy_bullets.pos[g, 1],
+                    ),
                     angle=random.randint(0, 360),
                     speed=random.randint(3, 7),
                     color=(100, 200, 255),
-                    scale=1.2
+                    scale=1.2,
                 )
-                
-            hits = np.nonzero((b_x >= p_rect.left) & (b_x <= p_rect.right) & 
-                              (b_y >= p_rect.top) & (b_y <= p_rect.bottom))[0]
-                              
+
+            hits = np.nonzero(
+                (b_x >= p_rect.left)
+                & (b_x <= p_rect.right)
+                & (b_y >= p_rect.top)
+                & (b_y <= p_rect.bottom)
+            )[0]
+
             if len(hits) > 0:
                 g_engine.player.take_damage()
                 g_engine.hit_stop_frames = 5
@@ -251,41 +266,55 @@ class Game(GameState):
             n = g_engine.player_bullets.active_count
             b_x = g_engine.player_bullets.pos[:n, 0]
             b_y = g_engine.player_bullets.pos[:n, 1]
-            
+
             bullets_to_kill = set()
-            
+
             for enemy in list(g_engine.all_enemies):
-                ex, ey, ew, eh = enemy.rect.x, enemy.rect.y, enemy.rect.width, enemy.rect.height
-                hits = np.nonzero((b_x >= ex) & (b_x <= ex + ew) & (b_y >= ey) & (b_y <= ey + eh))[0]
-                
+                ex, ey, ew, eh = (
+                    enemy.rect.x,
+                    enemy.rect.y,
+                    enemy.rect.width,
+                    enemy.rect.height,
+                )
+                hits = np.nonzero(
+                    (b_x >= ex) & (b_x <= ex + ew) & (b_y >= ey) & (b_y <= ey + eh)
+                )[0]
+
                 valid_hits = [h for h in hits if h not in bullets_to_kill]
-                
+
                 if valid_hits:
                     for h in valid_hits:
                         bullets_to_kill.add(h)
-                        
+
                     if isinstance(enemy, Boss):
-                        g_engine.explosion_system.create(enemy.rect.centerx, enemy.rect.centery + random.randint(-20, 20))
+                        g_engine.explosion_system.create(
+                            enemy.rect.centerx,
+                            enemy.rect.centery + random.randint(-20, 20),
+                        )
                         enemy.damage()
                     else:
-                        g_engine.explosion_system.create(enemy.rect.centerx, enemy.rect.centery)
+                        g_engine.explosion_system.create(
+                            enemy.rect.centerx, enemy.rect.centery
+                        )
                         enemy.damage()
-                        
+
                     for _ in range(random.randint(4, 8)):
                         g_engine.spark_system.emit(
                             pos=enemy.rect.center,
                             angle=random.randint(0, 360),
                             speed=random.randint(3, 10),
                             color=(255, 255, 180),
-                            scale=1.5
+                            scale=1.5,
                         )
-            
+
             for h in sorted(list(bullets_to_kill), reverse=True):
                 g_engine.player_bullets.kill_bullet(h)
 
         powerup_hits = pygame.sprite.spritecollide(
-            g_engine.player, g_engine.powerups, True,
-            collided=lambda p, pw: p.hitbox.colliderect(pw.rect)
+            g_engine.player,
+            g_engine.powerups,
+            True,
+            collided=lambda p, pw: p.hitbox.colliderect(pw.rect),
         )
         for powerup in powerup_hits:
             if powerup.p_type == "weapon":
@@ -297,8 +326,10 @@ class Game(GameState):
         g_engine.spark_system.update(dt)
 
         player_crashes = pygame.sprite.spritecollide(
-            g_engine.player, g_engine.all_enemies, False,
-            collided=lambda p, e: p.hitbox.colliderect(e.rect)
+            g_engine.player,
+            g_engine.all_enemies,
+            False,
+            collided=lambda p, e: p.hitbox.colliderect(e.rect),
         )
         if player_crashes:
             g_engine.player.take_damage()
@@ -446,7 +477,6 @@ class GameRunner(object):
         sys.exit()
 
     def draw(self):
-        pygame.display.set_icon(g_engine.assets.get_image("icon"))
         pygame.display.set_caption(
             f"Shoot 'em Up - Pygame. FPS: {int(clock.get_fps())}"
         )
