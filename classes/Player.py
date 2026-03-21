@@ -4,8 +4,6 @@ from pygame.locals import *
 from random import randint, choice
 
 from game_engine import g_engine
-from classes.Bullet import Bullet
-from classes.particles.Explosion import Explosion
 from constants.global_var import (
     MAX_LIFE,
     CONTROLS,
@@ -14,7 +12,6 @@ from constants.global_var import (
     PLAYER_COLOR_GREEN,
     GAME_COLOR,
 )
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, *groups):
@@ -42,12 +39,12 @@ class Player(pygame.sprite.Sprite):
         self.image = self.original_sprites[self.current_sprite_index]
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect(center=pos)
+        self.hitbox = self.rect.copy()
 
         self.movement = pygame.math.Vector2()
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
 
         self.life = MAX_LIFE
-        self.explosion = Explosion()
 
         self.last_hit = 0
         self.invincibility_duration = 100
@@ -104,20 +101,24 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def get_controller_input(self, event):
-        if event.button == 0:  # A button on xbox
+        if event.button == 0: # A button on xbox
             self.firing = True
-        if event.button == 1:  # B button on xbox
+        if event.button == 1: # B button on xbox  
             self.firing = True
-        if event.button == 5:  # right bumper
-            self.speed += 1
-        if event.button == 4:  # left bumper
-            if self.speed >= 7:
-                self.speed -= 1
+        if event.button == 5: # Right trigger on xbox  
+            self.firing = True
+        if event.button == 4: # Left trigger on xbox  
+            self.firing = True
+                
                 
     def get_controller_keyup(self, event):
-        if event.button == 0:  # A button on xbox
+        if event.button == 0:  
             self.firing = False
-        if event.button == 1:  # B button on xbox
+        if event.button == 1:  
+            self.firing = False
+        if event.button == 5:  
+            self.firing = False
+        if event.button == 4:  
             self.firing = False
 
     def get_joyhat_input(self, event):
@@ -188,11 +189,9 @@ class Player(pygame.sprite.Sprite):
             options["count"] = 3
             options["spread_arc"] = 30
 
-        Bullet.create_bullets(
+        g_engine.player_bullets.emit_pattern(
             pattern=pattern,
             pos=self.rect.center,
-            is_from_player=True,
-            groups=(g_engine.player_bullets, g_engine.all_sprites),
             options=options,
         )
         pygame.mixer.Sound.play(g_engine.assets.get_sound("shoot"))
@@ -201,7 +200,6 @@ class Player(pygame.sprite.Sprite):
 
     def upgrade(self):
         self.power_level = min(self.power_level + 1, 3)
-        self.shot_delay = max(0.1, self.shot_delay - 0.02)
 
     def update_particles(self):
         offset_x = randint(-12, 12)
@@ -233,7 +231,6 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt):
         self.last_time = time()
-        self.explosion.update(dt)
         self.update_particles()
 
         max_flash_radius = 25
@@ -284,7 +281,11 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(base_image, self.angle)
         self.image.set_colorkey((0, 0, 0))
 
-        self.rect = self.image.get_rect(center=self.rect.center)
+        original_center = self.rect.center
+        self.rect = self.image.get_rect(center=original_center)
+        
+        self.hitbox = self.rect.inflate(-20, -10)
+        self.hitbox.y += 15
 
         if self.firing and self.last_time - self.last_shot > self.shot_delay:
             self.fire()
@@ -315,7 +316,6 @@ class Player(pygame.sprite.Sprite):
             )
             surf.blit(particle_surf, (x - radius_int, y - radius_int))
 
-        self.explosion.draw(surf)
 
     def draw_muzzle_flash(self, surf):
         max_flash_radius = 25.0
@@ -341,9 +341,9 @@ class Player(pygame.sprite.Sprite):
             self.life -= 1
             self.power_level = 1
             self.last_hit = current_time
-            self.explosion.create(
-                self.rect.center[0] - SPRITE_SIZE / 2,
-                self.rect.center[1] - SPRITE_SIZE,
+            g_engine.explosion_system.create(
+                self.rect.centerx,
+                self.rect.centery,
                 PLAYER_COLOR_GREEN,
                 speed=-5,
             )

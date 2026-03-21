@@ -30,13 +30,13 @@ void main() {
 
 def from_surface_to_texture(gl_context: moderngl.Context, surface: pygame.Surface):
     texture = gl_context.texture(surface.get_size(), 4)
-    texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
+    texture.filter = (moderngl.LINEAR, moderngl.LINEAR)
     texture.write(pygame.image.tobytes(surface, "RGBA", True))
     return texture
 
 def create_texture(gl_context: moderngl.Context, size: tuple):
     texture = gl_context.texture(size, 4)
-    texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
+    texture.filter = (moderngl.LINEAR, moderngl.LINEAR)
     return texture
 
 def write_to_texture(texture: moderngl.Texture, surface: pygame.Surface):

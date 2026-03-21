@@ -1,51 +1,75 @@
-import math
-from dataclasses import dataclass
-from typing import Tuple, List
-from random import uniform
 import pygame
-from pygame.math import Vector2
+import numpy as np
 
-@dataclass
-class Particle:
-    pos: Vector2
-    origin: Vector2
-    vel: Vector2
-    color: Tuple[int, int, int]
-    max_range: float
+class ExplosionSystem:
+    def __init__(self, max_particles=10000):
+        self.max_particles = max_particles
+        self.active_count = 0
+        
+        self.pos = np.zeros((max_particles, 2), dtype=np.float32)
+        self.origin = np.zeros((max_particles, 2), dtype=np.float32)
+        self.vel = np.zeros((max_particles, 2), dtype=np.float32)
+        self.color = np.zeros((max_particles, 3), dtype=np.uint8)
+        self.max_range_sq = np.zeros(max_particles, dtype=np.float32)
 
-class Explosion:
-    def __init__(self):
-        self.particles: List[Particle] = []
-
-    def create(self, x: float, y: float,
-               color: Tuple[int, int, int] = (221, 245, 154),
-               count: int = 80,
-               e_range: float = 50,
-               speed: float = 10.0,
-               range_variation: float = 0.4) -> None:
-        origin = Vector2(x, y)
-        for _ in range(count):
-            angle = uniform(0, 2 * math.pi)
-            magnitude = uniform(0.2, 1.0) * speed
-            vel = Vector2(math.cos(angle), math.sin(angle)) * magnitude
-            random_factor = 1.0 + uniform(-range_variation, range_variation)
-            particle_range = e_range * random_factor
+    def create(self, x, y, color=(221, 245, 154), count=80, e_range=50.0, speed=10.0, range_variation=0.4):
+        if self.active_count >= self.max_particles:
+            return
             
-            p = Particle(pos=origin.copy(),
-                         origin=origin.copy(),
-                         vel=vel,
-                         color=color,
-                         max_range=particle_range)
-            self.particles.append(p)
+        available = self.max_particles - self.active_count
+        spawn_count = min(count, available)
+        
+        start_idx = self.active_count
+        end_idx = start_idx + spawn_count
 
-    def update(self, dt: float) -> None:
-        alive: List[Particle] = []
-        for p in self.particles:
-            p.pos += p.vel * dt
-            if (p.pos - p.origin).length_squared() <= (p.max_range * p.max_range):
-                alive.append(p)
-        self.particles = alive
+        angles = np.random.uniform(0, 2 * np.pi, spawn_count)
+        magnitudes = np.random.uniform(0.2, 1.0, spawn_count) * speed
+        
+        self.vel[start_idx:end_idx, 0] = np.cos(angles) * magnitudes
+        self.vel[start_idx:end_idx, 1] = np.sin(angles) * magnitudes
+        
+        random_factors = 1.0 + np.random.uniform(-range_variation, range_variation, spawn_count)
+        self.max_range_sq[start_idx:end_idx] = (e_range * random_factors) ** 2
+        
+        self.pos[start_idx:end_idx, 0] = x
+        self.pos[start_idx:end_idx, 1] = y
+        self.origin[start_idx:end_idx, 0] = x
+        self.origin[start_idx:end_idx, 1] = y
+        self.color[start_idx:end_idx] = color
+        
+        self.active_count += spawn_count
 
-    def draw(self, surf: pygame.Surface) -> None:
-        for p in self.particles:
-            pygame.draw.circle(surf, p.color, (int(p.pos.x), int(p.pos.y)), 3)
+    def update(self, dt):
+        if self.active_count == 0:
+            return
+            
+        n = self.active_count
+        self.pos[:n] += self.vel[:n] * dt
+        
+        dist_x = self.pos[:n, 0] - self.origin[:n, 0]
+        dist_y = self.pos[:n, 1] - self.origin[:n, 1]
+        dist_sq = dist_x * dist_x + dist_y * dist_y
+        
+        dead_indices = np.nonzero(dist_sq > self.max_range_sq[:n])[0]
+        
+        for i in reversed(dead_indices):
+            self.active_count -= 1
+            last_idx = self.active_count
+            
+            if i != last_idx:
+                self.pos[i] = self.pos[last_idx]
+                self.origin[i] = self.origin[last_idx]
+                self.vel[i] = self.vel[last_idx]
+                self.color[i] = self.color[last_idx]
+                self.max_range_sq[i] = self.max_range_sq[last_idx]
+
+    def draw(self, surf):
+        if self.active_count == 0:
+            return
+            
+        n = self.active_count
+        pos_list = self.pos[:n].astype(int).tolist()
+        color_list = self.color[:n].tolist()
+        
+        for i in range(n):
+            pygame.draw.circle(surf, color_list[i], pos_list[i], 3)

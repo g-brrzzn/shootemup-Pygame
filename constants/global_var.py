@@ -1,9 +1,16 @@
 import pygame
 import json
 import os
+import platform
+
+if platform.system() == "Windows":
+    try:
+        import ctypes
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
 
 CONFIG_FILE = "settings.json"
-
 
 class Configs:
     def __init__(self):
@@ -116,8 +123,6 @@ BACKGROUND_COLOR = (15, 25, 27, 200)
 BACKGROUND_COLOR_1 = BACKGROUND_COLOR
 BACKGROUND_COLOR_2 = BACKGROUND_COLOR
 
-# GREEN = (57, 194, 163)
-# PINK = (255, 113, 206)
 GAME_COLOR = (100, 40, 80)
 
 BACKGROUND_COLOR_GAME_1 = (
