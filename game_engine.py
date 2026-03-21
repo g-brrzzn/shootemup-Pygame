@@ -17,5 +17,7 @@ class GameEngine:
         self.glow_cache = {}
         self.joystick = None
         self.shader_manager = None
+        self.platform = None
+
 
 g_engine = GameEngine()
