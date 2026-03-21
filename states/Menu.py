@@ -24,6 +24,7 @@ class Menu(GameState):
         self.fall = Fall(
             amount=120, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=3
         )
+        self.buttons = ["START", "OPTIONS", "EXIT"]
 
     def start(self):
         self.selected = 0
@@ -63,24 +64,16 @@ class Menu(GameState):
                 hs_y_pos,
                 TITLE_YELLOW_1,
             )
-        menu_maker(
-            ["START", "OPTIONS", "EXIT"], __class__.__name__, self.selected, surf, False
-        )
+        menu_maker(self.buttons, __class__.__name__, self.selected, surf, False)
 
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                if self.selected == 2:
-                    self.selected = 0
-                else:
-                    self.selected += 1
+                self.selected = (self.selected + 1) % len(self.buttons)
             if event.key in CONTROLS["UP"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                if self.selected == 0:
-                    self.selected = 2
-                else:
-                    self.selected -= 1
+                self.selected = (self.selected - 1) % len(self.buttons)
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
@@ -99,16 +92,10 @@ class Menu(GameState):
 
                 if y == -1:
                     pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    if self.selected == 2:
-                        self.selected = 0
-                    else:
-                        self.selected += 1
+                    self.selected = (self.selected + 1) % len(self.buttons)
                 elif y == 1:
                     pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    if self.selected == 0:
-                        self.selected = 2
-                    else:
-                        self.selected -= 1
+                    self.selected = (self.selected - 1) % len(self.buttons)
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
@@ -128,29 +115,36 @@ class Menu(GameState):
             g_engine.joystick = joystick
         if event.type == JOYDEVICEREMOVED:
             g_engine.joystick = None
-            
-            
+
         if event.type == JOYAXISMOTION and config.use_analog_stick:
             deadzone = 0.5
-            
+
             if event.axis == 1:
-                if event.value > deadzone and not getattr(self, 'axis_down', False):
+                if event.value > deadzone and not getattr(self, "axis_down", False):
                     self.axis_down = True
-                    pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1)))
-                elif event.value < -deadzone and not getattr(self, 'axis_up', False):
+                    pygame.event.post(
+                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1))
+                    )
+                elif event.value < -deadzone and not getattr(self, "axis_up", False):
                     self.axis_up = True
-                    pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1)))
+                    pygame.event.post(
+                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1))
+                    )
                 elif abs(event.value) < deadzone:
                     self.axis_down = False
                     self.axis_up = False
 
             if event.axis == 0:
-                if event.value > deadzone and not getattr(self, 'axis_right', False):
+                if event.value > deadzone and not getattr(self, "axis_right", False):
                     self.axis_right = True
-                    pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0)))
-                elif event.value < -deadzone and not getattr(self, 'axis_left', False):
+                    pygame.event.post(
+                        pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0))
+                    )
+                elif event.value < -deadzone and not getattr(self, "axis_left", False):
                     self.axis_left = True
-                    pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0)))
+                    pygame.event.post(
+                        pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0))
+                    )
                 elif abs(event.value) < deadzone:
                     self.axis_right = False
                     self.axis_left = False
