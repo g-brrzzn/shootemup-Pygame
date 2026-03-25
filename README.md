@@ -10,11 +10,9 @@ This project goes beyond a simple game script. It was developed to serve as a ro
 
 ## 📸 Gameplay & Visuals
 
-https://github.com/user-attachments/assets/f3a289c4-248d-4a58-97a9-7048cefac95f
+<https://github.com/user-attachments/assets/f3a289c4-248d-4a58-97a9-7048cefac95f>
 
-<br>
-
-<img width="2560" height="1440" alt="Menu Screen" src="https://github.com/user-attachments/assets/9fcf35c6-c23c-4212-9f83-d8f610e50c7a" />
+![Menu Screenshot](https://github.com/user-attachments/assets/9fcf35c6-c23c-4212-9f83-d8f610e50c7a)
 
 ## ✨ Key Features & Engine Mechanics
 
@@ -32,12 +30,12 @@ The codebase is highly modularized, containing several advanced mechanics built 
 
 The game features standard arcade controls, plus hidden developer keys used for testing game balance:
 
-| Action              | Keyboard                            | Controller      |
-| :------------------ | :---------------------------------- | :-------------- |
-| **Move**            | `W` `A` `S` `D` or `Arrow Keys`     | `D-Pad`         |
-| **Shoot**           | `Space`                             | `Right Trigger` |
-| **Menu Navigation** | `Up` / `Down` and `Enter` / `Space` | `D-Pad` and `A` |
-| **Pause / Back**    | `ESC`                               | `Start` / `B`   |
+| Action              | Keyboard                            | Controller              |
+| :------------------ | :---------------------------------- | :---------------------- |
+| **Move**            | `W` `A` `S` `D` or `Arrow Keys`     | `Left Stick` or `D-Pad` |
+| **Shoot**           | `Space`                             | `Right Trigger`         |
+| **Menu Navigation** | `Up` / `Down` and `Enter` / `Space` | `D-Pad` and `A`         |
+| **Pause / Back**    | `ESC`                               | `Start` / `B`           |
 
 ---
 
@@ -56,25 +54,18 @@ The game features standard arcade controls, plus hidden developer keys used for 
    ```console
    git clone https://github.com/g-brrzzn/shootemup-Pygame
    cd shootemup-Pygame
-
    ```
 
 1. **Install the requirements:**
 
-   Shell
-
-   ```
+   ```console
    python -m pip install -r requirements.txt
-
    ```
 
 1. **Launch the game:**
 
-   Shell
-
-   ```
+   ```console
    python Game.py
-
    ```
 
 ---
