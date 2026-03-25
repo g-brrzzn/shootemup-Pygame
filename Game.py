@@ -22,7 +22,7 @@ from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
 from states.GameOver import GameOver, Exit
-from states.States_util import vertical, draw_text, intercept_macos_controller
+from states.States_util import vertical, draw_text
 
 from constants.global_var import (
     SCALE,
@@ -183,7 +183,11 @@ class Game(GameState):
             g_engine.player.get_input_keyup(event)
         if event.type == JOYBUTTONDOWN:
             g_engine.player.get_controller_input(event)
-            if event.button == 7:
+            if (
+                event.button == 7
+                or (event.button == 11 and g_engine.platform == "Linux")
+                or (event.button == 6 and g_engine.platform == "Darwin")
+            ):
                 self.done = True
         if event.type == JOYBUTTONUP:
             g_engine.player.get_controller_keyup(event)
@@ -459,8 +463,6 @@ class GameRunner(object):
 
     def get_events(self):
         for event in pygame.event.get():
-            if g_engine.platform == "Darwin":
-                intercept_macos_controller(event)
             if event.type == pygame.QUIT:
                 self.quit()
             self.state.get_event(event)

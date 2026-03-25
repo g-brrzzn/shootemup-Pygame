@@ -13,6 +13,7 @@ from constants.global_var import (
     GAME_COLOR,
 )
 
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, *groups):
         super().__init__(*groups)
@@ -101,25 +102,44 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def get_controller_input(self, event):
-        if event.button == 0: # A button on xbox
+        if event.button == 0:  # A button on xbox
             self.firing = True
-        if event.button == 1: # B button on xbox  
+        if event.button == 1:  # B button on xbox
             self.firing = True
-        if event.button == 5: # Right trigger on xbox  
+        if event.button == 5:  # Right trigger on xbox
             self.firing = True
-        if event.button == 4: # Left trigger on xbox  
+        if event.button == 4:  # Left trigger on xbox
             self.firing = True
-                
-                
+
+        if g_engine.platform == "Darwin":
+            if event.button == 11:
+                self.moving_up = True
+            if event.button == 12:
+                self.moving_down = True
+            if event.button == 13:
+                self.moving_left = True
+            if event.button == 14:
+                self.moving_right = True
+
     def get_controller_keyup(self, event):
-        if event.button == 0:  
+        if event.button == 0:
             self.firing = False
-        if event.button == 1:  
+        if event.button == 1:
             self.firing = False
-        if event.button == 5:  
+        if event.button == 5:
             self.firing = False
-        if event.button == 4:  
+        if event.button == 4:
             self.firing = False
+
+        if g_engine.platform == "Darwin":
+            if event.button == 11:
+                self.moving_up = False
+            if event.button == 12:
+                self.moving_down = False
+            if event.button == 13:
+                self.moving_left = False
+            if event.button == 14:
+                self.moving_right = False
 
     def get_joyhat_input(self, event):
         if event.hat == 0:
@@ -144,7 +164,7 @@ class Player(pygame.sprite.Sprite):
         if not config.use_analog_stick and event.axis in (0, 1):
             return
         deadzone = 0.3
-        
+
         if event.axis == 0:
             if event.value < -deadzone:
                 self.moving_left = True
@@ -155,7 +175,7 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.moving_left = False
                 self.moving_right = False
-                
+
         if event.axis == 1:
             if event.value < -deadzone:
                 self.moving_up = True
@@ -167,7 +187,7 @@ class Player(pygame.sprite.Sprite):
                 self.moving_up = False
                 self.moving_down = False
 
-        if event.axis == 5:
+        if event.axis == 5 or (event.axis == 4 and g_engine.platform == "Linux"):
             if event.value > 0.5:
                 self.firing = True
             else:
@@ -283,7 +303,7 @@ class Player(pygame.sprite.Sprite):
 
         original_center = self.rect.center
         self.rect = self.image.get_rect(center=original_center)
-        
+
         self.hitbox = self.rect.inflate(-20, -10)
         self.hitbox.y += 15
 
@@ -315,7 +335,6 @@ class Player(pygame.sprite.Sprite):
                 particle_surf, (*c, int(a)), (radius_int, radius_int), radius_int
             )
             surf.blit(particle_surf, (x - radius_int, y - radius_int))
-
 
     def draw_muzzle_flash(self, surf):
         max_flash_radius = 25.0
