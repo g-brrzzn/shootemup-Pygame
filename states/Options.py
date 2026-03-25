@@ -5,7 +5,16 @@ import os
 
 from game_engine import g_engine
 from .GameState import GameState
-from .States_util import vertical, menu_maker, get_on_off_status
+from .States_util import (
+    vertical,
+    menu_maker,
+    get_on_off_status,
+    menu_select_next,
+    menu_select_prev,
+    select_next_res,
+    select_prev_res,
+    handle_analog_stick,
+)
 from classes.particles.Fall import Fall
 from constants.global_var import (
     config,
@@ -49,27 +58,15 @@ class Options(GameState):
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                self.selected = (self.selected + 1) % len(self.options)
+                menu_select_next(self, self.options)
             if event.key in CONTROLS["UP"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                self.selected = (self.selected - 1) % len(self.options)
+                menu_select_prev(self, self.options)
 
             if event.key in CONTROLS["RIGHT"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                if self.selected == 0:
-                    selected_res = config.RESOLUTIONS.index(self.config_res)
-                    selected_res = max(0, selected_res - 1)
-                    self.config_res = config.RESOLUTIONS[selected_res]
-                config.window_size = self.config_res
+                select_next_res(self)
 
             if event.key in CONTROLS["LEFT"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                if self.selected == 0:
-                    selected_res = config.RESOLUTIONS.index(self.config_res)
-                    selected_res = min(len(config.RESOLUTIONS) - 1, selected_res + 1)
-                    self.config_res = config.RESOLUTIONS[selected_res]
-                config.window_size = self.config_res
+                select_prev_res(self)
 
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
@@ -107,29 +104,15 @@ class Options(GameState):
                 x, y = event.value
 
                 if y == -1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected + 1) % len(self.options)
+                    menu_select_next(self, self.options)
                 elif y == 1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected - 1) % len(self.options)
+                    menu_select_prev(self, self.options)
 
                 if x == 1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    if self.selected == 0:
-                        selected_res = config.RESOLUTIONS.index(self.config_res)
-                        selected_res = max(0, selected_res - 1)
-                        self.config_res = config.RESOLUTIONS[selected_res]
-                    config.window_size = self.config_res
+                    select_next_res(self)
 
                 elif x == -1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    if self.selected == 0:
-                        selected_res = config.RESOLUTIONS.index(self.config_res)
-                        selected_res = min(
-                            len(config.RESOLUTIONS) - 1, selected_res + 1
-                        )
-                        self.config_res = config.RESOLUTIONS[selected_res]
-                    config.window_size = self.config_res
+                    select_prev_res(self)
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
@@ -165,28 +148,14 @@ class Options(GameState):
 
             if g_engine.platform == "Darwin":
                 if event.button == 11:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected - 1) % len(self.options)
+                    menu_select_prev(self, self.options)
                 if event.button == 12:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected + 1) % len(self.options)
+                    menu_select_next(self, self.options)
 
                 if event.button == 13:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    if self.selected == 0:
-                        selected_res = config.RESOLUTIONS.index(self.config_res)
-                        selected_res = min(
-                            len(config.RESOLUTIONS) - 1, selected_res + 1
-                        )
-                        self.config_res = config.RESOLUTIONS[selected_res]
-                    config.window_size = self.config_res
+                    select_prev_res(self)
                 if event.button == 14:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    if self.selected == 0:
-                        selected_res = config.RESOLUTIONS.index(self.config_res)
-                        selected_res = max(0, selected_res - 1)
-                        self.config_res = config.RESOLUTIONS[selected_res]
-                    config.window_size = self.config_res
+                    select_next_res(self)
 
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
@@ -195,34 +164,4 @@ class Options(GameState):
             g_engine.joystick = None
 
         if event.type == JOYAXISMOTION and config.use_analog_stick:
-            deadzone = 0.5
-
-            if event.axis == 1:
-                if event.value > deadzone and not getattr(self, "axis_down", False):
-                    self.axis_down = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1))
-                    )
-                elif event.value < -deadzone and not getattr(self, "axis_up", False):
-                    self.axis_up = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1))
-                    )
-                elif abs(event.value) < deadzone:
-                    self.axis_down = False
-                    self.axis_up = False
-
-            if event.axis == 0:
-                if event.value > deadzone and not getattr(self, "axis_right", False):
-                    self.axis_right = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0))
-                    )
-                elif event.value < -deadzone and not getattr(self, "axis_left", False):
-                    self.axis_left = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0))
-                    )
-                elif abs(event.value) < deadzone:
-                    self.axis_right = False
-                    self.axis_left = False
+            handle_analog_stick(self, event)

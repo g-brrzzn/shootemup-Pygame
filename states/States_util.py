@@ -175,3 +175,57 @@ def menu_maker(options, title, selected, surf, is_settings):
             draw_text(surf, "|", half_w - x_offset, cursor_y, GAME_COLOR)
         else:
             draw_text(surf, option, half_w, item_y)
+
+
+def menu_select_next(menu, buttons):
+    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+    menu.selected = (menu.selected + 1) % len(buttons)
+
+
+def menu_select_prev(menu, buttons):
+    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+    menu.selected = (menu.selected - 1) % len(buttons)
+
+
+def select_prev_res(options):
+    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+    if options.selected == 0:
+        selected_res = config.RESOLUTIONS.index(options.config_res)
+        selected_res = min(len(config.RESOLUTIONS) - 1, selected_res + 1)
+        options.config_res = config.RESOLUTIONS[selected_res]
+    config.window_size = options.config_res
+
+
+def select_next_res(options):
+    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+    if options.selected == 0:
+        selected_res = config.RESOLUTIONS.index(options.config_res)
+        selected_res = max(0, selected_res - 1)
+        options.config_res = config.RESOLUTIONS[selected_res]
+    config.window_size = options.config_res
+
+
+def handle_analog_stick(menu, event):
+    deadzone = 0.5
+
+    if event.axis == 1:
+        if event.value > deadzone and not getattr(menu, "axis_down", False):
+            menu.axis_down = True
+            pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1)))
+        elif event.value < -deadzone and not getattr(menu, "axis_up", False):
+            menu.axis_up = True
+            pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1)))
+        elif abs(event.value) < deadzone:
+            menu.axis_down = False
+            menu.axis_up = False
+
+    if event.axis == 0:
+        if event.value > deadzone and not getattr(menu, "axis_right", False):
+            menu.axis_right = True
+            pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0)))
+        elif event.value < -deadzone and not getattr(menu, "axis_left", False):
+            menu.axis_left = True
+            pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0)))
+        elif abs(event.value) < deadzone:
+            menu.axis_right = False
+            menu.axis_left = False

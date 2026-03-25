@@ -4,7 +4,13 @@ from pygame.locals import *
 
 from game_engine import g_engine
 from .GameState import GameState
-from .States_util import vertical, menu_maker
+from .States_util import (
+    vertical,
+    menu_maker,
+    menu_select_next,
+    menu_select_prev,
+    handle_analog_stick,
+)
 from classes.particles.Fall import Fall
 from constants.global_var import CONTROLS, GAME_COLOR, config
 
@@ -33,11 +39,9 @@ class Exit(GameState):
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                self.selected = (self.selected + 1) % len(self.buttons)
+                menu_select_next(self, self.buttons)
             if event.key in CONTROLS["UP"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                self.selected = (self.selected - 1) % len(self.buttons)
+                menu_select_prev(self, self.buttons)
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
@@ -59,11 +63,9 @@ class Exit(GameState):
                 x, y = event.value
 
                 if y == -1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected + 1) % len(self.buttons)
+                    menu_select_next(self, self.buttons)
                 elif y == 1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected - 1) % len(self.buttons)
+                    menu_select_prev(self, self.buttons)
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
@@ -84,11 +86,9 @@ class Exit(GameState):
 
             if g_engine.platform == "Darwin":
                 if event.button == 11:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected - 1) % len(self.buttons)
+                    menu_select_prev(self, self.buttons)
                 if event.button == 12:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected + 1) % len(self.buttons)
+                    menu_select_next(self, self.buttons)
 
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
@@ -97,37 +97,7 @@ class Exit(GameState):
             g_engine.joystick = None
 
         if event.type == JOYAXISMOTION and config.use_analog_stick:
-            deadzone = 0.5
-
-            if event.axis == 1:
-                if event.value > deadzone and not getattr(self, "axis_down", False):
-                    self.axis_down = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1))
-                    )
-                elif event.value < -deadzone and not getattr(self, "axis_up", False):
-                    self.axis_up = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1))
-                    )
-                elif abs(event.value) < deadzone:
-                    self.axis_down = False
-                    self.axis_up = False
-
-            if event.axis == 0:
-                if event.value > deadzone and not getattr(self, "axis_right", False):
-                    self.axis_right = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0))
-                    )
-                elif event.value < -deadzone and not getattr(self, "axis_left", False):
-                    self.axis_left = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0))
-                    )
-                elif abs(event.value) < deadzone:
-                    self.axis_right = False
-                    self.axis_left = False
+            handle_analog_stick(self, event)
 
 
 class GameOver(GameState):
@@ -151,11 +121,9 @@ class GameOver(GameState):
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                self.selected = (self.selected + 1) % len(self.buttons)
+                menu_select_next(self, self.buttons)
             if event.key in CONTROLS["UP"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                self.selected = (self.selected - 1) % len(self.buttons)
+                menu_select_prev(self, self.buttons)
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
@@ -170,11 +138,9 @@ class GameOver(GameState):
                 x, y = event.value
 
                 if y == -1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected + 1) % len(self.buttons)
+                    menu_select_next(self, self.buttons)
                 elif y == 1:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected - 1) % len(self.buttons)
+                    menu_select_prev(self, self.buttons)
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
@@ -188,11 +154,9 @@ class GameOver(GameState):
 
             if g_engine.platform == "Darwin":
                 if event.button == 11:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected - 1) % len(self.buttons)
+                    menu_select_prev(self, self.buttons)
                 if event.button == 12:
-                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
-                    self.selected = (self.selected + 1) % len(self.buttons)
+                    menu_select_next(self, self.buttons)
 
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
@@ -201,34 +165,4 @@ class GameOver(GameState):
             g_engine.joystick = None
 
         if event.type == JOYAXISMOTION and config.use_analog_stick:
-            deadzone = 0.5
-
-            if event.axis == 1:
-                if event.value > deadzone and not getattr(self, "axis_down", False):
-                    self.axis_down = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1))
-                    )
-                elif event.value < -deadzone and not getattr(self, "axis_up", False):
-                    self.axis_up = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1))
-                    )
-                elif abs(event.value) < deadzone:
-                    self.axis_down = False
-                    self.axis_up = False
-
-            if event.axis == 0:
-                if event.value > deadzone and not getattr(self, "axis_right", False):
-                    self.axis_right = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0))
-                    )
-                elif event.value < -deadzone and not getattr(self, "axis_left", False):
-                    self.axis_left = True
-                    pygame.event.post(
-                        pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0))
-                    )
-                elif abs(event.value) < deadzone:
-                    self.axis_right = False
-                    self.axis_left = False
+            handle_analog_stick(self, event)
