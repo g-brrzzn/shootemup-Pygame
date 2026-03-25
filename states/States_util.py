@@ -190,10 +190,10 @@ def handle_analog_stick(menu, event):
     deadzone = 0.5
 
     if event.axis == 1:
-        if event.value > deadzone and not getattr(menu, "axis_down", False):
+        if event.value > deadzone and not menu.axis_down:
             menu.axis_down = True
             pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(0, -1)))
-        elif event.value < -deadzone and not getattr(menu, "axis_up", False):
+        elif event.value < -deadzone and not menu.axis_up:
             menu.axis_up = True
             pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(0, 1)))
         elif abs(event.value) < deadzone:
@@ -201,10 +201,10 @@ def handle_analog_stick(menu, event):
             menu.axis_up = False
 
     if event.axis == 0:
-        if event.value > deadzone and not getattr(menu, "axis_right", False):
+        if event.value > deadzone and not menu.axis_right:
             menu.axis_right = True
             pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(1, 0)))
-        elif event.value < -deadzone and not getattr(menu, "axis_left", False):
+        elif event.value < -deadzone and not menu.axis_left:
             menu.axis_left = True
             pygame.event.post(pygame.event.Event(JOYHATMOTION, hat=0, value=(-1, 0)))
         elif abs(event.value) < deadzone:
