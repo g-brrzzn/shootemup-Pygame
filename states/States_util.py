@@ -9,7 +9,6 @@ from constants.global_var import (
     TITLE_YELLOW_2,
     BACKGROUND_COLOR_MENU_1,
     GAME_COLOR,
-    CONTROLS,
 )
 
 
