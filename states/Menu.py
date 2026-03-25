@@ -110,6 +110,14 @@ class Menu(GameState):
                     pygame.quit()
                     sys.exit()
 
+            if g_engine.platform == "Darwin":
+                if event.button == 11:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    self.selected = (self.selected - 1) % len(self.buttons)
+                if event.button == 12:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    self.selected = (self.selected + 1) % len(self.buttons)
+
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
             g_engine.joystick = joystick

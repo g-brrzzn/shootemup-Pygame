@@ -163,6 +163,31 @@ class Options(GameState):
                 self.next_state = "Menu"
                 self.done = True
 
+            if g_engine.platform == "Darwin":
+                if event.button == 11:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    self.selected = (self.selected - 1) % len(self.options)
+                if event.button == 12:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    self.selected = (self.selected + 1) % len(self.options)
+
+                if event.button == 13:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    if self.selected == 0:
+                        selected_res = config.RESOLUTIONS.index(self.config_res)
+                        selected_res = min(
+                            len(config.RESOLUTIONS) - 1, selected_res + 1
+                        )
+                        self.config_res = config.RESOLUTIONS[selected_res]
+                    config.window_size = self.config_res
+                if event.button == 14:
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    if self.selected == 0:
+                        selected_res = config.RESOLUTIONS.index(self.config_res)
+                        selected_res = max(0, selected_res - 1)
+                        self.config_res = config.RESOLUTIONS[selected_res]
+                    config.window_size = self.config_res
+
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
             g_engine.joystick = joystick

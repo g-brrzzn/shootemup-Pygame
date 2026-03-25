@@ -175,27 +175,3 @@ def menu_maker(options, title, selected, surf, is_settings):
             draw_text(surf, "|", half_w - x_offset, cursor_y, GAME_COLOR)
         else:
             draw_text(surf, option, half_w, item_y)
-
-
-def intercept_macos_controller(event):
-    if event.type == JOYBUTTONDOWN:
-        if event.button == 6:
-            pygame.event.post(pygame.event.Event(JOYBUTTONDOWN, button=7))
-        if event.button == 11:
-            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["UP"][0]))
-        if event.button == 12:
-            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["DOWN"][0]))
-        if event.button == 13:
-            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["LEFT"][0]))
-        if event.button == 14:
-            pygame.event.post(pygame.event.Event(KEYDOWN, key=CONTROLS["RIGHT"][0]))
-
-    if event.type == JOYBUTTONUP:
-        if event.button == 11:
-            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["UP"][0]))
-        if event.button == 12:
-            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["DOWN"][0]))
-        if event.button == 13:
-            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["LEFT"][0]))
-        if event.button == 14:
-            pygame.event.post(pygame.event.Event(KEYUP, key=CONTROLS["RIGHT"][0]))
