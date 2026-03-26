@@ -2,13 +2,21 @@ import pygame
 import math
 from constants.global_var import config
 
+from game_engine import g_engine
+
 class PowerUp(pygame.sprite.Sprite):
-    def __init__(self, pos, p_type, color, *groups):
+    def __init__(self, pos, p_type, *groups):
         super().__init__(*groups)
         
         self.p_type = p_type  
         self.image = pygame.Surface((32, 16))
-        self.image.fill(color) 
+        if p_type == 'life':
+            img = g_engine.assets.images['life_powerup']
+        elif p_type == 'weapon':
+            img = g_engine.assets.images['weapon_powerup']
+        else:
+            img = self.image.fill((255, 255, 255)) # Default white if type is unknown
+        self.image = img
         self.rect = self.image.get_rect(center=pos)
         self.speed = 3
 

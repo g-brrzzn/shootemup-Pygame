@@ -41,6 +41,10 @@ class AssetManager:
         self.images['boss_1_1'] = self._load_sprite(os.path.join('sprites', 'enemies', 'boss_1', 'boss_1_1.png'), scale=scale_factor * 2, flip_y=True)
         self.images['boss_1_2'] = self._load_sprite(os.path.join('sprites', 'enemies', 'boss_1', 'boss_1_2.png'), scale=scale_factor * 2, flip_y=True)
         
+        # Power-ups
+        self.images['life_powerup'] = self._load_sprite(os.path.join('sprites', 'powerups', 'life_powerup.png'), scale=scale_factor)
+        self.images['weapon_powerup'] = self._load_sprite(os.path.join('sprites', 'powerups', 'weapon_powerup.png'), scale=scale_factor)
+
         # Other
         self.images["icon"] = self._load_sprite(
             os.path.join("sprites", "player", "player_idle1.png"), (32, 32)
