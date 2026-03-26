@@ -11,8 +11,6 @@ from .States_util import (
     get_on_off_status,
     menu_select_next,
     menu_select_prev,
-    select_next_res,
-    select_prev_res,
     handle_analog_stick,
 )
 from classes.particles.Fall import Fall
@@ -55,6 +53,22 @@ class Options(GameState):
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         menu_maker(self.options, __class__.__name__, self.selected, surf, True)
 
+    def select_prev_res(self):
+        pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+        if self.selected == 0:
+            selected_res = config.RESOLUTIONS.index(self.config_res)
+            selected_res = min(len(config.RESOLUTIONS) - 1, selected_res + 1)
+            self.config_res = config.RESOLUTIONS[selected_res]
+        config.window_size = self.config_res
+
+    def select_next_res(self):
+        pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+        if self.selected == 0:
+            selected_res = config.RESOLUTIONS.index(self.config_res)
+            selected_res = max(0, selected_res - 1)
+            self.config_res = config.RESOLUTIONS[selected_res]
+        config.window_size = self.config_res
+
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
@@ -63,10 +77,10 @@ class Options(GameState):
                 menu_select_prev(self, self.options)
 
             if event.key in CONTROLS["RIGHT"]:
-                select_next_res(self)
+                self.select_next_res()
 
             if event.key in CONTROLS["LEFT"]:
-                select_prev_res(self)
+                self.select_prev_res()
 
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
@@ -109,10 +123,10 @@ class Options(GameState):
                     menu_select_prev(self, self.options)
 
                 if x == 1:
-                    select_next_res(self)
+                    self.select_next_res()
 
                 elif x == -1:
-                    select_prev_res(self)
+                    self.select_prev_res()
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
@@ -153,9 +167,9 @@ class Options(GameState):
                     menu_select_next(self, self.options)
 
                 if event.button == 13:
-                    select_prev_res(self)
+                    self.select_prev_res()
                 if event.button == 14:
-                    select_next_res(self)
+                    self.select_next_res()
 
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
