@@ -71,3 +71,13 @@ code2text_output.txt
 highscore.txt
 settings.json
 benchmark_results.txt
+
+model_swarm_*
+model_single_*
+model_movement_*
+model_full_*
+model_full_*
+model_boss_*
+/logs
+logs_*
+events.out.*

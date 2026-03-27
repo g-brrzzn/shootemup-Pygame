@@ -389,3 +389,19 @@ class Player(pygame.sprite.Sprite):
 
     def getY(self):
         return self.rect.y
+
+
+    def apply_ai_action(self, action):
+        """
+        action is an array [X Axis, Y Axis]
+        X -> 0: Left, 1: Stopped, 2: Right
+        Y -> 0: Up,   1: Stopped, 2: Down
+        """
+        self.moving_left = (action[0] == 0)
+        self.moving_right = (action[0] == 2)
+        
+        self.moving_up = (action[1] == 0)
+        self.moving_down = (action[1] == 2)
+        
+        # Auto fire
+        self.firing = True 

@@ -76,7 +76,7 @@ pygame.mixer.music.set_volume(0.1)
 
 
 class Game(GameState):
-    def __init__(self):
+    def __init__(self, ai_stage="full"):
         super().__init__()
 
         g_engine.all_sprites = pygame.sprite.Group()
@@ -117,6 +117,7 @@ class Game(GameState):
         self.formations_to_spawn = 0
         self.current_wave_delay = 0
         self.wave_timer = 0
+        self.ai_stage = ai_stage
 
         joysticks = [
             pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())
@@ -157,14 +158,36 @@ class Game(GameState):
 
     def spawn_next_formation(self):
         if self.formations_to_spawn > 0:
-            options = [
-                "V_SHAPE",
-                "LINE_HORIZONTAL",
-                "DIAGONAL_LEFT",
-                "DIAGONAL_RIGHT",
-                "CIRCLE_CLUSTER",
-                "RANDOM_RAIN",
-            ]
+            if self.ai_stage == "movement":
+                options = ["LINE_HORIZONTAL"]
+            elif self.ai_stage == "single_enemy":
+                options = ["LINE_HORIZONTAL", "V_SHAPE"]
+            elif self.ai_stage == "swarm":
+                options = [
+                    "V_SHAPE",
+                    "LINE_HORIZONTAL",
+                    "DIAGONAL_LEFT",
+                    "DIAGONAL_RIGHT",
+                    "CIRCLE_CLUSTER",
+                    "RANDOM_RAIN",
+                ]
+            elif self.ai_stage == "boss":
+                options = [
+                    "V_SHAPE",
+                    "DIAGONAL_LEFT",
+                    "DIAGONAL_RIGHT",
+                    "CIRCLE_CLUSTER",
+                ]
+            else:
+                options = [
+                    "V_SHAPE",
+                    "LINE_HORIZONTAL",
+                    "DIAGONAL_LEFT",
+                    "DIAGONAL_RIGHT",
+                    "CIRCLE_CLUSTER",
+                    "RANDOM_RAIN",
+                ]
+
             choice_idx = min(len(options), 2 + g_engine.level)
             ftype = random.choice(options[:choice_idx])
 
@@ -242,7 +265,7 @@ class Game(GameState):
 
             for g in grazes:
                 g_engine.enemy_bullets.grazed[g] = True
-                g_engine.score += 50
+                g_engine.score += 10
                 g_engine.spark_system.emit(
                     pos=(
                         g_engine.enemy_bullets.pos[g, 0],
@@ -350,6 +373,7 @@ class Game(GameState):
 
         if self.formations_to_spawn > 0:
             is_clear = len(g_engine.all_enemies) == 0
+
             if self.current_wave_delay > 0:
                 self.current_wave_delay -= dt
 
@@ -364,7 +388,16 @@ class Game(GameState):
                 g_engine.level += 1
                 self.start_next_level_waves()
             else:
-                if g_engine.level % 3 == 0:
+                boss_every = 3
+
+                if self.ai_stage == "movement":
+                    boss_every = 999999
+                elif self.ai_stage == "single_enemy":
+                    boss_every = 999999
+                elif self.ai_stage == "boss":
+                    boss_every = 2
+
+                if g_engine.level % boss_every == 0:
                     self.boss_active = True
                     Boss(
                         (config.INTERNAL_RESOLUTION[0] / 2, -100),
@@ -375,13 +408,13 @@ class Game(GameState):
                     g_engine.level += 1
                     self.start_next_level_waves()
 
-        if g_engine.player.getLife() <= 0:
-            if g_engine.score > g_engine.high_score:
-                g_engine.high_score = g_engine.score
-                save_high_score(g_engine.high_score)
+                if g_engine.player.getLife() <= 0:
+                    if g_engine.score > g_engine.high_score:
+                        g_engine.high_score = g_engine.score
+                        save_high_score(g_engine.high_score)
 
-            self.next_state = "GameOver"
-            self.done = True
+                    self.next_state = "GameOver"
+                    self.done = True
 
     def draw(self, surf):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
@@ -440,7 +473,6 @@ class Game(GameState):
             draw_text(
                 surf, f"FPS {(int(clock.get_fps()))}", 50, 30, use_smaller_font=False
             )
-
 
 class GameRunner(object):
     def __init__(self, screen, shader_manager, game_surface, states, start_state):
