@@ -408,13 +408,13 @@ class Game(GameState):
                     g_engine.level += 1
                     self.start_next_level_waves()
 
-                if g_engine.player.getLife() <= 0:
-                    if g_engine.score > g_engine.high_score:
-                        g_engine.high_score = g_engine.score
-                        save_high_score(g_engine.high_score)
+        if g_engine.player.getLife() <= 0:
+            if g_engine.score > g_engine.high_score:
+                g_engine.high_score = g_engine.score
+                save_high_score(g_engine.high_score)
 
-                    self.next_state = "GameOver"
-                    self.done = True
+            self.next_state = "GameOver"
+            self.done = True
 
     def draw(self, surf):
         vertical(surf, False, BACKGROUND_COLOR_GAME_1, BACKGROUND_COLOR_GAME_2)
@@ -473,6 +473,7 @@ class Game(GameState):
             draw_text(
                 surf, f"FPS {(int(clock.get_fps()))}", 50, 30, use_smaller_font=False
             )
+
 
 class GameRunner(object):
     def __init__(self, screen, shader_manager, game_surface, states, start_state):
