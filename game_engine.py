@@ -18,6 +18,7 @@ class GameEngine:
         self.joystick = None
         self.shader_manager = None
         self.platform = None
+        self.fps_limit = None
 
 
 g_engine = GameEngine()

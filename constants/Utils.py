@@ -1,6 +1,5 @@
 import pygame
 from time import time
-from .global_var import FRAME_RATE
 
 pygame.init()
 

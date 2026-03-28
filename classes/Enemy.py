@@ -1,6 +1,5 @@
 import pygame
 import math
-from time import time
 from random import randint, uniform
 
 from game_engine import g_engine

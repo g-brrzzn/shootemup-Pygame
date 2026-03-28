@@ -1,6 +1,5 @@
 import pygame
 import math
-from time import time
 from constants.global_var import config
 
 from game_engine import g_engine

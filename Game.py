@@ -27,7 +27,6 @@ from states.States_util import vertical, draw_text
 from constants.global_var import (
     SCALE,
     config,
-    FRAME_RATE,
     BACKGROUND_COLOR_GAME_1,
     BACKGROUND_COLOR_GAME_2,
     CONTROLS,
@@ -62,6 +61,11 @@ else:
     shader_manager = None
     g_engine.shader_manager = None
     game_surface = pygame.Surface(config.INTERNAL_RESOLUTION, pygame.SRCALPHA)
+
+if g_engine.fps_limit is None:
+    g_engine.fps_limit = pygame.display.get_current_refresh_rate()
+    if g_engine.fps_limit not in config.FPS_LIMITS:
+        g_engine.fps_limit = 75
 
 g_engine.assets = AssetManager()
 g_engine.assets.load_assets(SCALE)
@@ -541,7 +545,7 @@ class GameRunner(object):
             self.screen.blit(scaled_surface, render_offset)
 
         pygame.display.flip()
-        clock.tick(FRAME_RATE)
+        clock.tick(g_engine.fps_limit)
 
 
 if __name__ == "__main__":
