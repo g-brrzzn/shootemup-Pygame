@@ -112,6 +112,27 @@ class Options(GameState):
             selected_fps_limit = max(0, selected_fps_limit - 1)
             g_engine.fps_limit = config.FPS_LIMITS[selected_fps_limit]
 
+    def handle_confirm(self):
+        pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
+        if self.selected in (0, 1):
+            pass
+        elif self.selected == 2:
+            config.show_fps = not config.show_fps
+        elif self.selected == 3:
+            config.set_fullscreen = not config.set_fullscreen
+        elif self.selected == 4:
+            config.use_opengl = not config.use_opengl
+        elif self.selected == 5:
+            config.apply_controller_vibration = not config.apply_controller_vibration
+        elif self.selected == 6:
+            config.use_analog_stick = not config.use_analog_stick
+        elif self.selected == 7:
+            config.save()
+            restart_game(["--options"])
+        elif self.selected == 8:
+            self.next_state = "Menu"
+            self.done = True
+
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
@@ -132,27 +153,7 @@ class Options(GameState):
                     self.select_prev_fps_limit()
 
             if event.key in CONTROLS["START"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
-                if self.selected in (0, 1):
-                    pass
-                elif self.selected == 2:
-                    config.show_fps = not config.show_fps
-                elif self.selected == 3:
-                    config.set_fullscreen = not config.set_fullscreen
-                elif self.selected == 4:
-                    config.use_opengl = not config.use_opengl
-                elif self.selected == 5:
-                    config.apply_controller_vibration = (
-                        not config.apply_controller_vibration
-                    )
-                elif self.selected == 6:
-                    config.use_analog_stick = not config.use_analog_stick
-                elif self.selected == 7:
-                    config.save()
-                    restart_game(["--options"])
-                elif self.selected == 8:
-                    self.next_state = "Menu"
-                    self.done = True
+                self.handle_confirm()
 
             if event.key in CONTROLS["ESC"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
@@ -181,27 +182,7 @@ class Options(GameState):
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
-                if self.selected in (0, 1):
-                    pass
-                elif self.selected == 2:
-                    config.show_fps = not config.show_fps
-                elif self.selected == 3:
-                    config.set_fullscreen = not config.set_fullscreen
-                elif self.selected == 4:
-                    config.use_opengl = not config.use_opengl
-                elif self.selected == 5:
-                    config.apply_controller_vibration = (
-                        not config.apply_controller_vibration
-                    )
-                elif self.selected == 6:
-                    config.use_analog_stick = not config.use_analog_stick
-                elif self.selected == 7:
-                    config.save()
-                    restart_game(["--options"])
-                elif self.selected == 8:
-                    self.next_state = "Menu"
-                    self.done = True
+                self.handle_confirm()
 
             if event.button == 1:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
