@@ -28,9 +28,21 @@ jobs:
           pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller --noconfirm --onefile --windowed --name "ShootEmUp" --paths "." --hidden-import game_engine --hidden-import classes --hidden-import constants --hidden-import states --hidden-import moderngl --hidden-import moderngl.mgl --hidden-import glcontext --hidden-import glcontext.wgl --add-data "assets;assets" Game.py
-          
+        shell: cmd
+        run: >
+          pyinstaller --noconfirm --onefile --windowed --name "ShootEmUp"
+          --paths "."
+          --hidden-import game_engine
+          --hidden-import classes
+          --hidden-import constants
+          --hidden-import states
+          --hidden-import moderngl
+          --hidden-import moderngl.mgl
+          --hidden-import glcontext
+          --hidden-import glcontext.wgl
+          --add-data "assets;assets"
+          Game.py
+
       - name: Update Latest Release
         uses: ncipollo/release-action@v1
         with:
