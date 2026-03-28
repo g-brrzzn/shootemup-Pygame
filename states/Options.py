@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import sys
 import os
+import subprocess
 
 from game_engine import g_engine
 from .GameState import GameState
@@ -20,6 +21,29 @@ from constants.global_var import (
     BACKGROUND_COLOR_MENU_1,
     BACKGROUND_COLOR_MENU_2,
 )
+
+
+def restart_game(extra_args=None):
+    extra_args = extra_args or []
+
+    if getattr(sys, "frozen", False):
+        # PyInstaller executable
+        cmd = [sys.executable, *sys.argv[1:]]
+    else:
+        # Running with python
+        cmd = [sys.executable, sys.argv[0], *sys.argv[1:]]
+
+    for arg in extra_args:
+        if arg not in cmd:
+            cmd.append(arg)
+
+    env = os.environ.copy()
+    env.pop("_MEIPASS2", None)
+    env.pop("_MEIPASS", None)
+
+    subprocess.Popen(cmd, env=env)
+    pygame.quit()
+    raise SystemExit
 
 
 class Options(GameState):
@@ -93,23 +117,12 @@ class Options(GameState):
                 elif self.selected == 3:
                     config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
-                    config.apply_controller_vibration = (
-                        not config.apply_controller_vibration
-                    )
+                    config.apply_controller_vibration = not config.apply_controller_vibration
                 elif self.selected == 5:
                     config.use_analog_stick = not config.use_analog_stick
                 elif self.selected == 6:
                     config.save()
-                    args = sys.argv.copy()
-                    if "--options" not in args:
-                        args.append("--options")
-                    
-                    env = os.environ.copy()
-                    
-                    env.pop('_MEIPASS2', None)
-                    env.pop('_MEIPASS', None)
-                    
-                    os.execve(sys.executable, args, env)
+                    restart_game(["--options"])
                 elif self.selected == 7:
                     self.next_state = "Menu"
                     self.done = True
@@ -130,7 +143,6 @@ class Options(GameState):
 
                 if x == 1:
                     self.select_next_res()
-
                 elif x == -1:
                     self.select_prev_res()
 
@@ -146,17 +158,12 @@ class Options(GameState):
                 elif self.selected == 3:
                     config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
-                    config.apply_controller_vibration = (
-                        not config.apply_controller_vibration
-                    )
+                    config.apply_controller_vibration = not config.apply_controller_vibration
                 elif self.selected == 5:
                     config.use_analog_stick = not config.use_analog_stick
                 elif self.selected == 6:
                     config.save()
-                    args = sys.argv.copy()
-                    if "--options" not in args:
-                        args.append("--options")
-                    os.execl(sys.executable, sys.executable, *args)
+                    restart_game(["--options"])
                 elif self.selected == 7:
                     self.next_state = "Menu"
                     self.done = True
@@ -180,6 +187,7 @@ class Options(GameState):
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
             g_engine.joystick = joystick
+
         if event.type == JOYDEVICEREMOVED:
             g_engine.joystick = None
 
