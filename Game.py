@@ -95,13 +95,13 @@ class Game(GameState):
         )
         self.background_fall = Fall(300)
         self.stars_back = Fall(
-            amount=150, min_s=0.1, max_s=0.2, color=(150, 150, 150), size=1, alpha=200
+            amount=150, min_s=7.5, max_s=15.0, color=(150, 150, 150), size=1, alpha=200
         )
         self.stars_mid = Fall(
-            amount=60, min_s=0.5, max_s=1.0, color=(180, 180, 200), size=2, alpha=150
+            amount=60, min_s=37.5, max_s=75, color=(180, 180, 200), size=2, alpha=150
         )
         self.stars_front = Fall(
-            amount=20, min_s=4.0, max_s=6.0, color=(200, 220, 255), size=4, alpha=60
+            amount=20, min_s=300.0, max_s=450.0, color=(200, 220, 255), size=4, alpha=60
         )
         self.particles = pygame.sprite.Group()
 
@@ -378,7 +378,7 @@ class Game(GameState):
                 self.current_wave_delay -= dt
 
             if self.current_wave_delay <= 0 or (
-                is_clear and self.current_wave_delay < 100
+                is_clear and self.current_wave_delay < 100000
             ):
                 self.spawn_next_formation()
 

@@ -42,8 +42,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=pos)
         self.hitbox = self.rect.copy()
 
+        self.x = pos[0]
+        self.y = pos[1]
+
         self.movement = pygame.math.Vector2()
-        self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
+        self.speed = config.INTERNAL_RESOLUTION[1] * 0.525
 
         self.life = MAX_LIFE
 
@@ -264,13 +267,17 @@ class Player(pygame.sprite.Sprite):
             self.current_sprite_index = 0
 
         if self.moving_right:
-            self.rect.x += round(self.speed * dt)
+            self.x += self.speed * dt
+            self.rect.x = round(self.x)
         if self.moving_left:
-            self.rect.x -= round(self.speed * dt)
+            self.x -= self.speed * dt
+            self.rect.x = round(self.x)
         if self.moving_up:
-            self.rect.y -= round(self.speed * dt)
+            self.y -= self.speed * dt
+            self.rect.y = round(self.y)
         if self.moving_down:
-            self.rect.y += round(self.speed * dt)
+            self.y += self.speed * dt
+            self.rect.y = round(self.y)
 
         if self.rect.right > config.INTERNAL_RESOLUTION[0]:
             self.rect.right = config.INTERNAL_RESOLUTION[0]
@@ -364,7 +371,7 @@ class Player(pygame.sprite.Sprite):
                 self.rect.centerx,
                 self.rect.centery,
                 PLAYER_COLOR_GREEN,
-                speed=-5,
+                speed=-375,
             )
             pygame.mixer.Sound.play(g_engine.assets.get_sound("hit"))
             g_engine.screen_shake = 15
@@ -390,18 +397,17 @@ class Player(pygame.sprite.Sprite):
     def getY(self):
         return self.rect.y
 
-
     def apply_ai_action(self, action):
         """
         action is an array [X Axis, Y Axis]
         X -> 0: Left, 1: Stopped, 2: Right
         Y -> 0: Up,   1: Stopped, 2: Down
         """
-        self.moving_left = (action[0] == 0)
-        self.moving_right = (action[0] == 2)
-        
-        self.moving_up = (action[1] == 0)
-        self.moving_down = (action[1] == 2)
-        
+        self.moving_left = action[0] == 0
+        self.moving_right = action[0] == 2
+
+        self.moving_up = action[1] == 0
+        self.moving_down = action[1] == 2
+
         # Auto fire
-        self.firing = True 
+        self.firing = True

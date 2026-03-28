@@ -1,4 +1,5 @@
 import pygame
+from time import time
 from pygame.locals import *
 import sys
 import os
@@ -21,6 +22,7 @@ from constants.global_var import (
     BACKGROUND_COLOR_MENU_1,
     BACKGROUND_COLOR_MENU_2,
 )
+from constants.Utils import delta_time
 
 
 def restart_game(extra_args=None):
@@ -49,11 +51,12 @@ def restart_game(extra_args=None):
 class Options(GameState):
     def __init__(self):
         super().__init__()
-        self.fall = Fall(amount=80, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=2)
+        self.fall = Fall(amount=80, min_s=15, max_s=37.5, color=(200, 200, 200), size=2)
 
     def start(self):
         self.selected = 0
         self.config_res = config.window_size
+        self.last_time = time()
         self.update_options_list()
 
     def update_options_list(self):
@@ -69,7 +72,8 @@ class Options(GameState):
         ]
 
     def update(self):
-        self.fall.update(-3, 0)
+        dt, self.last_time = delta_time(self.last_time)
+        self.fall.update(-225, 0, dt)
         self.update_options_list()
 
     def draw(self, surf):
@@ -117,7 +121,9 @@ class Options(GameState):
                 elif self.selected == 3:
                     config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
-                    config.apply_controller_vibration = not config.apply_controller_vibration
+                    config.apply_controller_vibration = (
+                        not config.apply_controller_vibration
+                    )
                 elif self.selected == 5:
                     config.use_analog_stick = not config.use_analog_stick
                 elif self.selected == 6:
@@ -158,7 +164,9 @@ class Options(GameState):
                 elif self.selected == 3:
                     config.use_opengl = not config.use_opengl
                 elif self.selected == 4:
-                    config.apply_controller_vibration = not config.apply_controller_vibration
+                    config.apply_controller_vibration = (
+                        not config.apply_controller_vibration
+                    )
                 elif self.selected == 5:
                     config.use_analog_stick = not config.use_analog_stick
                 elif self.selected == 6:

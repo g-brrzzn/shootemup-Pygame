@@ -6,11 +6,13 @@ import platform
 if platform.system() == "Windows":
     try:
         import ctypes
+
         ctypes.windll.user32.SetProcessDPIAware()
     except Exception:
         pass
 
 CONFIG_FILE = "settings.json"
+
 
 class Configs:
     def __init__(self):
@@ -44,7 +46,9 @@ class Configs:
                     self.APPLY_CONTROLLER_VIBRATION = data.get(
                         "apply_controller_vibration", self.APPLY_CONTROLLER_VIBRATION
                     )
-                    self.USE_ANALOG_STICK = data.get("use_analog_stick", self.USE_ANALOG_STICK)
+                    self.USE_ANALOG_STICK = data.get(
+                        "use_analog_stick", self.USE_ANALOG_STICK
+                    )
                     self.WINDOW_SIZE = tuple(win_size)
                 except:
                     pass
@@ -100,7 +104,7 @@ class Configs:
     @apply_controller_vibration.setter
     def apply_controller_vibration(self, apply):
         self.APPLY_CONTROLLER_VIBRATION = bool(apply)
-        
+
     @property
     def use_analog_stick(self):
         return self.USE_ANALOG_STICK

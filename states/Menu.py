@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from time import time
 import sys
 import math
 from random import randint
@@ -30,22 +31,20 @@ class Menu(GameState):
     def __init__(self):
         super().__init__()
         self.fall = Fall(
-            amount=120, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=3
+            amount=120, min_s=15, max_s=37.5, color=(200, 200, 200), size=3
         )
         self.buttons = ["START", "OPTIONS", "EXIT"]
 
     def start(self):
         self.selected = 0
-        self.last_time = pygame.time.get_ticks()
+        self.last_time = time()
         self.title_pos_y_offset = 0
 
     def update(self):
         dt, self.last_time = delta_time(self.last_time)
-        self.fall.update(-3, 0)
+        self.fall.update(-225, 0, dt)
         self.title_pos_y_offset = (
-            config.INTERNAL_RESOLUTION[1]
-            * 0.04
-            * math.sin(2 * math.pi * pygame.time.get_ticks() / 1000)
+            config.INTERNAL_RESOLUTION[1] * 0.04 * math.sin(2 * math.pi * time())
         )
 
     def draw(self, surf):

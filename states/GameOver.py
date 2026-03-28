@@ -1,5 +1,6 @@
 import sys
 import pygame
+from time import time
 from pygame.locals import *
 
 from game_engine import g_engine
@@ -13,6 +14,7 @@ from .States_util import (
 )
 from classes.particles.Fall import Fall
 from constants.global_var import CONTROLS, GAME_COLOR, config
+from constants.Utils import delta_time
 
 
 class Exit(GameState):
@@ -108,10 +110,12 @@ class GameOver(GameState):
 
     def start(self):
         self.selected = 0
-        self.fall = Fall(amount=50, min_s=0.1, max_s=0.3, color=GAME_COLOR, size=4)
+        self.last_time = time()
+        self.fall = Fall(amount=50, min_s=7.5, max_s=22.5, color=GAME_COLOR, size=4)
 
     def update(self):
-        self.fall.update(-2, 3)
+        dt, self.last_time = delta_time(self.last_time)
+        self.fall.update(-150, 225, dt)
 
     def draw(self, surf):
         vertical(surf)
