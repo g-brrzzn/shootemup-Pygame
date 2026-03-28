@@ -103,7 +103,13 @@ class Options(GameState):
                     args = sys.argv.copy()
                     if "--options" not in args:
                         args.append("--options")
-                    os.execl(sys.executable, sys.executable, *args)
+                    
+                    env = os.environ.copy()
+                    
+                    env.pop('_MEIPASS2', None)
+                    env.pop('_MEIPASS', None)
+                    
+                    os.execve(sys.executable, args, env)
                 elif self.selected == 7:
                     self.next_state = "Menu"
                     self.done = True
