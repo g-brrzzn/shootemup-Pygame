@@ -1,0 +1,44 @@
+name: Build Game Executable
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --noconfirm --onefile --windowed --name "ShootEmUp" --add-data "assets;assets" Game.py
+
+      - name: Update Latest Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "latest"
+          name: "Latest Build (Auto)"
+          body: "Automatically generated build from the latest commit. Download `ShootEmUp.exe` below to play."
+          allowUpdates: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          artifacts: "dist/ShootEmUp.exe"
+          token: ${{ secrets.GITHUB_TOKEN }}
