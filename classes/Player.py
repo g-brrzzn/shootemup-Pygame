@@ -42,8 +42,8 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=pos)
         self.hitbox = self.rect.copy()
 
-        self.x = pos[0]
-        self.y = pos[1]
+        self.x = float(self.rect.x)
+        self.y = float(self.rect.y)
 
         self.movement = pygame.math.Vector2()
         self.speed = config.INTERNAL_RESOLUTION[1] * 0.525
