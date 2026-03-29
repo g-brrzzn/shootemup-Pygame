@@ -60,9 +60,12 @@ class Options(GameState):
         self.update_options_list()
 
     def update_options_list(self):
+        fps_str = "NO LIMIT" if g_engine.fps_limit == 0 else g_engine.fps_limit
+        res_str = f"{self.config_res[0]}x{self.config_res[1]}"
+
         self.options = [
-            f"RESOLUTION - {self.config_res}",
-            f"FPS LIMIT - {g_engine.fps_limit}",
+            f"RESOLUTION - {res_str}",
+            f"FPS LIMIT - {fps_str}",
             f"SHOW FPS: {get_on_off_status(config.show_fps)}",
             f"FULLSCREEN: {get_on_off_status(config.set_fullscreen)}",
             f"USE OPENGL: {get_on_off_status(config.use_opengl)}",
