@@ -262,7 +262,7 @@ class Player(pygame.sprite.Sprite):
             if flash[1] > max_flash_radius:
                 self.muzzle_flashes.remove(flash)
 
-        self.current_sprite_index += 0.07
+        self.current_sprite_index += 5.25 * dt
         if self.current_sprite_index >= len(self.original_sprites):
             self.current_sprite_index = 0
 

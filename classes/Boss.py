@@ -43,7 +43,7 @@ class Boss(EnemyBase):
         self.rect.topleft = (self.x, self.y)
         self.shoot()
 
-        self.current_sprite += 0.07
+        self.current_sprite += 5.25 * dt
         if self.current_sprite >= len(self.sprites):
             self.current_sprite = 0
 

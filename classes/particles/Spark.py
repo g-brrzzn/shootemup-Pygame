@@ -17,7 +17,7 @@ class SparkSystem:
         self.decay = np.zeros(max_particles, dtype=np.float32)
 
         self.gravity = 11.25
-        self.friction = 0.92
+        self.friction = 0.0016
 
     def emit(
         self, pos, angle, speed, color=(221, 245, 154), scale=1.0, fixed_decay=None
@@ -47,7 +47,7 @@ class SparkSystem:
         n = self.active_count
 
         self.vel[:n, 1] += self.gravity * dt
-        self.vel[:n] *= self.friction
+        self.vel[:n] *= self.friction**dt
         self.pos[:n] += self.vel[:n] * dt
         self.life[:n] -= self.decay[:n] * dt
 

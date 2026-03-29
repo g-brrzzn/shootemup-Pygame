@@ -95,7 +95,7 @@ class EnemyBase(pygame.sprite.Sprite):
 
         self.rect.topleft = (self.x, self.y)
 
-        self.current_sprite += 0.1
+        self.current_sprite += 7.5 * dt
         if self.current_sprite >= len(self.sprites):
             self.current_sprite = 0
 
@@ -127,7 +127,7 @@ class Enemy1(EnemyBase):
         speed = self.base_speed * 3 if self.y < 0 else self.base_speed
         self.y += speed * dt
         self.x += (
-            math.sin(pygame.time.get_ticks() * 0.05 + self.random_offset) * 0.5 * dt
+            math.sin(pygame.time.get_ticks() * 0.05 + self.random_offset) * 37.5 * dt
         )
 
     def shoot(self):
