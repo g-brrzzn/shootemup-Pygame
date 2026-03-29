@@ -7,7 +7,7 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 from reinforcement_learning.ai_env import ShootEmUpEnv
-from Game import screen, game_surface, shader_manager, clock, FRAME_RATE
+from Game import screen, game_surface, shader_manager, clock
 from game_engine import g_engine
 
 
@@ -79,7 +79,7 @@ def main():
             screen.blit(scaled_surface, render_offset)
 
         pygame.display.flip()
-        clock.tick(FRAME_RATE)
+        clock.tick(g_engine.fps_limit)
 
         if dones[0]:
             print(f"A IA morreu! Pontuação alcançada: {g_engine.score}. Reiniciando...")
