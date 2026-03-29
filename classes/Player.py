@@ -294,7 +294,7 @@ class Player(pygame.sprite.Sprite):
         if self.moving_right:
             target_angle = -10
 
-        self.angle += (target_angle - self.angle) * 0.1 * dt
+        self.angle += (target_angle - self.angle) * 15.0 * dt
 
         current_time = pygame.time.get_ticks()
         is_invincible = current_time - self.last_hit < self.invincibility_duration
