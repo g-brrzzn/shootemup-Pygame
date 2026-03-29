@@ -52,12 +52,12 @@ if config.use_opengl:
     pygame.display.gl_set_attribute(
         pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
     )
-    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
+    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=False)
     shader_manager = ShaderManager(config.INTERNAL_RESOLUTION, screen.get_size())
     game_surface = shader_manager.get_draw_surface()
     g_engine.shader_manager = shader_manager
 else:
-    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
+    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=False)
     shader_manager = None
     g_engine.shader_manager = None
     game_surface = pygame.Surface(config.INTERNAL_RESOLUTION, pygame.SRCALPHA)
@@ -230,11 +230,11 @@ class Game(GameState):
 
     def update(self):
         dt, self.last_time = delta_time(self.last_time)
-        if dt > 3.0:
-            dt = 3.0
+        if dt > 0.1:
+            dt = 0.1
 
         if g_engine.hit_stop_frames > 0:
-            g_engine.hit_stop_frames -= 1
+            g_engine.hit_stop_frames -= dt
             g_engine.explosion_system.update(dt)
             g_engine.spark_system.update(dt)
             return
@@ -290,7 +290,7 @@ class Game(GameState):
 
             if len(hits) > 0:
                 g_engine.player.take_damage()
-                g_engine.hit_stop_frames = 5
+                g_engine.hit_stop_frames = 0.08
                 if config.apply_controller_vibration and g_engine.joystick:
                     g_engine.joystick.rumble(50, 200, 100)
                 for h in reversed(hits):
@@ -367,11 +367,11 @@ class Game(GameState):
         )
         if player_crashes:
             g_engine.player.take_damage()
-            g_engine.hit_stop_frames = 5
+            g_engine.hit_stop_frames = 0.08
             if config.apply_controller_vibration and g_engine.joystick:
                 g_engine.joystick.rumble(50, 200, 100)
             for enemy in player_crashes:
-                g_engine.screen_shake = max(g_engine.screen_shake, 5)
+                g_engine.screen_shake = max(g_engine.screen_shake, 0.1)
                 if not isinstance(enemy, Boss):
                     enemy.kill()
 
@@ -532,7 +532,7 @@ class GameRunner(object):
 
         render_offset = [0, 0]
         if g_engine.screen_shake > 0:
-            g_engine.screen_shake -= 1
+            g_engine.screen_shake -= clock.get_time() / 1000.0
             render_offset[0] = random.randint(-4, 4)
             render_offset[1] = random.randint(-4, 4)
 

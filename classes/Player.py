@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.firing = False
         self.last_time = time()
         self.last_shot = self.last_time
+        self.trail_timer = 0.0
 
         self.original_sprites = [
             g_engine.assets.get_image("player_idle1"),
@@ -224,7 +225,8 @@ class Player(pygame.sprite.Sprite):
     def upgrade(self):
         self.power_level = min(self.power_level + 1, 3)
 
-    def update_particles(self):
+    def update_particles(self, dt):
+        self.trail_timer += dt
         offset_x = randint(-12, 12)
         p_x = self.rect.centerx + offset_x
         p_y = self.rect.bottom - 20
@@ -238,9 +240,9 @@ class Player(pygame.sprite.Sprite):
         self.exhaust_particles.append([p_x, p_y, radius, color, 255])
 
         for p in self.exhaust_particles[:]:
-            p[1] += 5
-            p[2] -= 0.5
-            p[4] -= 15
+            p[1] += 300.0 * dt   
+            p[2] -= 30.0 * dt    
+            p[4] -= 900.0 * dt   
 
             if p[2] <= 0 or p[4] <= 0:
                 try:
@@ -248,17 +250,19 @@ class Player(pygame.sprite.Sprite):
                 except ValueError:
                     pass
 
-        self.trail.append((self.rect.centerx, self.rect.centery))
-        if len(self.trail) > 12:
-            self.trail.pop(0)
+        if self.trail_timer >= 0.015:
+            self.trail.append((self.rect.centerx, self.rect.centery))
+            if len(self.trail) > 12:
+                self.trail.pop(0)
+            self.trail_timer = 0.0
 
     def update(self, dt):
         self.last_time = time()
-        self.update_particles()
+        self.update_particles(dt)
 
         max_flash_radius = 25
         for flash in self.muzzle_flashes[:]:
-            flash[1] += flash[2]
+            flash[1] += (flash[2] * 60.0 * dt)
             if flash[1] > max_flash_radius:
                 self.muzzle_flashes.remove(flash)
 
@@ -374,7 +378,7 @@ class Player(pygame.sprite.Sprite):
                 speed=-375,
             )
             pygame.mixer.Sound.play(g_engine.assets.get_sound("hit"))
-            g_engine.screen_shake = 15
+            g_engine.screen_shake = 0.25
 
     def getLife(self):
         return self.life
