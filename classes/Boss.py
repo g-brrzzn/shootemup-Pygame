@@ -69,7 +69,7 @@ class Boss(EnemyBase):
         self.last_hit = pygame.time.get_ticks()
         if self.life <= 1:
             g_engine.score += self.score_value
-            g_engine.screen_shake = 30
+            g_engine.screen_shake = 0.5
             g_engine.explosion_system.create(
                 self.rect.centerx, self.rect.centery, count=150, speed=15
             )
