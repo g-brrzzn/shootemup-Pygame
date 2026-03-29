@@ -289,9 +289,9 @@ class Player(pygame.sprite.Sprite):
             self.rect.top = 0
 
         target_angle = 0
-        if self.moving_left:
+        if self.moving_left and not self.moving_right:
             target_angle = 10
-        if self.moving_right:
+        if self.moving_right and not self.moving_left:
             target_angle = -10
 
         self.angle += (target_angle - self.angle) * 15.0 * dt

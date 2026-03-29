@@ -14,7 +14,7 @@ from .States_util import (
 )
 from classes.particles.Fall import Fall
 from constants.global_var import CONTROLS, GAME_COLOR, config
-from constants.Utils import delta_time
+from constants.Utils import delta_time, save_high_score
 
 
 class Exit(GameState):
@@ -37,6 +37,17 @@ class Exit(GameState):
             surf,
             False,
         )
+        
+    def force_game_reset(self):
+        if g_engine.score > g_engine.high_score:
+            g_engine.high_score = g_engine.score
+            save_high_score(g_engine.high_score)
+        
+        if g_engine.player:
+            g_engine.player.setLife(0)
+            
+        self.next_state = "Menu"
+        self.done = True
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -47,7 +58,7 @@ class Exit(GameState):
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Menu"
+                    self.force_game_reset()
                     self.done = True
                 elif self.selected == 1:
                     pygame.quit()
@@ -150,7 +161,7 @@ class GameOver(GameState):
             if event.button == 0:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Menu"
+                    self.foce_game_reset()
                     self.done = True
                 elif self.selected == 1:
                     self.next_state = "Exit"
