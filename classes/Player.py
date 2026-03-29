@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.firing = False
         self.last_time = time()
         self.last_shot = self.last_time
+        self.trail_timer = 0.0
 
         self.original_sprites = [
             g_engine.assets.get_image("player_idle1"),
@@ -42,8 +43,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=pos)
         self.hitbox = self.rect.copy()
 
+        self.x = float(self.rect.x)
+        self.y = float(self.rect.y)
+
         self.movement = pygame.math.Vector2()
-        self.speed = config.INTERNAL_RESOLUTION[1] * 0.007
+        self.speed = config.INTERNAL_RESOLUTION[1] * 0.525
 
         self.life = MAX_LIFE
 
@@ -221,7 +225,8 @@ class Player(pygame.sprite.Sprite):
     def upgrade(self):
         self.power_level = min(self.power_level + 1, 3)
 
-    def update_particles(self):
+    def update_particles(self, dt):
+        self.trail_timer += dt
         offset_x = randint(-12, 12)
         p_x = self.rect.centerx + offset_x
         p_y = self.rect.bottom - 20
@@ -235,9 +240,9 @@ class Player(pygame.sprite.Sprite):
         self.exhaust_particles.append([p_x, p_y, radius, color, 255])
 
         for p in self.exhaust_particles[:]:
-            p[1] += 5
-            p[2] -= 0.5
-            p[4] -= 15
+            p[1] += 300.0 * dt   
+            p[2] -= 30.0 * dt    
+            p[4] -= 900.0 * dt   
 
             if p[2] <= 0 or p[4] <= 0:
                 try:
@@ -245,32 +250,38 @@ class Player(pygame.sprite.Sprite):
                 except ValueError:
                     pass
 
-        self.trail.append((self.rect.centerx, self.rect.centery))
-        if len(self.trail) > 12:
-            self.trail.pop(0)
+        if self.trail_timer >= 0.015:
+            self.trail.append((self.rect.centerx, self.rect.centery))
+            if len(self.trail) > 12:
+                self.trail.pop(0)
+            self.trail_timer = 0.0
 
     def update(self, dt):
         self.last_time = time()
-        self.update_particles()
+        self.update_particles(dt)
 
         max_flash_radius = 25
         for flash in self.muzzle_flashes[:]:
-            flash[1] += flash[2]
+            flash[1] += (flash[2] * 60.0 * dt)
             if flash[1] > max_flash_radius:
                 self.muzzle_flashes.remove(flash)
 
-        self.current_sprite_index += 0.07
+        self.current_sprite_index += 5.25 * dt
         if self.current_sprite_index >= len(self.original_sprites):
             self.current_sprite_index = 0
 
         if self.moving_right:
-            self.rect.x += round(self.speed * dt)
+            self.x += self.speed * dt
+            self.rect.x = round(self.x)
         if self.moving_left:
-            self.rect.x -= round(self.speed * dt)
+            self.x -= self.speed * dt
+            self.rect.x = round(self.x)
         if self.moving_up:
-            self.rect.y -= round(self.speed * dt)
+            self.y -= self.speed * dt
+            self.rect.y = round(self.y)
         if self.moving_down:
-            self.rect.y += round(self.speed * dt)
+            self.y += self.speed * dt
+            self.rect.y = round(self.y)
 
         if self.rect.right > config.INTERNAL_RESOLUTION[0]:
             self.rect.right = config.INTERNAL_RESOLUTION[0]
@@ -282,12 +293,12 @@ class Player(pygame.sprite.Sprite):
             self.rect.top = 0
 
         target_angle = 0
-        if self.moving_left:
+        if self.moving_left and not self.moving_right:
             target_angle = 10
-        if self.moving_right:
+        if self.moving_right and not self.moving_left:
             target_angle = -10
 
-        self.angle += (target_angle - self.angle) * 0.1 * dt
+        self.angle += (target_angle - self.angle) * 15.0 * dt
 
         current_time = pygame.time.get_ticks()
         is_invincible = current_time - self.last_hit < self.invincibility_duration
@@ -364,10 +375,10 @@ class Player(pygame.sprite.Sprite):
                 self.rect.centerx,
                 self.rect.centery,
                 PLAYER_COLOR_GREEN,
-                speed=-5,
+                speed=-375,
             )
             pygame.mixer.Sound.play(g_engine.assets.get_sound("hit"))
-            g_engine.screen_shake = 15
+            g_engine.screen_shake = 0.25
 
     def getLife(self):
         return self.life
@@ -390,18 +401,17 @@ class Player(pygame.sprite.Sprite):
     def getY(self):
         return self.rect.y
 
-
     def apply_ai_action(self, action):
         """
         action is an array [X Axis, Y Axis]
         X -> 0: Left, 1: Stopped, 2: Right
         Y -> 0: Up,   1: Stopped, 2: Down
         """
-        self.moving_left = (action[0] == 0)
-        self.moving_right = (action[0] == 2)
-        
-        self.moving_up = (action[1] == 0)
-        self.moving_down = (action[1] == 2)
-        
+        self.moving_left = action[0] == 0
+        self.moving_right = action[0] == 2
+
+        self.moving_up = action[1] == 0
+        self.moving_down = action[1] == 2
+
         # Auto fire
-        self.firing = True 
+        self.firing = True

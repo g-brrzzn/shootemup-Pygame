@@ -2,26 +2,37 @@ import pygame
 import numpy as np
 from constants.global_var import config
 
+
 class Fall:
-    def __init__(self, amount: int, min_s: float = 0.1, max_s: float = 0.9, color: tuple = (70, 70, 70), size: int = 3, alpha: int = 255):
+    def __init__(
+        self,
+        amount: int,
+        min_s: float = 7.5,
+        max_s: float = 67.5,
+        color: tuple = (70, 70, 70),
+        size: int = 3,
+        alpha: int = 255,
+    ):
         self.amount = amount
         self.pos = np.zeros((amount, 2), dtype=np.float32)
         self.fall_speed = np.zeros(amount, dtype=np.float32)
-        
+
         width, height = config.INTERNAL_RESOLUTION
-        
+
         self.pos[:, 0] = np.random.randint(1, width, size=amount)
         self.pos[:, 1] = np.random.randint(1, height, size=amount)
         self.fall_speed[:] = np.random.uniform(min_s, max_s, size=amount)
-        
+
         self.image = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
         pygame.draw.circle(self.image, (*color, alpha), (size, size), size)
 
-    def update(self, gravity: float = 0.3, wind: float = 0.3, dt: float = 1.0) -> None:
+    def update(
+        self, gravity: float = 22.5, wind: float = 22.5, dt: float = 1.0
+    ) -> None:
         width, height = config.INTERNAL_RESOLUTION
-        
+
         self.pos[:, 1] += (gravity + self.fall_speed) * dt
-        
+
         if wind != 0:
             self.pos[:, 0] += wind * dt
 

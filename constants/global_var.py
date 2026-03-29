@@ -2,15 +2,18 @@ import pygame
 import json
 import os
 import platform
+from game_engine import g_engine
 
 if platform.system() == "Windows":
     try:
         import ctypes
+
         ctypes.windll.user32.SetProcessDPIAware()
     except Exception:
         pass
 
 CONFIG_FILE = "settings.json"
+
 
 class Configs:
     def __init__(self):
@@ -21,6 +24,7 @@ class Configs:
         self.XGA = (1024, 768)
         self.QHD = (960, 540)
         self.RESOLUTIONS = [self.QHD, self.XGA, self.HD, self.FHD, self.WQHD, self.UHD]
+        self.FPS_LIMITS = [30, 60, 75, 120, 144, 165, 180, 200, 240, 360, 540, 0]
         self.INTERNAL_RESOLUTION = (1600, 900)
 
         self.SHOW_FPS = False
@@ -44,8 +48,11 @@ class Configs:
                     self.APPLY_CONTROLLER_VIBRATION = data.get(
                         "apply_controller_vibration", self.APPLY_CONTROLLER_VIBRATION
                     )
-                    self.USE_ANALOG_STICK = data.get("use_analog_stick", self.USE_ANALOG_STICK)
+                    self.USE_ANALOG_STICK = data.get(
+                        "use_analog_stick", self.USE_ANALOG_STICK
+                    )
                     self.WINDOW_SIZE = tuple(win_size)
+                    g_engine.fps_limit = data.get("fps_limit", g_engine.fps_limit)
                 except:
                     pass
 
@@ -57,6 +64,7 @@ class Configs:
             "window_size": self.WINDOW_SIZE,
             "apply_controller_vibration": self.APPLY_CONTROLLER_VIBRATION,
             "use_analog_stick": self.USE_ANALOG_STICK,
+            "fps_limit": g_engine.fps_limit,
         }
         with open(CONFIG_FILE, "w") as f:
             json.dump(data, f, indent=4)
@@ -100,7 +108,7 @@ class Configs:
     @apply_controller_vibration.setter
     def apply_controller_vibration(self, apply):
         self.APPLY_CONTROLLER_VIBRATION = bool(apply)
-        
+
     @property
     def use_analog_stick(self):
         return self.USE_ANALOG_STICK
@@ -109,10 +117,17 @@ class Configs:
     def use_analog_stick(self, apply):
         self.USE_ANALOG_STICK = bool(apply)
 
+    @property
+    def fps_limit(self):
+        return g_engine.fps_limit
+
+    @fps_limit.setter
+    def fps_limit(self, limit):
+        g_engine.fps_limit = limit
+
 
 config = Configs()
 
-FRAME_RATE = 75
 SPRITE_SIZE = 16
 SCALE = 4
 SCALED_SPRITE_SIZE = SPRITE_SIZE * SCALE

@@ -1,4 +1,5 @@
 import pygame
+from time import time
 from pygame.locals import *
 import sys
 import os
@@ -21,6 +22,7 @@ from constants.global_var import (
     BACKGROUND_COLOR_MENU_1,
     BACKGROUND_COLOR_MENU_2,
 )
+from constants.Utils import delta_time
 
 
 def restart_game(extra_args=None):
@@ -49,16 +51,21 @@ def restart_game(extra_args=None):
 class Options(GameState):
     def __init__(self):
         super().__init__()
-        self.fall = Fall(amount=80, min_s=0.2, max_s=0.5, color=(200, 200, 200), size=2)
+        self.fall = Fall(amount=80, min_s=15, max_s=37.5, color=(200, 200, 200), size=2)
 
     def start(self):
         self.selected = 0
         self.config_res = config.window_size
+        self.last_time = time()
         self.update_options_list()
 
     def update_options_list(self):
+        fps_str = "NO LIMIT" if g_engine.fps_limit == 0 else g_engine.fps_limit
+        res_str = f"{self.config_res[0]}x{self.config_res[1]}"
+
         self.options = [
-            f"RESOLUTION - {self.config_res}",
+            f"RESOLUTION - {res_str}",
+            f"FPS LIMIT - {fps_str}",
             f"SHOW FPS: {get_on_off_status(config.show_fps)}",
             f"FULLSCREEN: {get_on_off_status(config.set_fullscreen)}",
             f"USE OPENGL: {get_on_off_status(config.use_opengl)}",
@@ -69,7 +76,8 @@ class Options(GameState):
         ]
 
     def update(self):
-        self.fall.update(-3, 0)
+        dt, self.last_time = delta_time(self.last_time)
+        self.fall.update(-225, 0, dt)
         self.update_options_list()
 
     def draw(self, surf):
@@ -77,21 +85,56 @@ class Options(GameState):
         vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
         menu_maker(self.options, __class__.__name__, self.selected, surf, True)
 
-    def select_prev_res(self):
+    def decrease_option(self):
         pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
         if self.selected == 0:
-            selected_res = config.RESOLUTIONS.index(self.config_res)
-            selected_res = min(len(config.RESOLUTIONS) - 1, selected_res + 1)
-            self.config_res = config.RESOLUTIONS[selected_res]
-        config.window_size = self.config_res
+            idx = config.RESOLUTIONS.index(self.config_res)
+            self.config_res = config.RESOLUTIONS[max(0, idx - 1)]
+            config.window_size = self.config_res
+        elif self.selected == 1:
+            idx = config.FPS_LIMITS.index(g_engine.fps_limit)
+            g_engine.fps_limit = config.FPS_LIMITS[max(0, idx - 1)]
+        elif self.selected == 2:
+            config.show_fps = not config.show_fps
+        elif self.selected == 3:
+            config.set_fullscreen = not config.set_fullscreen
+        elif self.selected == 4:
+            config.use_opengl = not config.use_opengl
+        elif self.selected == 5:
+            config.apply_controller_vibration = not config.apply_controller_vibration
+        elif self.selected == 6:
+            config.use_analog_stick = not config.use_analog_stick
 
-    def select_next_res(self):
+    def increase_option(self):
         pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
         if self.selected == 0:
-            selected_res = config.RESOLUTIONS.index(self.config_res)
-            selected_res = max(0, selected_res - 1)
-            self.config_res = config.RESOLUTIONS[selected_res]
-        config.window_size = self.config_res
+            idx = config.RESOLUTIONS.index(self.config_res)
+            self.config_res = config.RESOLUTIONS[min(len(config.RESOLUTIONS) - 1, idx + 1)]
+            config.window_size = self.config_res
+        elif self.selected == 1:
+            idx = config.FPS_LIMITS.index(g_engine.fps_limit)
+            g_engine.fps_limit = config.FPS_LIMITS[min(len(config.FPS_LIMITS) - 1, idx + 1)]
+        elif self.selected == 2:
+            config.show_fps = not config.show_fps
+        elif self.selected == 3:
+            config.set_fullscreen = not config.set_fullscreen
+        elif self.selected == 4:
+            config.use_opengl = not config.use_opengl
+        elif self.selected == 5:
+            config.apply_controller_vibration = not config.apply_controller_vibration
+        elif self.selected == 6:
+            config.use_analog_stick = not config.use_analog_stick
+
+    def handle_confirm(self):
+        pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
+        if self.selected in range(0, 7):
+            self.increase_option()
+        elif self.selected == 7: 
+            config.save()
+            restart_game(["--options"])
+        elif self.selected == 8: 
+            self.next_state = "Menu"
+            self.done = True
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -100,32 +143,14 @@ class Options(GameState):
             if event.key in CONTROLS["UP"]:
                 menu_select_prev(self, self.options)
 
-            if event.key in CONTROLS["RIGHT"]:
-                self.select_next_res()
-
             if event.key in CONTROLS["LEFT"]:
-                self.select_prev_res()
+                self.decrease_option()
+
+            if event.key in CONTROLS["RIGHT"]:
+                self.increase_option()
 
             if event.key in CONTROLS["START"]:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
-                if self.selected == 0:
-                    pass
-                elif self.selected == 1:
-                    config.show_fps = not config.show_fps
-                elif self.selected == 2:
-                    config.set_fullscreen = not config.set_fullscreen
-                elif self.selected == 3:
-                    config.use_opengl = not config.use_opengl
-                elif self.selected == 4:
-                    config.apply_controller_vibration = not config.apply_controller_vibration
-                elif self.selected == 5:
-                    config.use_analog_stick = not config.use_analog_stick
-                elif self.selected == 6:
-                    config.save()
-                    restart_game(["--options"])
-                elif self.selected == 7:
-                    self.next_state = "Menu"
-                    self.done = True
+                self.handle_confirm()
 
             if event.key in CONTROLS["ESC"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
@@ -142,31 +167,13 @@ class Options(GameState):
                     menu_select_prev(self, self.options)
 
                 if x == 1:
-                    self.select_next_res()
+                    self.increase_option()
                 elif x == -1:
-                    self.select_prev_res()
+                    self.decrease_option()
 
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
-                pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
-                if self.selected == 0:
-                    pass
-                elif self.selected == 1:
-                    config.show_fps = not config.show_fps
-                elif self.selected == 2:
-                    config.set_fullscreen = not config.set_fullscreen
-                elif self.selected == 3:
-                    config.use_opengl = not config.use_opengl
-                elif self.selected == 4:
-                    config.apply_controller_vibration = not config.apply_controller_vibration
-                elif self.selected == 5:
-                    config.use_analog_stick = not config.use_analog_stick
-                elif self.selected == 6:
-                    config.save()
-                    restart_game(["--options"])
-                elif self.selected == 7:
-                    self.next_state = "Menu"
-                    self.done = True
+                self.handle_confirm()
 
             if event.button == 1:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
@@ -178,11 +185,10 @@ class Options(GameState):
                     menu_select_prev(self, self.options)
                 if event.button == 12:
                     menu_select_next(self, self.options)
-
                 if event.button == 13:
-                    self.select_prev_res()
+                    self.decrease_option()
                 if event.button == 14:
-                    self.select_next_res()
+                    self.increase_option()
 
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)

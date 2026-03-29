@@ -27,7 +27,6 @@ from states.States_util import vertical, draw_text
 from constants.global_var import (
     SCALE,
     config,
-    FRAME_RATE,
     BACKGROUND_COLOR_GAME_1,
     BACKGROUND_COLOR_GAME_2,
     CONTROLS,
@@ -53,15 +52,20 @@ if config.use_opengl:
     pygame.display.gl_set_attribute(
         pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
     )
-    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
+    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=False)
     shader_manager = ShaderManager(config.INTERNAL_RESOLUTION, screen.get_size())
     game_surface = shader_manager.get_draw_surface()
     g_engine.shader_manager = shader_manager
 else:
-    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=True)
+    screen = pygame.display.set_mode(config.window_size, display_flags, vsync=False)
     shader_manager = None
     g_engine.shader_manager = None
     game_surface = pygame.Surface(config.INTERNAL_RESOLUTION, pygame.SRCALPHA)
+
+if g_engine.fps_limit is None:
+    g_engine.fps_limit = pygame.display.get_current_refresh_rate()
+    if g_engine.fps_limit not in config.FPS_LIMITS:
+        g_engine.fps_limit = 75
 
 g_engine.assets = AssetManager()
 g_engine.assets.load_assets(SCALE)
@@ -95,13 +99,13 @@ class Game(GameState):
         )
         self.background_fall = Fall(300)
         self.stars_back = Fall(
-            amount=150, min_s=0.1, max_s=0.2, color=(150, 150, 150), size=1, alpha=200
+            amount=150, min_s=7.5, max_s=15.0, color=(150, 150, 150), size=1, alpha=200
         )
         self.stars_mid = Fall(
-            amount=60, min_s=0.5, max_s=1.0, color=(180, 180, 200), size=2, alpha=150
+            amount=60, min_s=37.5, max_s=75, color=(180, 180, 200), size=2, alpha=150
         )
         self.stars_front = Fall(
-            amount=20, min_s=4.0, max_s=6.0, color=(200, 220, 255), size=4, alpha=60
+            amount=20, min_s=300.0, max_s=450.0, color=(200, 220, 255), size=4, alpha=60
         )
         self.particles = pygame.sprite.Group()
 
@@ -226,11 +230,11 @@ class Game(GameState):
 
     def update(self):
         dt, self.last_time = delta_time(self.last_time)
-        if dt > 3.0:
-            dt = 3.0
+        if dt > 0.1:
+            dt = 0.1
 
         if g_engine.hit_stop_frames > 0:
-            g_engine.hit_stop_frames -= 1
+            g_engine.hit_stop_frames -= dt
             g_engine.explosion_system.update(dt)
             g_engine.spark_system.update(dt)
             return
@@ -286,7 +290,7 @@ class Game(GameState):
 
             if len(hits) > 0:
                 g_engine.player.take_damage()
-                g_engine.hit_stop_frames = 5
+                g_engine.hit_stop_frames = 0.08
                 if config.apply_controller_vibration and g_engine.joystick:
                     g_engine.joystick.rumble(50, 200, 100)
                 for h in reversed(hits):
@@ -363,11 +367,11 @@ class Game(GameState):
         )
         if player_crashes:
             g_engine.player.take_damage()
-            g_engine.hit_stop_frames = 5
+            g_engine.hit_stop_frames = 0.08
             if config.apply_controller_vibration and g_engine.joystick:
                 g_engine.joystick.rumble(50, 200, 100)
             for enemy in player_crashes:
-                g_engine.screen_shake = max(g_engine.screen_shake, 5)
+                g_engine.screen_shake = max(g_engine.screen_shake, 0.1)
                 if not isinstance(enemy, Boss):
                     enemy.kill()
 
@@ -378,7 +382,7 @@ class Game(GameState):
                 self.current_wave_delay -= dt
 
             if self.current_wave_delay <= 0 or (
-                is_clear and self.current_wave_delay < 100
+                is_clear and self.current_wave_delay < 100000
             ):
                 self.spawn_next_formation()
 
@@ -528,7 +532,7 @@ class GameRunner(object):
 
         render_offset = [0, 0]
         if g_engine.screen_shake > 0:
-            g_engine.screen_shake -= 1
+            g_engine.screen_shake -= clock.get_time() / 1000.0
             render_offset[0] = random.randint(-4, 4)
             render_offset[1] = random.randint(-4, 4)
 
@@ -541,7 +545,7 @@ class GameRunner(object):
             self.screen.blit(scaled_surface, render_offset)
 
         pygame.display.flip()
-        clock.tick(FRAME_RATE)
+        clock.tick(g_engine.fps_limit)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import sys
 import pygame
+from time import time
 from pygame.locals import *
 
 from game_engine import g_engine
@@ -13,6 +14,7 @@ from .States_util import (
 )
 from classes.particles.Fall import Fall
 from constants.global_var import CONTROLS, GAME_COLOR, config
+from constants.Utils import delta_time, save_high_score
 
 
 class Exit(GameState):
@@ -35,6 +37,17 @@ class Exit(GameState):
             surf,
             False,
         )
+        
+    def force_game_reset(self):
+        if g_engine.score > g_engine.high_score:
+            g_engine.high_score = g_engine.score
+            save_high_score(g_engine.high_score)
+        
+        if g_engine.player:
+            g_engine.player.setLife(0)
+            
+        self.next_state = "Menu"
+        self.done = True
 
     def get_event(self, event):
         if event.type == KEYDOWN:
@@ -45,7 +58,7 @@ class Exit(GameState):
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Menu"
+                    self.force_game_reset()
                     self.done = True
                 elif self.selected == 1:
                     pygame.quit()
@@ -108,10 +121,12 @@ class GameOver(GameState):
 
     def start(self):
         self.selected = 0
-        self.fall = Fall(amount=50, min_s=0.1, max_s=0.3, color=GAME_COLOR, size=4)
+        self.last_time = time()
+        self.fall = Fall(amount=50, min_s=7.5, max_s=22.5, color=GAME_COLOR, size=4)
 
     def update(self):
-        self.fall.update(-2, 3)
+        dt, self.last_time = delta_time(self.last_time)
+        self.fall.update(-150, 225, dt)
 
     def draw(self, surf):
         vertical(surf)
@@ -146,7 +161,7 @@ class GameOver(GameState):
             if event.button == 0:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Menu"
+                    self.foce_game_reset()
                     self.done = True
                 elif self.selected == 1:
                     self.next_state = "Exit"

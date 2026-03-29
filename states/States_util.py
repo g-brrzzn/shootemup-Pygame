@@ -94,11 +94,11 @@ def menu_maker(options, title, selected, surf, is_settings):
 
     pct_5_w = internal_w * 0.05
     pct_10_w = internal_w * 0.1
-    pct_15_w = internal_w * 0.15
+    pct_20_w = internal_w * 0.2
     pct_5_h = internal_h * 0.05
 
     if is_settings:
-        lowest_y = pct_15_w
+        lowest_y = pct_20_w
     else:
         lowest_y = pct_10_w
 
