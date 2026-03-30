@@ -1,15 +1,17 @@
-import pygame
+import os
 import sys
+import pygame
 from pathlib import Path
 
 from constants.Utils import create_glow_surface
+from constants.global_var import PLAYER_COLOR_GREEN, TITLE_YELLOW_1
 from constants.global_var import PLAYER_COLOR_GREEN, TITLE_YELLOW_1
 
 
 def get_assets_dir():
     if getattr(sys, "frozen", False):
-        return Path(sys._MEIPASS) / "assets"
-    return Path(__file__).resolve().parent
+        return Path(sys.executable).resolve().parent / "assets"
+    return Path(__file__).resolve().parents[1] / "assets"
 
 
 ASSET_DIR = get_assets_dir()

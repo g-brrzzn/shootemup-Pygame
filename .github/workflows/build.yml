@@ -29,28 +29,27 @@ jobs:
 
       - name: Build with PyInstaller
         shell: cmd
-        run: >
-          pyinstaller --noconfirm --onefile --windowed --name "ShootEmUp"
-          --paths "."
-          --hidden-import game_engine
-          --hidden-import classes
-          --hidden-import constants
-          --hidden-import states
-          --hidden-import moderngl
-          --hidden-import moderngl.mgl
-          --hidden-import glcontext
-          --hidden-import glcontext.wgl
-          --add-data "assets;assets"
-          Game.py
+        run: |
+          python -m PyInstaller --noconfirm --clean ShootEmUp.spec
+
+      - name: Copy assets into dist folder
+        shell: pwsh
+        run: |
+          Copy-Item -Path assets -Destination dist\ShootEmUp\assets -Recurse -Force
+
+      - name: Create release zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist\ShootEmUp\* -DestinationPath dist\ShootEmUp-Windows.zip -Force
 
       - name: Update Latest Release
         uses: ncipollo/release-action@v1
         with:
           tag: "latest"
           name: "Latest Build (Auto)"
-          body: "Automatically generated build from the latest commit. Download `ShootEmUp.exe` below to play."
+          body: "Automatically generated build from the latest commit. Download the ZIP and extract it before running the game."
           allowUpdates: true
           removeArtifacts: true
           replacesArtifacts: true
-          artifacts: "dist/ShootEmUp.exe"
+          artifacts: "dist/ShootEmUp-Windows.zip"
           token: ${{ secrets.GITHUB_TOKEN }}
