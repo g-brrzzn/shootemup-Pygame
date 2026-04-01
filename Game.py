@@ -22,6 +22,7 @@ from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
 from states.GameOver import GameOver, Exit
+from states.LevelUp import LevelUp
 from states.States_util import vertical, draw_text
 
 from constants.global_var import (
@@ -89,6 +90,9 @@ class Game(GameState):
 
         g_engine.player_bullets = BulletSystem(max_particles=2000, is_player=True)
         g_engine.enemy_bullets = BulletSystem(max_particles=15000, is_player=False)
+        
+        g_engine.player_bullets.set_orbit_anchor_provider(lambda: g_engine.player.rect.center if g_engine.player else None)
+        g_engine.player_bullets.set_target_provider(lambda: g_engine.all_enemies)
 
         g_engine.player = Player(
             (
@@ -119,6 +123,8 @@ class Game(GameState):
         self.boss_active = False
 
         self.formations_to_spawn = 0
+        self.total_formations_current_wave = 1
+        self.formations_beaten_in_wave = 0
         self.current_wave_delay = 0
         self.wave_timer = 0
         self.ai_stage = ai_stage
@@ -157,6 +163,9 @@ class Game(GameState):
 
     def start_next_level_waves(self):
         self.formations_to_spawn = 3 + (g_engine.level * 2)
+        self.total_formations_current_wave = self.formations_to_spawn
+        self.formations_beaten_in_wave = 0
+        
         self.spawn_next_formation()
         self.wave_timer = 0
 
@@ -205,9 +214,23 @@ class Game(GameState):
         if event.type == KEYDOWN:
             g_engine.player.get_input(event)
             if event.key in CONTROLS["ESC"]:
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "Pause"
                 self.done = True
         if event.type == KEYUP:
             g_engine.player.get_input_keyup(event)
+            
+            
+        # --- LEVEL UP BUTTON (DEBUG) ----------------
+            if event.key == K_TAB:
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "LevelUp"
+                self.done = True
+        # --------------------------------------------    
+            
+            
         if event.type == JOYBUTTONDOWN:
             g_engine.player.get_controller_input(event)
             if (
@@ -215,6 +238,9 @@ class Game(GameState):
                 or (event.button == 11 and g_engine.platform == "Linux")
                 or (event.button == 6 and g_engine.platform == "Darwin")
             ):
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "Pause"
                 self.done = True
         if event.type == JOYBUTTONUP:
             g_engine.player.get_controller_keyup(event)
@@ -348,7 +374,7 @@ class Game(GameState):
             g_engine.player,
             g_engine.powerups,
             True,
-            collided=lambda p, pw: p.hitbox.colliderect(pw.rect),
+            collided=lambda p, pw: p.hitbox.colliderect(pw.hitbox),
         )
         for powerup in powerup_hits:
             if powerup.p_type == "weapon":
@@ -375,15 +401,19 @@ class Game(GameState):
                 if not isinstance(enemy, Boss):
                     enemy.kill()
 
+        if hasattr(self, 'total_formations_current_wave'):
+            if len(g_engine.all_enemies) == 0:
+                self.formations_beaten_in_wave = self.total_formations_current_wave - self.formations_to_spawn
+            else:
+                self.formations_beaten_in_wave = max(0, self.total_formations_current_wave - self.formations_to_spawn - 1)
+
         if self.formations_to_spawn > 0:
             is_clear = len(g_engine.all_enemies) == 0
 
             if self.current_wave_delay > 0:
                 self.current_wave_delay -= dt
 
-            if self.current_wave_delay <= 0 or (
-                is_clear and self.current_wave_delay < 100000
-            ):
+            if self.current_wave_delay <= 0 or (is_clear and self.current_wave_delay < 100000):
                 self.spawn_next_formation()
 
         elif len(g_engine.all_enemies) == 0:
@@ -393,13 +423,9 @@ class Game(GameState):
                 self.start_next_level_waves()
             else:
                 boss_every = 3
-
-                if self.ai_stage == "movement":
-                    boss_every = 999999
-                elif self.ai_stage == "single_enemy":
-                    boss_every = 999999
-                elif self.ai_stage == "boss":
-                    boss_every = 2
+                if self.ai_stage == "movement": boss_every = 999999
+                elif self.ai_stage == "single_enemy": boss_every = 999999
+                elif self.ai_stage == "boss": boss_every = 2
 
                 if g_engine.level % boss_every == 0:
                     self.boss_active = True
@@ -409,6 +435,12 @@ class Game(GameState):
                         g_engine.all_sprites,
                     )
                 else:
+                    if hasattr(g_engine.player, 'reset_movement'):
+                        g_engine.player.reset_movement()
+                    
+                    self.next_state = "LevelUp"
+                    self.done = True
+                    
                     g_engine.level += 1
                     self.start_next_level_waves()
 
@@ -450,21 +482,40 @@ class Game(GameState):
 
         self.stars_front.draw(surf)
 
+        if g_engine.player and g_engine.player.getLife() > 0:
+            bar_width = config.INTERNAL_RESOLUTION[0] * 0.4 
+            bar_height = 8
+            x_pos = (config.INTERNAL_RESOLUTION[0] - bar_width) // 2
+            
+            if self.boss_active:
+                boss = next((e for e in g_engine.all_enemies if isinstance(e, Boss)), None)
+                fill_pct = max(0.0, boss.life / boss.max_life) if boss else 0.0
+            else:
+                total_forms = max(1, getattr(self, 'total_formations_current_wave', 1))
+                beaten = getattr(self, 'formations_beaten_in_wave', 0)
+                fill_pct = beaten / total_forms
+
+            fill_width = int(fill_pct * bar_width)
+            
+            pygame.draw.rect(surf, (20, 30, 35), (x_pos, 15, bar_width, bar_height))
+            pygame.draw.rect(surf, (0, 255, 150), (x_pos, 15, fill_width, bar_height))
+            pygame.draw.rect(surf, (200, 200, 200), (x_pos, 15, bar_width, bar_height), 1)
+
+
         draw_text(
             surf,
             f"Score {g_engine.score:06d}",
             config.INTERNAL_RESOLUTION[0] / 2,
-            30,
+            45, 
             use_smaller_font=False,
         )
         draw_text(
             surf,
-            f"Level {g_engine.level}",
+            f"Wave {g_engine.level}",
             config.INTERNAL_RESOLUTION[0] - 50,
             config.INTERNAL_RESOLUTION[1] - 30,
             use_smaller_font=False,
         )
-
         draw_text(
             surf,
             f"Life   {max(0, g_engine.player.getLife())}",
@@ -557,6 +608,7 @@ if __name__ == "__main__":
         "Exit": Exit(),
         "Options": Options(),
         "GameOver": GameOver(),
+        "LevelUp": LevelUp(), 
     }
 
     start_state = "Menu"

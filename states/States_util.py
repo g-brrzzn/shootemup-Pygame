@@ -54,9 +54,12 @@ def get_on_off_status(is_on):
 
 
 def vertical(
-    surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BACKGROUND_COLOR_2
+    surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BACKGROUND_COLOR_2, custom_rect=None
 ):
-    if not is_square:
+    if custom_rect:
+        axis_x, axis_y, w, h = custom_rect
+        size = (w, h)
+    elif not is_square:
         size = config.INTERNAL_RESOLUTION
         axis_x, axis_y = 0, 0
     else:
@@ -65,9 +68,8 @@ def vertical(
             config.INTERNAL_RESOLUTION[0] * 0.2,
         )
         center = (config.INTERNAL_RESOLUTION[0] / 2, config.INTERNAL_RESOLUTION[1] / 2)
-        x, y = center
-        axis_x = x - size[0] / 2
-        axis_y = y - size[1] / 2
+        axis_x = center[0] - size[0] / 2
+        axis_y = center[1] - size[1] / 2
 
     height = size[1]
     big_surf = pygame.Surface((1, height)).convert_alpha()
@@ -101,8 +103,14 @@ def menu_maker(options, title, selected, surf, is_settings):
         lowest_y = pct_20_w
     else:
         lowest_y = pct_10_w
+        
+    bg_width = pct_10_w * 2 
+    bg_height = pct_10_w + lowest_y 
 
-    vertical(surf)
+    bg_x = half_w - pct_10_w
+    bg_y = half_h - pct_10_w
+
+    vertical(surf, custom_rect=(bg_x, bg_y, bg_width, bg_height))
 
     # Title background
     title_bg_rect = (half_w - pct_5_w, half_h - pct_5_h * 4.15, pct_10_w + 5, pct_5_h)

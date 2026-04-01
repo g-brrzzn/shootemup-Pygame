@@ -64,6 +64,7 @@ class EnemyBase(pygame.sprite.Sprite):
 
         if self.life <= 1:
             g_engine.score += self.score_value
+                       
             roll = randint(0, 100)
             if roll < 10:
                 PowerUp(

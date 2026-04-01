@@ -3,29 +3,39 @@ from time import time
 from pygame.locals import *
 from random import randint, choice
 
+from classes.Weapons import FrontalCannon
 from game_engine import g_engine
 from constants.global_var import (
     MAX_LIFE,
     CONTROLS,
     config,
-    SPRITE_SIZE,
     PLAYER_COLOR_GREEN,
     GAME_COLOR,
 )
 
 
 class Player(pygame.sprite.Sprite):
+    MAX_POWER_LEVEL = 3
+
     def __init__(self, pos, *groups):
         super().__init__(*groups)
+
         self.shot_delay = 0.25
         self.moving_right = False
         self.moving_left = False
         self.moving_up = False
         self.moving_down = False
         self.firing = False
+
         self.last_time = time()
         self.last_shot = self.last_time
         self.trail_timer = 0.0
+        
+        self.speed_mult = 1.0
+        self.bullet_damage_mult = 1.0
+        self.bullet_speed_mult = 1.0
+        self.spread_arc_mult = 1.0
+        self.tracking_strength_mult = 1.0
 
         self.original_sprites = [
             g_engine.assets.get_image("player_idle1"),
@@ -61,6 +71,26 @@ class Player(pygame.sprite.Sprite):
         self.muzzle_flashes = []
         self.trail = []
 
+        self.level = 1
+        self.exp = 0
+        self.max_exp = 10
+        self.pending_level_up = False
+
+        self.acquired_skills = []
+        self.active_weapons = {
+            "base": FrontalCannon()
+        }
+        self.weapon_levels = {
+            "base": 1
+        }
+
+    def reset_movement(self):
+        self.moving_right = False
+        self.moving_left = False
+        self.moving_up = False
+        self.moving_down = False
+        self.firing = False
+
     def create_white_surface(self, surface):
         mask = pygame.mask.from_surface(surface)
         white_surface = mask.to_surface(
@@ -68,6 +98,27 @@ class Player(pygame.sprite.Sprite):
         )
         white_surface.set_colorkey((0, 0, 0))
         return white_surface
+
+    def gain_exp(self, amount):
+        self.exp += amount
+        if self.exp >= self.max_exp:
+            self.exp -= self.max_exp
+            self.level += 1
+            self.max_exp = int(self.max_exp * 1.5)
+            self.pending_level_up = True
+
+    def equip_weapon(self, weapon_id, weapon_instance, level=1):
+        self.active_weapons[weapon_id] = weapon_instance
+        self.weapon_levels[weapon_id] = max(self.weapon_levels.get(weapon_id, 0), level)
+
+    def unequip_weapon(self, weapon_id):
+        if weapon_id == "base":
+            return
+        self.active_weapons.pop(weapon_id, None)
+        self.weapon_levels.pop(weapon_id, None)
+
+    def add_skill(self, skill):
+        self.acquired_skills.append(dict(skill))
 
     def get_input(self, event):
         if event.key in CONTROLS["LEFT"]:
@@ -106,13 +157,13 @@ class Player(pygame.sprite.Sprite):
             self.firing = False
 
     def get_controller_input(self, event):
-        if event.button == 0:  # A button on xbox
+        if event.button == 0:
             self.firing = True
-        if event.button == 1:  # B button on xbox
+        if event.button == 1:
             self.firing = True
-        if event.button == 5:  # Right trigger on xbox
+        if event.button == 5:
             self.firing = True
-        if event.button == 4:  # Left trigger on xbox
+        if event.button == 4:
             self.firing = True
 
         if g_engine.platform == "Darwin":
@@ -146,8 +197,10 @@ class Player(pygame.sprite.Sprite):
                 self.moving_right = False
 
     def get_joyhat_input(self, event):
-        if event.hat == 0:
-            x, y = event.value
+        if event.hat != 0:
+            return
+
+        x, y = event.value
 
         if x == -1:
             self.moving_left = True
@@ -156,6 +209,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.moving_left = False
             self.moving_right = False
+
         if y == -1:
             self.moving_down = True
         elif y == 1:
@@ -167,6 +221,7 @@ class Player(pygame.sprite.Sprite):
     def get_joyaxismotion_input(self, event):
         if not config.use_analog_stick and event.axis in (0, 1):
             return
+
         deadzone = 0.3
 
         if event.axis == 0:
@@ -197,33 +252,48 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.firing = False
 
+    def get_firing_weapons(self):
+        fusion_weapons = [
+            (w_id, w) for w_id, w in self.active_weapons.items()
+            if w_id.startswith("fusion_") and not getattr(w, "is_auto", False)
+        ]
+
+        if fusion_weapons:
+            return fusion_weapons[:1]
+
+        weapons = []
+        has_main_weapon = any(w in self.active_weapons for w in ["burst_turret"])
+
+        for w_id, w in self.active_weapons.items():
+            if getattr(w, "is_auto", False):
+                continue 
+                
+            if has_main_weapon and w_id == "base":
+                continue 
+                
+            weapons.append((w_id, w))
+
+        return weapons
+
     def fire(self):
-        for _ in range(2):
-            self.muzzle_flashes.append([randint(-2, 2), randint(2, 6), randint(3, 5)])
+        actually_fired = False
+        firing_weapons = self.get_firing_weapons()
+        
+        for weapon_id, weapon in firing_weapons:
+            if weapon.fire(self.rect, self.power_level, g_engine.player_bullets) is not False:
+                actually_fired = True
 
-        options = {"angle": 90}
-        pattern = "single"
+        if actually_fired:
+            for _ in range(2):
+                self.muzzle_flashes.append([randint(-2, 2), randint(2, 6), randint(3, 5)])
 
-        if self.power_level == 2:
-            pattern = "spread"
-            options["count"] = 2
-            options["spread_arc"] = 15
-        elif self.power_level >= 3:
-            pattern = "spread"
-            options["count"] = 3
-            options["spread_arc"] = 30
+            pygame.mixer.Sound.play(g_engine.assets.get_sound("shoot"))
 
-        g_engine.player_bullets.emit_pattern(
-            pattern=pattern,
-            pos=self.rect.center,
-            options=options,
-        )
-        pygame.mixer.Sound.play(g_engine.assets.get_sound("shoot"))
-        if config.apply_controller_vibration and g_engine.joystick:
-            g_engine.joystick.rumble(5, 50, 20)
+            if config.apply_controller_vibration and g_engine.joystick:
+                g_engine.joystick.rumble(5, 50, 20)
 
     def upgrade(self):
-        self.power_level = min(self.power_level + 1, 3)
+        self.power_level = min(self.power_level + 1, self.MAX_POWER_LEVEL)
 
     def update_particles(self, dt):
         self.trail_timer += dt
@@ -240,9 +310,9 @@ class Player(pygame.sprite.Sprite):
         self.exhaust_particles.append([p_x, p_y, radius, color, 255])
 
         for p in self.exhaust_particles[:]:
-            p[1] += 300.0 * dt   
-            p[2] -= 30.0 * dt    
-            p[4] -= 900.0 * dt   
+            p[1] += 300.0 * dt
+            p[2] -= 30.0 * dt
+            p[4] -= 900.0 * dt
 
             if p[2] <= 0 or p[4] <= 0:
                 try:
@@ -270,27 +340,36 @@ class Player(pygame.sprite.Sprite):
         if self.current_sprite_index >= len(self.original_sprites):
             self.current_sprite_index = 0
 
+        current_speed = self.speed * self.speed_mult
+
         if self.moving_right:
-            self.x += self.speed * dt
+            self.x += current_speed * dt
             self.rect.x = round(self.x)
         if self.moving_left:
-            self.x -= self.speed * dt
+            self.x -= current_speed * dt
             self.rect.x = round(self.x)
         if self.moving_up:
-            self.y -= self.speed * dt
+            self.y -= current_speed * dt
             self.rect.y = round(self.y)
         if self.moving_down:
-            self.y += self.speed * dt
+            self.y += current_speed * dt
             self.rect.y = round(self.y)
 
         if self.rect.right > config.INTERNAL_RESOLUTION[0]:
             self.rect.right = config.INTERNAL_RESOLUTION[0]
+            self.x = float(self.rect.x)
+
         if self.rect.left < 0:
             self.rect.left = 0
+            self.x = float(self.rect.x)
+
         if self.rect.bottom > config.INTERNAL_RESOLUTION[1]:
             self.rect.bottom = config.INTERNAL_RESOLUTION[1]
+            self.y = float(self.rect.y)
+
         if self.rect.top < 0:
             self.rect.top = 0
+            self.y = float(self.rect.y)
 
         target_angle = 0
         if self.moving_left and not self.moving_right:
@@ -321,6 +400,11 @@ class Player(pygame.sprite.Sprite):
         if self.firing and self.last_time - self.last_shot > self.shot_delay:
             self.fire()
             self.last_shot = self.last_time
+            
+        if self.life > 0:
+            for w_id, w in self.active_weapons.items():
+                if getattr(w, "is_auto", False):
+                    w.fire(self.rect, self.power_level, g_engine.player_bullets)
 
     def draw_particles(self, surf):
         for i, (tx, ty) in enumerate(self.trail):
@@ -358,6 +442,7 @@ class Player(pygame.sprite.Sprite):
             alpha = int(255 * (1.0 - (radius / max_flash_radius)))
             if alpha <= 0:
                 continue
+
             rad_int = int(radius)
             flash_surf = pygame.Surface((rad_int * 2, rad_int * 2), pygame.SRCALPHA)
             pygame.draw.circle(
@@ -413,5 +498,4 @@ class Player(pygame.sprite.Sprite):
         self.moving_up = action[1] == 0
         self.moving_down = action[1] == 2
 
-        # Auto fire
         self.firing = True
