@@ -48,6 +48,7 @@ class Player(pygame.sprite.Sprite):
         self.parry_visual_alpha = 0.0
         
         self.overdrive_timer = 0.0
+        self.ricochet_timer = 0.0
 
         self.parry_texts = []
         try:
@@ -394,7 +395,9 @@ class Player(pygame.sprite.Sprite):
         self.upgrade()  
 
         self.last_hit = pygame.time.get_ticks() + 3000
-            
+    
+    def activate_ricochet(self):
+        self.ricochet_timer = 6.0        
             
     def update(self, dt):
         self.last_time = time()
@@ -405,6 +408,9 @@ class Player(pygame.sprite.Sprite):
         
         if self.parry_cooldown_timer > 0:
             self.parry_cooldown_timer -= dt
+            
+        if self.ricochet_timer > 0:
+            self.ricochet_timer -= dt
 
         if self.parry_active:
             self.parry_timer -= dt

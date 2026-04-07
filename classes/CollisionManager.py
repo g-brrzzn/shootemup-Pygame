@@ -140,6 +140,8 @@ class CollisionManager:
                 g_engine.player.upgrade()
             elif powerup.p_type == "life":
                 g_engine.player.gain_life()
+            elif powerup.p_type == "ricochet":
+                g_engine.player.activate_ricochet()
             pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
 
     @staticmethod

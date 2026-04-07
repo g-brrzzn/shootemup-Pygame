@@ -82,7 +82,7 @@ class EnemyBase(pygame.sprite.Sprite):
 
         if self.life <= 1:
             g_engine.score += self.score_value
-                       
+                        
             roll = randint(0, 100)
             if roll < 10:
                 PowerUp(
@@ -91,6 +91,10 @@ class EnemyBase(pygame.sprite.Sprite):
             elif roll < 15 and g_engine.player.getPowerLevel() < 3:
                 PowerUp(
                     self.rect.center, "weapon", g_engine.powerups, g_engine.all_sprites
+                )
+            elif roll < 17:
+                PowerUp(
+                    self.rect.center, "ricochet", g_engine.powerups, g_engine.all_sprites
                 )
 
             self.kill()

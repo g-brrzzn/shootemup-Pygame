@@ -259,16 +259,35 @@ class BulletSystem:
         self.life[:n] -= dt
 
         world_w, world_h = config.INTERNAL_RESOLUTION
-        out_x = (self.pos[:n, 0] < -50) | (self.pos[:n, 0] > world_w + 100)
-        out_y = (self.pos[:n, 1] < -50) | (self.pos[:n, 1] > world_h + 100)
-        
         timeout = self.life[:n] <= 0
-        out_mask = out_x | out_y | timeout
+        
+        from game_engine import g_engine
+        
+        if self.is_player and getattr(g_engine.player, "ricochet_timer", 0) > 0:
+            out_l = self.pos[:n, 0] <= 0
+            out_r = self.pos[:n, 0] >= world_w
+            out_t = self.pos[:n, 1] <= 0
+            out_b = self.pos[:n, 1] >= world_h
+
+            self.vel[:n, 0][out_l | out_r] *= -1
+            self.vel[:n, 1][out_t | out_b] *= -1
+
+            self.pos[:n, 0] = np.clip(self.pos[:n, 0], 1, world_w - 1)
+            self.pos[:n, 1] = np.clip(self.pos[:n, 1], 1, world_h - 1)
+
+            bounces = np.nonzero(out_l | out_r | out_t | out_b)[0]
+            for i in bounces:
+                self.angle[i] = int((math.degrees(math.atan2(-self.vel[i, 1], self.vel[i, 0])) % 360))
+
+            out_mask = timeout
+        else:
+            out_x = (self.pos[:n, 0] < -50) | (self.pos[:n, 0] > world_w + 100)
+            out_y = (self.pos[:n, 1] < -50) | (self.pos[:n, 1] > world_h + 100)
+            out_mask = out_x | out_y | timeout
 
         dead_indices = np.nonzero(out_mask)[0]
         for i in reversed(dead_indices):
             if timeout[i] and not self.meta[i].get("orbit"):
-                from game_engine import g_engine
                 g_engine.spark_system.emit(
                     pos=(self.pos[i, 0], self.pos[i, 1]),
                     angle=0, speed=0, color=(100, 100, 100), scale=0.5, fixed_decay=20

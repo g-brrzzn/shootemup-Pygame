@@ -15,6 +15,12 @@ class PowerUp(pygame.sprite.Sprite):
         elif p_type == "weapon":
             self.base_img = g_engine.assets.get_image("weapon_powerup")
             self.glow_color = PLAYER_COLOR_GREEN
+        elif p_type == "ricochet":
+            self.base_img = pygame.Surface((20, 20), pygame.SRCALPHA)
+            pygame.draw.rect(self.base_img, (50, 150, 255), (0, 0, 20, 20), border_radius=5)
+            pygame.draw.rect(self.base_img, (255, 255, 255), (0, 0, 20, 20), 2, border_radius=5)
+            pygame.draw.circle(self.base_img, (255, 255, 255), (10, 10), 5)
+            self.glow_color = (50, 150, 255)
         else:
             self.base_img = pygame.Surface((32, 16), pygame.SRCALPHA)
             self.base_img.fill((255, 255, 255))
