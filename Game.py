@@ -17,6 +17,7 @@ from classes.particles.Spark import SparkSystem
 from classes.EnemyFormations import FormationManager
 from assets.AssetManager import AssetManager
 from classes.CollisionManager import CollisionManager
+from classes.HUD import HUD
 
 from states.Menu import Menu
 from states.Pause import Pause
@@ -84,6 +85,8 @@ pygame.mixer.music.set_volume(0.1)
 class Game(GameState):
     def __init__(self, ai_stage="full"):
         super().__init__()
+        
+        self.hud = HUD()
 
         g_engine.all_sprites = pygame.sprite.Group()
         g_engine.all_enemies = pygame.sprite.Group()
@@ -364,52 +367,16 @@ class Game(GameState):
 
         self.stars_front.draw(surf)
 
-        if g_engine.player and g_engine.player.getLife() > 0:
-            bar_width = config.INTERNAL_RESOLUTION[0] * 0.4 
-            bar_height = 8
-            x_pos = (config.INTERNAL_RESOLUTION[0] - bar_width) // 2
-            
-            if self.boss_active:
-                boss = next((e for e in g_engine.all_enemies if isinstance(e, Boss)), None)
-                fill_pct = max(0.0, boss.life / boss.max_life) if boss else 0.0
-            else:
-                total_forms = max(1, getattr(self, 'total_formations_current_wave', 1))
-                beaten = getattr(self, 'formations_beaten_in_wave', 0)
-                fill_pct = beaten / total_forms
+        fill_pct = 0.0
+        if self.boss_active:
+            boss = next((e for e in g_engine.all_enemies if isinstance(e, Boss)), None)
+            fill_pct = max(0.0, boss.life / boss.max_life) if boss else 0.0
+        else:
+            total_forms = max(1, getattr(self, 'total_formations_current_wave', 1))
+            beaten = getattr(self, 'formations_beaten_in_wave', 0)
+            fill_pct = beaten / total_forms
 
-            fill_width = int(fill_pct * bar_width)
-            
-            pygame.draw.rect(surf, (20, 30, 35), (x_pos, 15, bar_width, bar_height))
-            pygame.draw.rect(surf, (0, 255, 150), (x_pos, 15, fill_width, bar_height))
-            pygame.draw.rect(surf, (200, 200, 200), (x_pos, 15, bar_width, bar_height), 1)
-
-
-        draw_text(
-            surf,
-            f"Score {g_engine.score:06d}",
-            config.INTERNAL_RESOLUTION[0] / 2,
-            45, 
-            use_smaller_font=False,
-        )
-        draw_text(
-            surf,
-            f"Wave {g_engine.level}",
-            config.INTERNAL_RESOLUTION[0] - 50,
-            config.INTERNAL_RESOLUTION[1] - 30,
-            use_smaller_font=False,
-        )
-        draw_text(
-            surf,
-            f"Life   {max(0, g_engine.player.getLife())}",
-            config.INTERNAL_RESOLUTION[0] - 50,
-            config.INTERNAL_RESOLUTION[1] - 60,
-            use_smaller_font=False,
-        )
-
-        if config.show_fps:
-            draw_text(
-                surf, f"FPS {(int(clock.get_fps()))}", 50, 30, use_smaller_font=False
-            )
+        self.hud.draw(surf, clock, fill_pct)
 
 
 class GameRunner(object):
