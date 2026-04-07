@@ -16,6 +16,7 @@ from classes.particles.Explosion import ExplosionSystem
 from classes.particles.Spark import SparkSystem
 from classes.EnemyFormations import FormationManager
 from assets.AssetManager import AssetManager
+from classes.CollisionManager import CollisionManager
 
 from states.Menu import Menu
 from states.Pause import Pause
@@ -270,169 +271,15 @@ class Game(GameState):
         g_engine.enemy_bullets.update(dt)
 
         base_speed = g_engine.level * 0.5
-
         self.stars_back.update(gravity=base_speed * 0.1, dt=dt)
         self.stars_mid.update(gravity=base_speed * 0.5, dt=dt)
         self.stars_front.update(gravity=base_speed * 1.5, dt=dt)
 
         g_engine.explosion_system.update(dt)
         self.particles.update(dt)
-
-        if g_engine.enemy_bullets.active_count > 0:
-            p_rect = g_engine.player.hitbox
-            n = g_engine.enemy_bullets.active_count
-            b_x = g_engine.enemy_bullets.pos[:n, 0]
-            b_y = g_engine.enemy_bullets.pos[:n, 1]
-
-            not_grazed = ~g_engine.enemy_bullets.grazed[:n]
-            grazes = np.nonzero(
-                (b_x >= p_rect.left - 40)
-                & (b_x <= p_rect.right + 40)
-                & (b_y >= p_rect.top - 40)
-                & (b_y <= p_rect.bottom + 40)
-                & not_grazed
-            )[0]
-
-            for g in grazes:
-                g_engine.enemy_bullets.grazed[g] = True
-                g_engine.score += 10
-                g_engine.spark_system.emit(
-                    pos=(
-                        g_engine.enemy_bullets.pos[g, 0],
-                        g_engine.enemy_bullets.pos[g, 1],
-                    ),
-                    angle=random.randint(0, 360),
-                    speed=random.randint(3, 7),
-                    color=(100, 200, 255),
-                    scale=1.2,
-                )
-
-            hits = np.nonzero(
-                (b_x >= p_rect.left)
-                & (b_x <= p_rect.right)
-                & (b_y >= p_rect.top)
-                & (b_y <= p_rect.bottom)
-            )[0]
-
-            if len(hits) > 0:
-                for h in reversed(hits):
-                    meta = g_engine.enemy_bullets.get_bullet_meta(h)
-                    
-                    p_rect = g_engine.player.hitbox
-                    parry_rect = g_engine.player.parry_rect 
-                    bullets_to_kill = set()
-
-                    if g_engine.player.parry_active:
-                        possible_parrys = np.nonzero(
-                            (b_x >= parry_rect.left) & (b_x <= parry_rect.right) &
-                            (b_y >= parry_rect.top) & (b_y <= parry_rect.bottom)
-                        )[0]
-                        
-                        for h in possible_parrys:
-                            meta = g_engine.enemy_bullets.get_bullet_meta(h)
-                            if meta.get("is_pink") and h not in bullets_to_kill:
-                                g_engine.score += 150
-                                g_engine.player.gain_exp(1)
-                                g_engine.player.on_parry_success()
-                                bullets_to_kill.add(h)
-
-                    hits = np.nonzero(
-                        (b_x >= p_rect.left) & (b_x <= p_rect.right) &
-                        (b_y >= p_rect.top) & (b_y <= p_rect.bottom)
-                    )[0]
-
-                    for h in hits:
-                        if h in bullets_to_kill: 
-                            continue 
-                        
-                        if g_engine.player.take_damage():
-                            bullets_to_kill.add(h)
-                            g_engine.hit_stop_frames = 0.08
-                            if config.apply_controller_vibration and g_engine.joystick:
-                                g_engine.joystick.rumble(50, 200, 100)
-
-                    for h in sorted(list(bullets_to_kill), reverse=True):
-                        g_engine.enemy_bullets.kill_bullet(h)
-
-        if g_engine.player_bullets.active_count > 0 and len(g_engine.all_enemies) > 0:
-            n = g_engine.player_bullets.active_count
-            b_x = g_engine.player_bullets.pos[:n, 0]
-            b_y = g_engine.player_bullets.pos[:n, 1]
-
-            bullets_to_kill = set()
-
-            for enemy in list(g_engine.all_enemies):
-                ex, ey, ew, eh = (
-                    enemy.rect.x,
-                    enemy.rect.y,
-                    enemy.rect.width,
-                    enemy.rect.height,
-                )
-                hits = np.nonzero(
-                    (b_x >= ex) & (b_x <= ex + ew) & (b_y >= ey) & (b_y <= ey + eh)
-                )[0]
-
-                valid_hits = [h for h in hits if h not in bullets_to_kill]
-
-                if valid_hits:
-                    for h in valid_hits:
-                        bullets_to_kill.add(h)
-
-                    if isinstance(enemy, Boss):
-                        g_engine.explosion_system.create(
-                            enemy.rect.centerx,
-                            enemy.rect.centery + random.randint(-20, 20),
-                        )
-                        enemy.damage()
-                    else:
-                        g_engine.explosion_system.create(
-                            enemy.rect.centerx, enemy.rect.centery
-                        )
-                        enemy.damage()
-
-                    for _ in range(random.randint(4, 8)):
-                        g_engine.spark_system.emit(
-                            pos=enemy.rect.center,
-                            angle=random.randint(0, 360),
-                            speed=random.randint(3, 10),
-                            color=(255, 255, 180),
-                            scale=1.5,
-                        )
-
-            for h in sorted(list(bullets_to_kill), reverse=True):
-                g_engine.player_bullets.kill_bullet(h)
-
-        powerup_hits = pygame.sprite.spritecollide(
-            g_engine.player,
-            g_engine.powerups,
-            True,
-            collided=lambda p, pw: p.hitbox.colliderect(pw.hitbox),
-        )
-        for powerup in powerup_hits:
-            if powerup.p_type == "weapon":
-                g_engine.player.upgrade()
-            elif powerup.p_type == "life":
-                g_engine.player.gain_life()
-            pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
-
         g_engine.spark_system.update(dt)
 
-        player_crashes = pygame.sprite.spritecollide(
-            g_engine.player,
-            g_engine.all_enemies,
-            False,
-            collided=lambda p, e: p.hitbox.colliderect(e.rect),
-        )
-        if player_crashes:
-            if g_engine.player.take_damage():
-                g_engine.hit_stop_frames = 0.08
-                g_engine.screen_shake = max(g_engine.screen_shake, 0.1)
-                if config.apply_controller_vibration and g_engine.joystick:
-                    g_engine.joystick.rumble(50, 200, 100)
-            
-            for enemy in player_crashes:
-                if not isinstance(enemy, Boss):
-                    enemy.kill()
+        CollisionManager.update()
 
         if hasattr(self, 'total_formations_current_wave'):
             if len(g_engine.all_enemies) == 0:
