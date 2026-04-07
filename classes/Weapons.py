@@ -115,7 +115,7 @@ class BombPod(Weapon):
     def fire(self, player_rect, power_level, bullet_system):
         lvl = _lvl(power_level)
         _single(
-            bullet_system, player_rect.center, angle=90, speed_scale=0.72,
+            bullet_system, player_rect.center, angle=90, speed_scale=1.15,
             explosive=True, blast_radius=70 + (lvl * 20), splash_damage=1.0 + (lvl * 0.2)
         )
 
@@ -140,7 +140,7 @@ class BombardmentFusion(Weapon):
 
         _spread(
             bullet_system, player_rect.center, count=bomb_count,
-            spread_arc=50 + (lvl * 10), angle=90, speed_scale=0.75 + (lvl * 0.05),
+            spread_arc=50 + (lvl * 10), angle=90, speed_scale=1.15 + (lvl * 0.05),
             explosive=True, blast_radius=80 + (lvl * 15), splash_damage=2.0,
         )
 

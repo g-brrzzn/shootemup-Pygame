@@ -10,6 +10,7 @@ from game_engine import g_engine
 from .GameState import GameState
 from .States_util import draw_text, handle_analog_stick
 from classes.particles.Fall import Fall
+from classes.particles.LightRays import LightRays
 from constants.global_var import config, CONTROLS, GAME_COLOR, TITLE_YELLOW_1
 from constants.Utils import delta_time
 
@@ -178,6 +179,8 @@ class LevelUp(GameState):
 
         self.fall_1 = Fall(amount=35, min_s=15, max_s=40, color=TITLE_YELLOW_1, size=2)
         self.fall_2 = Fall(amount=35, min_s=15, max_s=40, color=(100, 200, 255), size=2)
+        self.rays_1 = LightRays(amount=20, color=TITLE_YELLOW_1, min_speed=600, max_speed=1000, alpha=160, width=3, length=120, direction=-1)
+        self.rays_2 = LightRays(amount=15, color=(255, 150, 220), min_speed=800, max_speed=1400, alpha=200, width=2, length=200, direction=-1)
 
         available_fusions, available_bases = self._build_offer_pool()
         counts = self._skill_counts()
@@ -269,6 +272,8 @@ class LevelUp(GameState):
         dt, self.last_time = delta_time(self.last_time)
         self.fall_1.update(gravity=30, wind=120, dt=dt)
         self.fall_2.update(gravity=-80, wind=-120, dt=dt)
+        self.rays_1.update(dt)
+        self.rays_2.update(dt)
 
         fade_speed = 800.0
         if self.is_closing:
@@ -285,6 +290,9 @@ class LevelUp(GameState):
         overlay = pygame.Surface((w, h), pygame.SRCALPHA)
         overlay.fill((10, 15, 20, int(180 * (self.state_alpha / 255.0))))
         surf.blit(overlay, (0, 0))
+
+        self.rays_1.draw(surf)
+        self.rays_2.draw(surf)
 
         ui_surf = pygame.Surface((w, h), pygame.SRCALPHA)
         self.fall_1.draw(ui_surf)

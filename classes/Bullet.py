@@ -70,6 +70,7 @@ class BulletSystem:
 
         cls.glow_player = assets_manager.get_image("glow_bullet_player")
         cls.glow_enemy = assets_manager.get_image("glow_bullet_enemy")
+        cls.glow_enemy_pink = assets_manager.get_image("glow_bullet_pink")
         
         cls.glow_player_l2 = pygame.transform.scale(cls.glow_player, (int(cls.glow_player.get_width() * 1.3), int(cls.glow_player.get_height() * 1.3)))
         cls.glow_player_l3 = pygame.transform.scale(cls.glow_player, (int(cls.glow_player.get_width() * 1.8), int(cls.glow_player.get_height() * 1.8)))
@@ -134,6 +135,8 @@ class BulletSystem:
 
         angle_rad = math.radians(angle)
         speed = self.base_speed * speed_scale
+        if props.get("is_pink"):
+            speed *= 0.65
         self.vel[idx, 0] = math.cos(angle_rad) * speed
         self.vel[idx, 1] = -math.sin(angle_rad) * speed
 
@@ -365,10 +368,19 @@ class BulletSystem:
                     surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
                     
                 else:
-                    img = self.enemy_images[angle_list[i]]
-                    glow = self.glow_enemy
-                    glow_w = glow.get_width() // 2
-                    glow_h = glow.get_height() // 2
-                    
-                    surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2))
-                    surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
+                    if meta.get("is_pink"):
+                        pygame.draw.circle(surf, (250, 160, 210), (px, py), 10) 
+                        
+                        glow = self.glow_enemy_pink
+                        glow_w = glow.get_width() // 2
+                        glow_h = glow.get_height() // 2
+                        surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
+                    else:
+                        img = self.enemy_images[angle_list[i]]
+                        glow = self.glow_enemy
+                        
+                        glow_w = glow.get_width() // 2
+                        glow_h = glow.get_height() // 2
+                        
+                        surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2))
+                        surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)

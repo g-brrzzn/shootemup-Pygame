@@ -176,6 +176,7 @@ CONTROLS = {
     "RIGHT": [pygame.K_d, pygame.K_RIGHT],
     "LEFT": [pygame.K_a, pygame.K_LEFT],
     "FIRE": [pygame.K_SPACE],
+    "ABSORB": [pygame.K_LSHIFT, pygame.K_f], 
     "START": [pygame.K_RETURN, pygame.K_SPACE],
     "ESC": [pygame.K_ESCAPE],
 }

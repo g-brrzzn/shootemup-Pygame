@@ -83,6 +83,7 @@ class AssetManager:
         self.sounds['hit'] = self._load_sound(p('sound/hit.mp3'))
         self.sounds['menu_select'] = self._load_sound(p('sound/impactMetal_002.ogg'))
         self.sounds['menu_confirm'] = self._load_sound(p('sound/forceField_001.mp3'))
+        self.sounds['wah-parry'] = self._load_sound(p('sound/wah-parry.mp3'))
 
         self.sounds['music'] = str(self._resolve_path(p('sound/victory.mp3')))
 
@@ -140,4 +141,6 @@ class AssetManager:
     def _generate_glows(self):
         self.images['glow_bullet_player'] = create_glow_surface(25, (255, 0, 255))
         self.images['glow_bullet_enemy'] = create_glow_surface(25, TITLE_YELLOW_1)
+        self.images['glow_bullet_pink'] = create_glow_surface(25, (220, 88, 176))
         self.images['glow_player'] = create_glow_surface(45, PLAYER_COLOR_GREEN)
+        self.images['glow_absorb'] = create_glow_surface(55, (255, 50, 150))

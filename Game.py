@@ -315,12 +315,44 @@ class Game(GameState):
             )[0]
 
             if len(hits) > 0:
-                g_engine.player.take_damage()
-                g_engine.hit_stop_frames = 0.08
-                if config.apply_controller_vibration and g_engine.joystick:
-                    g_engine.joystick.rumble(50, 200, 100)
                 for h in reversed(hits):
-                    g_engine.enemy_bullets.kill_bullet(h)
+                    meta = g_engine.enemy_bullets.get_bullet_meta(h)
+                    
+                    p_rect = g_engine.player.hitbox
+                    parry_rect = g_engine.player.parry_rect 
+                    bullets_to_kill = set()
+
+                    if g_engine.player.parry_active:
+                        possible_parrys = np.nonzero(
+                            (b_x >= parry_rect.left) & (b_x <= parry_rect.right) &
+                            (b_y >= parry_rect.top) & (b_y <= parry_rect.bottom)
+                        )[0]
+                        
+                        for h in possible_parrys:
+                            meta = g_engine.enemy_bullets.get_bullet_meta(h)
+                            if meta.get("is_pink") and h not in bullets_to_kill:
+                                g_engine.score += 150
+                                g_engine.player.gain_exp(1)
+                                g_engine.player.on_parry_success()
+                                bullets_to_kill.add(h)
+
+                    hits = np.nonzero(
+                        (b_x >= p_rect.left) & (b_x <= p_rect.right) &
+                        (b_y >= p_rect.top) & (b_y <= p_rect.bottom)
+                    )[0]
+
+                    for h in hits:
+                        if h in bullets_to_kill: 
+                            continue 
+                        
+                        if g_engine.player.take_damage():
+                            bullets_to_kill.add(h)
+                            g_engine.hit_stop_frames = 0.08
+                            if config.apply_controller_vibration and g_engine.joystick:
+                                g_engine.joystick.rumble(50, 200, 100)
+
+                    for h in sorted(list(bullets_to_kill), reverse=True):
+                        g_engine.enemy_bullets.kill_bullet(h)
 
         if g_engine.player_bullets.active_count > 0 and len(g_engine.all_enemies) > 0:
             n = g_engine.player_bullets.active_count
@@ -392,12 +424,13 @@ class Game(GameState):
             collided=lambda p, e: p.hitbox.colliderect(e.rect),
         )
         if player_crashes:
-            g_engine.player.take_damage()
-            g_engine.hit_stop_frames = 0.08
-            if config.apply_controller_vibration and g_engine.joystick:
-                g_engine.joystick.rumble(50, 200, 100)
-            for enemy in player_crashes:
+            if g_engine.player.take_damage():
+                g_engine.hit_stop_frames = 0.08
                 g_engine.screen_shake = max(g_engine.screen_shake, 0.1)
+                if config.apply_controller_vibration and g_engine.joystick:
+                    g_engine.joystick.rumble(50, 200, 100)
+            
+            for enemy in player_crashes:
                 if not isinstance(enemy, Boss):
                     enemy.kill()
 
@@ -464,6 +497,8 @@ class Game(GameState):
             player_glow.get_rect(center=g_engine.player.rect.center),
             special_flags=pygame.BLEND_ADD,
         )
+        
+        g_engine.player.draw_absorb_effect(surf) 
 
         g_engine.player.draw_particles(surf)
         g_engine.player.draw_muzzle_flash(surf)

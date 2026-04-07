@@ -1,3 +1,6 @@
+import math
+import numpy as np 
+
 import pygame
 from time import time
 from pygame.locals import *
@@ -12,6 +15,31 @@ from constants.global_var import (
     PLAYER_COLOR_GREEN,
     GAME_COLOR,
 )
+
+class ParryText:
+    def __init__(self, pos, font, text="PARRY!"):
+        self.x, self.y = pos
+        self.text = text
+        self.font = font
+        self.color = (255, 105, 180, 255) 
+        self.life_time = 0.6  
+        self.speed = 100.0   
+
+    def update(self, dt):
+        self.life_time -= dt
+        self.y -= self.speed * dt
+
+        alpha = int(max(0, self.color[3] - (255.0 / 0.6) * dt))
+
+
+    def draw(self, surf):
+        text_surf = self.font.render(self.text, True, (255, 105, 180))
+        text_rect = text_surf.get_rect(center=(int(self.x), int(self.y)))
+
+        alpha = int((self.life_time / 0.6) * 255) 
+        text_surf.set_alpha(alpha)
+        
+        surf.blit(text_surf, text_rect)
 
 
 class Player(pygame.sprite.Sprite):
@@ -36,6 +64,22 @@ class Player(pygame.sprite.Sprite):
         self.bullet_speed_mult = 1.0
         self.spread_arc_mult = 1.0
         self.tracking_strength_mult = 1.0
+        
+        self.parry_active = False
+        self.parry_timer = 0.0
+        self.parry_duration = 0.25  
+        self.parry_cooldown_timer = 0.0
+        self.parry_cooldown = 0.5   
+        
+        self.parry_visual_alpha = 0.0
+        
+        self.overdrive_timer = 0.0
+
+        self.parry_texts = []
+        try:
+            self.parry_font = pygame.font.Font(g_engine.assets.get_font_path("american_captain"), 30)
+        except:
+            self.parry_font = pygame.font.SysFont("arial", 30, bold=True)
 
         self.original_sprites = [
             g_engine.assets.get_image("player_idle1"),
@@ -44,6 +88,10 @@ class Player(pygame.sprite.Sprite):
 
         self.original_white_sprites = [
             self.create_white_surface(s) for s in self.original_sprites
+        ]
+        
+        self.original_pink_sprites = [
+            self.create_pink_surface(s) for s in self.original_sprites
         ]
 
         self.current_sprite_index = 0
@@ -98,6 +146,20 @@ class Player(pygame.sprite.Sprite):
         )
         white_surface.set_colorkey((0, 0, 0))
         return white_surface
+    
+    def create_pink_surface(self, surface):
+        tinted = surface.copy()
+        arr = pygame.surfarray.pixels3d(tinted)
+
+        gray = np.dot(arr[..., :3], [0.2989, 0.5870, 0.1140])
+        
+        arr[..., 0] = np.clip(gray * 1.0, 0, 255)         
+        arr[..., 1] = np.clip(gray * (105/255.0), 0, 255)  
+        arr[..., 2] = np.clip(gray * (180/255.0), 0, 255) 
+        
+        del arr 
+        tinted.set_colorkey((0, 0, 0))
+        return tinted
 
     def gain_exp(self, amount):
         self.exp += amount
@@ -130,8 +192,15 @@ class Player(pygame.sprite.Sprite):
         if event.key in CONTROLS["UP"]:
             self.moving_up = True
         if event.key in CONTROLS["FIRE"]:
-            self.firing = True
+            self.firing = True          
+        if event.key in CONTROLS["ABSORB"]: 
+            if not self.parry_active and self.parry_cooldown_timer <= 0:
+                self.parry_active = True
+                self.parry_timer = self.parry_duration
+                self.parry_cooldown_timer = self.parry_cooldown
+                
 
+        # Debug keys
         if event.key == K_o:
             if self.shot_delay >= 0.1:
                 self.shot_delay -= 0.1
@@ -325,10 +394,54 @@ class Player(pygame.sprite.Sprite):
             if len(self.trail) > 12:
                 self.trail.pop(0)
             self.trail_timer = 0.0
+            
+                
 
+    
+    def draw_absorb_effect(self, surf):
+        if self.parry_active:
+            glow = g_engine.assets.get_image("glow_absorb").copy()
+            pulse = int((math.sin(pygame.time.get_ticks() * 0.05) + 1) * 50) + 155 
+            glow.set_alpha(pulse)
+            surf.blit(glow, glow.get_rect(center=self.rect.center), special_flags=pygame.BLEND_ADD)
+            
+            
+    def on_parry_success(self):
+        pygame.mixer.Sound.play(g_engine.assets.get_sound("wah-parry"))
+
+        new_text = ParryText((self.rect.centerx, self.rect.top - 20), self.parry_font)
+        self.parry_texts.append(new_text)
+
+        g_engine.hit_stop_frames = 0.15  
+        
+        self.parry_active = False
+        self.parry_visual_alpha = 0.0
+        self.parry_cooldown_timer = 0.0
+        
+        self.overdrive_timer = 3.0
+        
+        self.upgrade()  
+
+        self.last_hit = pygame.time.get_ticks() + 3000
+            
+            
     def update(self, dt):
         self.last_time = time()
         self.update_particles(dt)
+        
+        if self.overdrive_timer > 0:
+            self.overdrive_timer -= dt
+        
+        if self.parry_cooldown_timer > 0:
+            self.parry_cooldown_timer -= dt
+
+        if self.parry_active:
+            self.parry_timer -= dt
+            self.parry_visual_alpha = min(255.0, self.parry_visual_alpha + 1500.0 * dt) 
+            if self.parry_timer <= 0:
+                self.parry_active = False
+        else:
+            self.parry_visual_alpha = max(0.0, self.parry_visual_alpha - 800.0 * dt) 
 
         max_flash_radius = 25
         for flash in self.muzzle_flashes[:]:
@@ -382,8 +495,15 @@ class Player(pygame.sprite.Sprite):
         current_time = pygame.time.get_ticks()
         is_invincible = current_time - self.last_hit < self.invincibility_duration
 
+        current_time = pygame.time.get_ticks()
+
+        is_invincible = (current_time < self.last_hit) or (current_time - self.last_hit < self.invincibility_duration)
+
         idx = int(self.current_sprite_index)
-        if is_invincible and (current_time // 100) % 2 == 1:
+        
+        if self.parry_active:
+            base_image = self.original_pink_sprites[idx]
+        elif is_invincible and (current_time // 100) % 2 == 1:
             base_image = self.original_white_sprites[idx]
         else:
             base_image = self.original_sprites[idx]
@@ -396,8 +516,12 @@ class Player(pygame.sprite.Sprite):
 
         self.hitbox = self.rect.inflate(-20, -10)
         self.hitbox.y += 15
+        
+        self.parry_rect = self.rect.inflate(60, 60)
 
-        if self.firing and self.last_time - self.last_shot > self.shot_delay:
+        effective_shot_delay = self.shot_delay / 2.0 if self.overdrive_timer > 0 else self.shot_delay
+
+        if self.firing and self.last_time - self.last_shot > effective_shot_delay:
             self.fire()
             self.last_shot = self.last_time
             
@@ -406,14 +530,22 @@ class Player(pygame.sprite.Sprite):
                 if getattr(w, "is_auto", False):
                     w.fire(self.rect, self.power_level, g_engine.player_bullets)
 
+        for text in self.parry_texts[:]:
+            text.update(dt)
+            if text.life_time <= 0:
+                self.parry_texts.remove(text)
+
     def draw_particles(self, surf):
         for i, (tx, ty) in enumerate(self.trail):
             radius = int((i / len(self.trail)) * 9)
             if radius > 0:
                 surf_trail = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
                 alpha = int((i / len(self.trail)) * 120)
+                
+                trail_color = (255, 105, 180) if self.parry_active else PLAYER_COLOR_GREEN
+                
                 pygame.draw.circle(
-                    surf_trail, (*PLAYER_COLOR_GREEN, alpha), (radius, radius), radius
+                    surf_trail, (*trail_color, alpha), (radius, radius), radius
                 )
                 surf.blit(surf_trail, (tx - radius, ty - radius))
 
@@ -449,13 +581,19 @@ class Player(pygame.sprite.Sprite):
                 flash_surf, (*GAME_COLOR, alpha), (rad_int, rad_int), rad_int, 3
             )
             surf.blit(flash_surf, (center_x - rad_int, center_y - rad_int))
+            
+    def draw_parry_texts(self, surf):
+        for text in self.parry_texts:
+            text.draw(surf)
 
     def take_damage(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_hit > self.invincibility_duration:
+        is_invincible = (current_time < self.last_hit) or (current_time - self.last_hit < self.invincibility_duration)
+        
+        if not is_invincible:
             self.life -= 1
             self.power_level = 1
-            self.last_hit = current_time
+            self.last_hit = current_time 
             g_engine.explosion_system.create(
                 self.rect.centerx,
                 self.rect.centery,
@@ -463,7 +601,11 @@ class Player(pygame.sprite.Sprite):
                 speed=-375,
             )
             pygame.mixer.Sound.play(g_engine.assets.get_sound("hit"))
-            g_engine.screen_shake = 0.25
+            g_engine.screen_shake = 0.5
+            
+            return True 
+            
+        return False 
 
     def getLife(self):
         return self.life
