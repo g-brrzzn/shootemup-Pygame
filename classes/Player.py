@@ -16,32 +16,6 @@ from constants.global_var import (
     GAME_COLOR,
 )
 
-class ParryText:
-    def __init__(self, pos, font, text="PARRY!"):
-        self.x, self.y = pos
-        self.text = text
-        self.font = font
-        self.color = (255, 105, 180, 255) 
-        self.life_time = 0.6  
-        self.speed = 100.0   
-
-    def update(self, dt):
-        self.life_time -= dt
-        self.y -= self.speed * dt
-
-        alpha = int(max(0, self.color[3] - (255.0 / 0.6) * dt))
-
-
-    def draw(self, surf):
-        text_surf = self.font.render(self.text, True, (255, 105, 180))
-        text_rect = text_surf.get_rect(center=(int(self.x), int(self.y)))
-
-        alpha = int((self.life_time / 0.6) * 255) 
-        text_surf.set_alpha(alpha)
-        
-        surf.blit(text_surf, text_rect)
-
-
 class Player(pygame.sprite.Sprite):
     MAX_POWER_LEVEL = 3
 
@@ -409,9 +383,6 @@ class Player(pygame.sprite.Sprite):
     def on_parry_success(self):
         pygame.mixer.Sound.play(g_engine.assets.get_sound("wah-parry"))
 
-        new_text = ParryText((self.rect.centerx, self.rect.top - 20), self.parry_font)
-        self.parry_texts.append(new_text)
-
         g_engine.hit_stop_frames = 0.15  
         
         self.parry_active = False
@@ -517,7 +488,7 @@ class Player(pygame.sprite.Sprite):
         self.hitbox = self.rect.inflate(-20, -10)
         self.hitbox.y += 15
         
-        self.parry_rect = self.rect.inflate(60, 60)
+        self.parry_rect = self.rect.inflate(70, 70)
 
         effective_shot_delay = self.shot_delay / 2.0 if self.overdrive_timer > 0 else self.shot_delay
 
@@ -530,10 +501,6 @@ class Player(pygame.sprite.Sprite):
                 if getattr(w, "is_auto", False):
                     w.fire(self.rect, self.power_level, g_engine.player_bullets)
 
-        for text in self.parry_texts[:]:
-            text.update(dt)
-            if text.life_time <= 0:
-                self.parry_texts.remove(text)
 
     def draw_particles(self, surf):
         for i, (tx, ty) in enumerate(self.trail):
@@ -582,9 +549,6 @@ class Player(pygame.sprite.Sprite):
             )
             surf.blit(flash_surf, (center_x - rad_int, center_y - rad_int))
             
-    def draw_parry_texts(self, surf):
-        for text in self.parry_texts:
-            text.draw(surf)
 
     def take_damage(self):
         current_time = pygame.time.get_ticks()

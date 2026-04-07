@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from constants.global_var import config
+from constants.global_var import config, PLAYER_COLOR_GREEN
 from game_engine import g_engine
 
 class PowerUp(pygame.sprite.Sprite):
@@ -11,10 +11,10 @@ class PowerUp(pygame.sprite.Sprite):
         
         if p_type == "life":
             self.base_img = g_engine.assets.get_image("life_powerup")
-            self.glow_color = (50, 255, 100)  
+            self.glow_color = (255, 50, 50)  
         elif p_type == "weapon":
             self.base_img = g_engine.assets.get_image("weapon_powerup")
-            self.glow_color = (255, 200, 50) 
+            self.glow_color = PLAYER_COLOR_GREEN
         else:
             self.base_img = pygame.Surface((32, 16), pygame.SRCALPHA)
             self.base_img.fill((255, 255, 255))
