@@ -57,7 +57,19 @@ class RearShot(Weapon):
 
 
 class SideShot(Weapon):
+    def __init__(self):
+        self.last_fire_time = 0
+        self.cooldown = 1.2
+        self.is_auto = False
+
     def fire(self, player_rect, power_level, bullet_system):
+        import pygame
+        current_time = pygame.time.get_ticks() / 1000.0
+        
+        if current_time - self.last_fire_time < self.cooldown:
+            return False
+            
+        self.last_fire_time = current_time
         lvl = _lvl(power_level)
         count = min(6, 2 * lvl) 
         _spread(bullet_system, player_rect.center, count=count, spread_arc=180, angle=90, speed_scale=0.95)

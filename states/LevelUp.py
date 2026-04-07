@@ -46,7 +46,7 @@ BASE_UPGRADES = [
         "id": "bomb_pod",
         "name": "BOMB POD",
         "desc": "Area-of-effect explosions",
-        "color": (255, 120, 120),
+        "color": (220, 88, 176),
         "type": "weapon",
         "category": "auto_pod", 
         "weapon_class": BombPod,
@@ -59,18 +59,6 @@ BASE_UPGRADES = [
         "type": "weapon",
         "category": "primary", 
         "weapon_class": BurstTurret,
-    },
-    {
-        "id": "overclock",
-        "name": "OVERCLOCK",
-        "desc": "Main weapons fire faster",
-        "color": (100, 255, 100),
-        "type": "stat",
-        "category": "passive",
-        "stat_target": "shot_delay",
-        "multiplier": 0.82,
-        "max_stacks": 5,
-        "repeatable": True,
     },
     {
         "id": "reinforced_hull",
@@ -91,10 +79,10 @@ FUSIONS = [
         "id": "fusion_bombardment",
         "name": "BOMBARDMENT",
         "desc": "FUSION: Explosive rain",
-        "color": (255, 120, 120),
+        "color": (220, 88, 176),
         "type": "fusion",
         "category": "ultimate",
-        "requires": ["bomb_pod", "overclock"],
+        "requires": ["bomb_pod", "tracking_drones"],
         "weapon_class": BombardmentFusion,
     },
     {
@@ -137,7 +125,7 @@ class LevelUp(GameState):
             return True
 
         if upgrade["type"] == "weapon" and owned_count > 0:
-            return owned_count < 3 
+            return False 
 
         if upgrade["type"] == "fusion":
             return owned_count == 0
@@ -197,13 +185,8 @@ class LevelUp(GameState):
             for base in available_bases[:needed_cards]:
                 card = dict(base)
                 owned = counts.get(card["id"], 0)
-                if card["type"] == "weapon":
-                    if owned == 0:
-                        card["next_level"] = "NEW WEAPON"
-                    elif owned == 1:
-                        card["next_level"] = "Level 2"
-                    elif owned == 2:
-                        card["next_level"] = "Level 3 (MAX)"
+                if card["type"] == "weapon":                
+                    card["next_level"] = "NEW WEAPON"
                 else:
                     if owned == 0:
                         card["next_level"] = "NEW!"

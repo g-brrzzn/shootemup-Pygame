@@ -340,11 +340,11 @@ class BulletSystem:
             elif meta.get("explosive"):
                 bomb_base = pygame.Surface((20, 20), pygame.SRCALPHA)
                 
-                pygame.draw.circle(bomb_base, (255, 120, 120, 255), (10, 10), 8)
-                pygame.draw.circle(bomb_base, (221, 245, 154, 255), (10, 10), 4)
+                pygame.draw.circle(bomb_base, (*GAME_COLOR[:3], 255), (10, 10), 8)
+                pygame.draw.circle(bomb_base, (250, 160, 210, 255), (10, 10), 4)
                 
                 pulse = abs(math.sin(life_list[i] * 20)) * 3
-                pygame.draw.circle(bomb_base, (255, 200, 100, 150), (10, 10), 6 + pulse, 2)
+                pygame.draw.circle(bomb_base, (*GAME_COLOR[:3], 150), (10, 10), 6 + pulse, 2)
 
                 surf.blit(bomb_base, (px - 10, py - 10))
             
