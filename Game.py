@@ -16,12 +16,16 @@ from classes.particles.Explosion import ExplosionSystem
 from classes.particles.Spark import SparkSystem
 from classes.EnemyFormations import FormationManager
 from assets.AssetManager import AssetManager
+from classes.CollisionManager import CollisionManager
+from classes.HUD import HUD
 
 from states.Menu import Menu
+from states.ModMenu import ModMenu
 from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
 from states.GameOver import GameOver, Exit
+from states.LevelUp import LevelUp
 from states.States_util import vertical, draw_text
 
 from constants.global_var import (
@@ -74,14 +78,24 @@ BulletSystem.load_assets(g_engine.assets)
 EnemyBase.load_assets(g_engine.assets)
 
 pygame.mixer.init()
-pygame.mixer.music.load(g_engine.assets.get_sound("music"))
-pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.1)
 
+MUSIC_END_EVENT = pygame.USEREVENT + 1
+pygame.mixer.music.set_endevent(MUSIC_END_EVENT)
+
+def play_random_music():
+    if g_engine.assets.music_tracks:      
+        track = random.choice(g_engine.assets.music_tracks)
+        pygame.mixer.music.load(track)
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play() 
+
+play_random_music()
 
 class Game(GameState):
     def __init__(self, ai_stage="full"):
         super().__init__()
+        
+        self.hud = HUD()
 
         g_engine.all_sprites = pygame.sprite.Group()
         g_engine.all_enemies = pygame.sprite.Group()
@@ -89,6 +103,9 @@ class Game(GameState):
 
         g_engine.player_bullets = BulletSystem(max_particles=2000, is_player=True)
         g_engine.enemy_bullets = BulletSystem(max_particles=15000, is_player=False)
+        
+        g_engine.player_bullets.set_orbit_anchor_provider(lambda: g_engine.player.rect.center if g_engine.player else None)
+        g_engine.player_bullets.set_target_provider(lambda: g_engine.all_enemies)
 
         g_engine.player = Player(
             (
@@ -119,6 +136,8 @@ class Game(GameState):
         self.boss_active = False
 
         self.formations_to_spawn = 0
+        self.total_formations_current_wave = 1
+        self.formations_beaten_in_wave = 0
         self.current_wave_delay = 0
         self.wave_timer = 0
         self.ai_stage = ai_stage
@@ -142,6 +161,7 @@ class Game(GameState):
             g_engine.enemy_bullets.active_count = 0
             g_engine.level = 1
             g_engine.score = 0
+            g_engine.show_hitboxes = False
             self.boss_active = False
             g_engine.player = Player(
                 (
@@ -157,30 +177,25 @@ class Game(GameState):
 
     def start_next_level_waves(self):
         self.formations_to_spawn = 3 + (g_engine.level * 2)
+        self.total_formations_current_wave = self.formations_to_spawn
+        self.formations_beaten_in_wave = 0
+        
         self.spawn_next_formation()
         self.wave_timer = 0
 
     def spawn_next_formation(self):
         if self.formations_to_spawn > 0:
             if self.ai_stage == "movement":
-                options = ["LINE_HORIZONTAL"]
+                options = ["LINE_HORIZONTAL", "BLOCKADE"]
             elif self.ai_stage == "single_enemy":
-                options = ["LINE_HORIZONTAL", "V_SHAPE"]
-            elif self.ai_stage == "swarm":
-                options = [
-                    "V_SHAPE",
-                    "LINE_HORIZONTAL",
-                    "DIAGONAL_LEFT",
-                    "DIAGONAL_RIGHT",
-                    "CIRCLE_CLUSTER",
-                    "RANDOM_RAIN",
-                ]
+                options = ["LINE_HORIZONTAL", "V_SHAPE", "BLOCKADE"]
             elif self.ai_stage == "boss":
                 options = [
                     "V_SHAPE",
                     "DIAGONAL_LEFT",
                     "DIAGONAL_RIGHT",
                     "CIRCLE_CLUSTER",
+                    "PINCER",
                 ]
             else:
                 options = [
@@ -190,14 +205,29 @@ class Game(GameState):
                     "DIAGONAL_RIGHT",
                     "CIRCLE_CLUSTER",
                     "RANDOM_RAIN",
+                    "ENTER_AND_STOP",
+                    "SWEEP_CROSS",
+                    "PINCER",
+                    "BLOCKADE",
+                    "CROSSFIRE",
                 ]
 
-            choice_idx = min(len(options), 2 + g_engine.level)
-            ftype = random.choice(options[:choice_idx])
+            choice_idx = min(len(options), 3 + g_engine.level)
+            available_options = options[:choice_idx]
 
-            FormationManager.spawn_formation(ftype, g_engine.level)
-            self.formations_to_spawn -= 1
-            self.current_wave_delay = 120
+            is_combo = g_engine.level >= 2 and random.random() < 0.35 and self.formations_to_spawn > 1
+
+            if is_combo:
+                f1, f2 = random.sample(available_options, 2)
+                FormationManager.spawn_formation(f1, g_engine.level)
+                FormationManager.spawn_formation(f2, g_engine.level)
+                self.formations_to_spawn -= 2
+                self.current_wave_delay = random.uniform(3.5, 5.5)
+            else:
+                ftype = random.choice(available_options)
+                FormationManager.spawn_formation(ftype, g_engine.level)
+                self.formations_to_spawn -= 1
+                self.current_wave_delay = random.uniform(2.5, 4.0)
         else:
             self.level_done = True
 
@@ -205,9 +235,21 @@ class Game(GameState):
         if event.type == KEYDOWN:
             g_engine.player.get_input(event)
             if event.key in CONTROLS["ESC"]:
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "Pause"
                 self.done = True
+                
+            if event.key in CONTROLS.get("MOD_MENU", [K_BACKSPACE]):
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "ModMenu"
+                self.done = True
+                
         if event.type == KEYUP:
             g_engine.player.get_input_keyup(event)
+            
+            
         if event.type == JOYBUTTONDOWN:
             g_engine.player.get_controller_input(event)
             if (
@@ -215,16 +257,30 @@ class Game(GameState):
                 or (event.button == 11 and g_engine.platform == "Linux")
                 or (event.button == 6 and g_engine.platform == "Darwin")
             ):
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "Pause"
                 self.done = True
+                
+            if event.button in [4, 6]:
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "ModMenu"
+                self.done = True
+                
         if event.type == JOYBUTTONUP:
             g_engine.player.get_controller_keyup(event)
+            
         if event.type == JOYAXISMOTION:
             g_engine.player.get_joyaxismotion_input(event)
+            
         if event.type == JOYHATMOTION:
             g_engine.player.get_joyhat_input(event)
+            
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
             g_engine.joystick = joystick
+            
         if event.type == JOYDEVICEREMOVED:
             g_engine.joystick = None
 
@@ -244,136 +300,21 @@ class Game(GameState):
         g_engine.enemy_bullets.update(dt)
 
         base_speed = g_engine.level * 0.5
-
         self.stars_back.update(gravity=base_speed * 0.1, dt=dt)
         self.stars_mid.update(gravity=base_speed * 0.5, dt=dt)
         self.stars_front.update(gravity=base_speed * 1.5, dt=dt)
 
         g_engine.explosion_system.update(dt)
         self.particles.update(dt)
-
-        if g_engine.enemy_bullets.active_count > 0:
-            p_rect = g_engine.player.hitbox
-            n = g_engine.enemy_bullets.active_count
-            b_x = g_engine.enemy_bullets.pos[:n, 0]
-            b_y = g_engine.enemy_bullets.pos[:n, 1]
-
-            not_grazed = ~g_engine.enemy_bullets.grazed[:n]
-            grazes = np.nonzero(
-                (b_x >= p_rect.left - 40)
-                & (b_x <= p_rect.right + 40)
-                & (b_y >= p_rect.top - 40)
-                & (b_y <= p_rect.bottom + 40)
-                & not_grazed
-            )[0]
-
-            for g in grazes:
-                g_engine.enemy_bullets.grazed[g] = True
-                g_engine.score += 10
-                g_engine.spark_system.emit(
-                    pos=(
-                        g_engine.enemy_bullets.pos[g, 0],
-                        g_engine.enemy_bullets.pos[g, 1],
-                    ),
-                    angle=random.randint(0, 360),
-                    speed=random.randint(3, 7),
-                    color=(100, 200, 255),
-                    scale=1.2,
-                )
-
-            hits = np.nonzero(
-                (b_x >= p_rect.left)
-                & (b_x <= p_rect.right)
-                & (b_y >= p_rect.top)
-                & (b_y <= p_rect.bottom)
-            )[0]
-
-            if len(hits) > 0:
-                g_engine.player.take_damage()
-                g_engine.hit_stop_frames = 0.08
-                if config.apply_controller_vibration and g_engine.joystick:
-                    g_engine.joystick.rumble(50, 200, 100)
-                for h in reversed(hits):
-                    g_engine.enemy_bullets.kill_bullet(h)
-
-        if g_engine.player_bullets.active_count > 0 and len(g_engine.all_enemies) > 0:
-            n = g_engine.player_bullets.active_count
-            b_x = g_engine.player_bullets.pos[:n, 0]
-            b_y = g_engine.player_bullets.pos[:n, 1]
-
-            bullets_to_kill = set()
-
-            for enemy in list(g_engine.all_enemies):
-                ex, ey, ew, eh = (
-                    enemy.rect.x,
-                    enemy.rect.y,
-                    enemy.rect.width,
-                    enemy.rect.height,
-                )
-                hits = np.nonzero(
-                    (b_x >= ex) & (b_x <= ex + ew) & (b_y >= ey) & (b_y <= ey + eh)
-                )[0]
-
-                valid_hits = [h for h in hits if h not in bullets_to_kill]
-
-                if valid_hits:
-                    for h in valid_hits:
-                        bullets_to_kill.add(h)
-
-                    if isinstance(enemy, Boss):
-                        g_engine.explosion_system.create(
-                            enemy.rect.centerx,
-                            enemy.rect.centery + random.randint(-20, 20),
-                        )
-                        enemy.damage()
-                    else:
-                        g_engine.explosion_system.create(
-                            enemy.rect.centerx, enemy.rect.centery
-                        )
-                        enemy.damage()
-
-                    for _ in range(random.randint(4, 8)):
-                        g_engine.spark_system.emit(
-                            pos=enemy.rect.center,
-                            angle=random.randint(0, 360),
-                            speed=random.randint(3, 10),
-                            color=(255, 255, 180),
-                            scale=1.5,
-                        )
-
-            for h in sorted(list(bullets_to_kill), reverse=True):
-                g_engine.player_bullets.kill_bullet(h)
-
-        powerup_hits = pygame.sprite.spritecollide(
-            g_engine.player,
-            g_engine.powerups,
-            True,
-            collided=lambda p, pw: p.hitbox.colliderect(pw.rect),
-        )
-        for powerup in powerup_hits:
-            if powerup.p_type == "weapon":
-                g_engine.player.upgrade()
-            elif powerup.p_type == "life":
-                g_engine.player.gain_life()
-            pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
-
         g_engine.spark_system.update(dt)
 
-        player_crashes = pygame.sprite.spritecollide(
-            g_engine.player,
-            g_engine.all_enemies,
-            False,
-            collided=lambda p, e: p.hitbox.colliderect(e.rect),
-        )
-        if player_crashes:
-            g_engine.player.take_damage()
-            g_engine.hit_stop_frames = 0.08
-            if config.apply_controller_vibration and g_engine.joystick:
-                g_engine.joystick.rumble(50, 200, 100)
-            for enemy in player_crashes:
-                g_engine.screen_shake = max(g_engine.screen_shake, 0.1)
-                if not isinstance(enemy, Boss):
-                    enemy.kill()
+        CollisionManager.update()
+
+        if hasattr(self, 'total_formations_current_wave'):
+            if len(g_engine.all_enemies) == 0:
+                self.formations_beaten_in_wave = self.total_formations_current_wave - self.formations_to_spawn
+            else:
+                self.formations_beaten_in_wave = max(0, self.total_formations_current_wave - self.formations_to_spawn - 1)
 
         if self.formations_to_spawn > 0:
             is_clear = len(g_engine.all_enemies) == 0
@@ -381,9 +322,7 @@ class Game(GameState):
             if self.current_wave_delay > 0:
                 self.current_wave_delay -= dt
 
-            if self.current_wave_delay <= 0 or (
-                is_clear and self.current_wave_delay < 100000
-            ):
+            if self.current_wave_delay <= 0 or is_clear:
                 self.spawn_next_formation()
 
         elif len(g_engine.all_enemies) == 0:
@@ -393,13 +332,9 @@ class Game(GameState):
                 self.start_next_level_waves()
             else:
                 boss_every = 3
-
-                if self.ai_stage == "movement":
-                    boss_every = 999999
-                elif self.ai_stage == "single_enemy":
-                    boss_every = 999999
-                elif self.ai_stage == "boss":
-                    boss_every = 2
+                if self.ai_stage == "movement": boss_every = 999999
+                elif self.ai_stage == "single_enemy": boss_every = 999999
+                elif self.ai_stage == "boss": boss_every = 2
 
                 if g_engine.level % boss_every == 0:
                     self.boss_active = True
@@ -409,6 +344,12 @@ class Game(GameState):
                         g_engine.all_sprites,
                     )
                 else:
+                    if hasattr(g_engine.player, 'reset_movement'):
+                        g_engine.player.reset_movement()
+                    
+                    self.next_state = "LevelUp"
+                    self.done = True
+                    
                     g_engine.level += 1
                     self.start_next_level_waves()
 
@@ -432,6 +373,8 @@ class Game(GameState):
             player_glow.get_rect(center=g_engine.player.rect.center),
             special_flags=pygame.BLEND_ADD,
         )
+        
+        g_engine.player.draw_absorb_effect(surf) 
 
         g_engine.player.draw_particles(surf)
         g_engine.player.draw_muzzle_flash(surf)
@@ -449,34 +392,40 @@ class Game(GameState):
         g_engine.explosion_system.draw(surf)
 
         self.stars_front.draw(surf)
+        
+        if getattr(g_engine, 'show_hitboxes', False):
+            if g_engine.player and g_engine.player.getLife() > 0:
+                pygame.draw.rect(surf, (0, 255, 0), g_engine.player.hitbox, 2)
+                
+                if hasattr(g_engine.player, 'parry_rect'):
+                    pygame.draw.rect(surf, (50, 150, 255), g_engine.player.parry_rect, 1)
 
-        draw_text(
-            surf,
-            f"Score {g_engine.score:06d}",
-            config.INTERNAL_RESOLUTION[0] / 2,
-            30,
-            use_smaller_font=False,
-        )
-        draw_text(
-            surf,
-            f"Level {g_engine.level}",
-            config.INTERNAL_RESOLUTION[0] - 50,
-            config.INTERNAL_RESOLUTION[1] - 30,
-            use_smaller_font=False,
-        )
+            for enemy in g_engine.all_enemies:
+                pygame.draw.rect(surf, (255, 50, 50), enemy.rect, 2)
+                
+            for pu in g_engine.powerups:
+                pygame.draw.rect(surf, (255, 255, 0), pu.hitbox, 2)
+                
+            n_pb = g_engine.player_bullets.active_count
+            for i in range(n_pb):
+                px, py = g_engine.player_bullets.pos[i]
+                pygame.draw.circle(surf, (0, 255, 100), (int(px), int(py)), 4, 1)
+                
+            n_eb = g_engine.enemy_bullets.active_count
+            for i in range(n_eb):
+                px, py = g_engine.enemy_bullets.pos[i]
+                pygame.draw.circle(surf, (255, 100, 100), (int(px), int(py)), 4, 1)
 
-        draw_text(
-            surf,
-            f"Life   {max(0, g_engine.player.getLife())}",
-            config.INTERNAL_RESOLUTION[0] - 50,
-            config.INTERNAL_RESOLUTION[1] - 60,
-            use_smaller_font=False,
-        )
+        fill_pct = 0.0
+        if self.boss_active:
+            boss = next((e for e in g_engine.all_enemies if isinstance(e, Boss)), None)
+            fill_pct = max(0.0, boss.life / boss.max_life) if boss else 0.0
+        else:
+            total_forms = max(1, getattr(self, 'total_formations_current_wave', 1))
+            beaten = getattr(self, 'formations_beaten_in_wave', 0)
+            fill_pct = beaten / total_forms
 
-        if config.show_fps:
-            draw_text(
-                surf, f"FPS {(int(clock.get_fps()))}", 50, 30, use_smaller_font=False
-            )
+        self.hud.draw(surf, clock, fill_pct)
 
 
 class GameRunner(object):
@@ -502,6 +451,8 @@ class GameRunner(object):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
+            if event.type == MUSIC_END_EVENT:
+                play_random_music()
             self.state.get_event(event)
 
     def update(self):
@@ -557,6 +508,8 @@ if __name__ == "__main__":
         "Exit": Exit(),
         "Options": Options(),
         "GameOver": GameOver(),
+        "LevelUp": LevelUp(), 
+        "ModMenu": ModMenu(),
     }
 
     start_state = "Menu"

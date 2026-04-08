@@ -138,7 +138,7 @@ BACKGROUND_COLOR = (15, 25, 27, 200)
 BACKGROUND_COLOR_1 = BACKGROUND_COLOR
 BACKGROUND_COLOR_2 = BACKGROUND_COLOR
 
-GAME_COLOR = (100, 40, 80)
+GAME_COLOR = (120, 40, 90)
 
 BACKGROUND_COLOR_GAME_1 = (
     BACKGROUND_COLOR_1[0],
@@ -176,6 +176,8 @@ CONTROLS = {
     "RIGHT": [pygame.K_d, pygame.K_RIGHT],
     "LEFT": [pygame.K_a, pygame.K_LEFT],
     "FIRE": [pygame.K_SPACE],
+    "ABSORB": [pygame.K_LSHIFT, pygame.K_f], 
     "START": [pygame.K_RETURN, pygame.K_SPACE],
     "ESC": [pygame.K_ESCAPE],
+    "MOD_MENU": [pygame.K_BACKSPACE],
 }

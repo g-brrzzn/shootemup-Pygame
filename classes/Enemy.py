@@ -1,11 +1,11 @@
 import pygame
 import math
+import numpy as np
 from random import randint, uniform
 
 from game_engine import g_engine
 from classes.PowerUp import PowerUp
 from constants.global_var import config, SCALED_SPRITE_SIZE
-
 
 class EnemyBase(pygame.sprite.Sprite):
     instancelist = []
@@ -17,6 +17,7 @@ class EnemyBase(pygame.sprite.Sprite):
 
         self.sprites = self.load_sprites(sprite_files_keys)
         self.white_sprites = [self.create_white_surface(s) for s in self.sprites]
+        self.pink_sprites = [self.create_pink_surface(s) for s in self.sprites]
         self.current_sprite = 0
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect()
@@ -32,6 +33,40 @@ class EnemyBase(pygame.sprite.Sprite):
 
         self.spawn_time = pygame.time.get_ticks()
         self.random_offset = uniform(0, 100)
+        
+        self.shoot_cooldown = 0.0
+        self.telegraph_timer = 0.0
+        self.pending_pattern = None
+        self.pending_kwargs = None
+        self.custom_move_func = None
+
+
+    def _try_drop_powerup(self):
+        roll = uniform(0, 100)
+
+        drop_table = self.get_drop_table()
+
+        cumulative = 0.0
+
+        for entry in drop_table:
+            powerup_type = entry["type"]
+            chance = entry["chance"]
+            condition = entry.get("condition", lambda: True)
+
+            cumulative += chance
+
+            if roll <= cumulative:
+                if not condition():
+                    return
+
+                PowerUp(
+                    self.rect.center,
+                    powerup_type,
+                    g_engine.powerups,
+                    g_engine.all_sprites,
+                )
+                return
+
 
     @classmethod
     def load_assets(cls, assets_manager):
@@ -44,6 +79,17 @@ class EnemyBase(pygame.sprite.Sprite):
         )
         white_surface.set_colorkey((0, 0, 0))
         return white_surface
+    
+    def create_pink_surface(self, surface):
+        tinted = surface.copy()
+        arr = pygame.surfarray.pixels3d(tinted)
+        gray = np.dot(arr[..., :3], [0.2989, 0.5870, 0.1140])
+        arr[..., 0] = np.clip(gray * 1.0, 0, 255)
+        arr[..., 1] = np.clip(gray * (105/255.0), 0, 255)
+        arr[..., 2] = np.clip(gray * (180/255.0), 0, 255)
+        del arr
+        tinted.set_colorkey((0, 0, 0))
+        return tinted
 
     def load_sprites(self, sprite_keys):
         sprites = []
@@ -58,25 +104,34 @@ class EnemyBase(pygame.sprite.Sprite):
             EnemyBase.instancelist.remove(self)
         except ValueError:
             pass
+        
+    def get_drop_table(self):
+        return [
+            {
+                "type": "life", 
+                "chance": 4.0
+                },
+            {
+                "type": "weapon",
+                "chance": 5.0,
+                "condition": lambda: g_engine.player.getPowerLevel() < 3
+            },
+            {
+                "type": "ricochet", 
+                "chance": 2.0
+             },
+        ]
 
     def damage(self):
         self.last_hit = pygame.time.get_ticks()
+        self.life -= 1
 
-        if self.life <= 1:
-            g_engine.score += self.score_value
-            roll = randint(0, 100)
-            if roll < 10:
-                PowerUp(
-                    self.rect.center, "life", g_engine.powerups, g_engine.all_sprites
-                )
-            elif roll < 15 and g_engine.player.getPowerLevel() < 3:
-                PowerUp(
-                    self.rect.center, "weapon", g_engine.powerups, g_engine.all_sprites
-                )
+        if self.life > 0:
+            return
 
-            self.kill()
-        else:
-            self.life -= 1
+        g_engine.score += self.score_value
+        self._try_drop_powerup()
+        self.kill()
 
     def shoot(self):
         pass
@@ -87,23 +142,64 @@ class EnemyBase(pygame.sprite.Sprite):
     def check_bounds(self):
         if self.y > config.INTERNAL_RESOLUTION[1] + 100:
             self.kill()
+        if self.x < -100 or self.x > config.INTERNAL_RESOLUTION[0] + 100:
+            self.kill()
+            
+    def prepare_attack(self, pattern, kwargs):
+        is_pink = kwargs.get("is_pink", False)
+        
+        if is_pink:
+            self.telegraph_timer = 0.6  
+            self.pending_pattern = pattern
+            self.pending_kwargs = kwargs
+        else:
+            g_engine.enemy_bullets.emit_pattern(pattern, self.rect.center, kwargs)
+            self.shoot_cooldown = 0.5
 
     def update(self, dt):
-        self.move(dt)
-        self.shoot()
-        self.check_bounds()
+        if self.custom_move_func:
+            self.custom_move_func(self, dt)
+        else:
+            self.move(dt)
 
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= dt
+
+        if self.telegraph_timer > 0:
+            self.telegraph_timer -= dt
+            
+            if self.telegraph_timer <= 0 and self.pending_pattern:
+                g_engine.enemy_bullets.emit_pattern(
+                    self.pending_pattern, self.rect.center, self.pending_kwargs
+                )
+                self.pending_pattern = None
+                self.shoot_cooldown = 1.5 
+        else:
+            if self.shoot_cooldown <= 0:
+                self.shoot()
+
+        self.check_bounds()
         self.rect.topleft = (self.x, self.y)
 
         self.current_sprite += 7.5 * dt
         if self.current_sprite >= len(self.sprites):
             self.current_sprite = 0
 
+        idx = int(self.current_sprite)
+        
         if pygame.time.get_ticks() - self.last_hit < self.hit_flash_duration:
-            self.image = self.white_sprites[int(self.current_sprite)]
+            self.image = self.white_sprites[idx].copy()
         else:
-            self.image = self.sprites[int(self.current_sprite)]
+            self.image = self.sprites[idx].copy()
 
+            if self.telegraph_timer > 0:
+                pink_overlay = self.pink_sprites[idx].copy()
+                pulse = abs(math.sin(self.telegraph_timer * 15)) * 255
+                pink_overlay.set_alpha(int(pulse))
+                self.image.blit(pink_overlay, (0, 0))
+                
+        self.image.set_colorkey((0, 0, 0))
+                
     def draw(self, surf):
         surf.blit(self.image, self.rect)
 
@@ -113,7 +209,6 @@ class EnemyBase(pygame.sprite.Sprite):
             x = randint(0, config.INTERNAL_RESOLUTION[0])
             y = randint(-200, -50)
             enemy_class((x, y), g_engine.all_enemies, g_engine.all_sprites)
-
 
 class Enemy1(EnemyBase):
     def __init__(self, pos, *groups):
@@ -132,10 +227,8 @@ class Enemy1(EnemyBase):
 
     def shoot(self):
         if randint(0, 1000) < 5:
-            g_engine.enemy_bullets.emit_pattern(
-                "single", self.rect.center, {"angle": -90, "speed_scale": 0.75}
-            )
-
+            is_pink = randint(0, 100) < 20 
+            self.prepare_attack("single", {"angle": -90, "speed_scale": 0.75, "is_pink": is_pink})
 
 class Enemy2(EnemyBase):
     def __init__(self, pos, *groups):
@@ -156,12 +249,11 @@ class Enemy2(EnemyBase):
 
     def shoot(self):
         if randint(0, 1000) < 5:
-            g_engine.enemy_bullets.emit_pattern(
+            is_pink = randint(0, 100) < 20
+            self.prepare_attack(
                 "spread",
-                self.rect.center,
-                {"count": 2, "spread_arc": 20, "angle": -90, "speed_scale": 0.45},
+                {"count": 2, "spread_arc": 20, "angle": -90, "speed_scale": 0.45, "is_pink": is_pink}
             )
-
 
 class Enemy3(EnemyBase):
     def __init__(self, pos, *groups):
@@ -188,7 +280,4 @@ class Enemy3(EnemyBase):
             dx = g_engine.player.rect.centerx - self.rect.centerx
             dy = g_engine.player.rect.centery - self.rect.centery
             angle = math.degrees(math.atan2(-dy, dx))
-
-            g_engine.enemy_bullets.emit_pattern(
-                "single", self.rect.center, {"angle": angle, "speed_scale": 0.6}
-            )
+            self.prepare_attack("single", {"angle": angle, "speed_scale": 0.6})

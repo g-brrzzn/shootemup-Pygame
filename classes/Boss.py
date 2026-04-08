@@ -70,8 +70,13 @@ class Boss(EnemyBase):
         if self.life <= 1:
             g_engine.score += self.score_value
             g_engine.screen_shake = 0.5
+            
             g_engine.explosion_system.create(
-                self.rect.centerx, self.rect.centery, count=150, speed=15
+                self.rect.centerx, 
+                self.rect.centery, 
+                count=200, 
+                speed=800.0, 
+                e_range=150.0 
             )
             self.kill()
         else:
@@ -80,14 +85,3 @@ class Boss(EnemyBase):
     def draw(self, surf):
         draw_rect = self.display_image.get_rect(center=self.rect.center)
         surf.blit(self.display_image, draw_rect)
-
-        bar_width = draw_rect.width
-        bar_height = 8
-        fill = (self.life / self.max_life) * bar_width
-
-        border_rect = pygame.Rect(draw_rect.x, draw_rect.y - 15, bar_width, bar_height)
-        fill_rect = pygame.Rect(draw_rect.x, draw_rect.y - 15, fill, bar_height)
-
-        pygame.draw.rect(surf, (50, 0, 0), border_rect)
-        pygame.draw.rect(surf, (255, 0, 0), fill_rect)
-        pygame.draw.rect(surf, (255, 255, 255), border_rect, 1)
