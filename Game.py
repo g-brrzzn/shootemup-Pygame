@@ -161,6 +161,7 @@ class Game(GameState):
             g_engine.enemy_bullets.active_count = 0
             g_engine.level = 1
             g_engine.score = 0
+            g_engine.show_hitboxes = False
             self.boss_active = False
             g_engine.player = Player(
                 (
@@ -248,11 +249,6 @@ class Game(GameState):
         if event.type == KEYUP:
             g_engine.player.get_input_keyup(event)
             
-            if event.key == K_TAB:
-                if hasattr(g_engine.player, 'reset_movement'):
-                    g_engine.player.reset_movement()
-                self.next_state = "LevelUp"
-                self.done = True
             
         if event.type == JOYBUTTONDOWN:
             g_engine.player.get_controller_input(event)
@@ -400,7 +396,9 @@ class Game(GameState):
         if getattr(g_engine, 'show_hitboxes', False):
             if g_engine.player and g_engine.player.getLife() > 0:
                 pygame.draw.rect(surf, (0, 255, 0), g_engine.player.hitbox, 2)
-                pygame.draw.rect(surf, (50, 150, 255), g_engine.player.parry_rect, 1)
+                
+                if hasattr(g_engine.player, 'parry_rect'):
+                    pygame.draw.rect(surf, (50, 150, 255), g_engine.player.parry_rect, 1)
 
             for enemy in g_engine.all_enemies:
                 pygame.draw.rect(surf, (255, 50, 50), enemy.rect, 2)

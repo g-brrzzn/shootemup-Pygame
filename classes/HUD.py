@@ -1,7 +1,7 @@
 import pygame
 import math
 from game_engine import g_engine
-from constants.global_var import config
+from constants.global_var import config, GAME_COLOR
 from states.States_util import draw_text
 
 class HUD:
@@ -38,6 +38,8 @@ class HUD:
             pygame.draw.rect(surf, (0, 255, 150), (x_pos, 15, int(fill_pct * bar_w), bar_h))
             pygame.draw.rect(surf, (200, 200, 200), (x_pos, 15, bar_w, bar_h), 1)
 
+        cheats_active = getattr(g_engine, 'show_hitboxes', False)
+
         if player:
             level_icon_x = self.margin
             level_icon_y = h - self.margin - 30
@@ -50,6 +52,11 @@ class HUD:
 
             current_effect_y = level_icon_y - 35
             
+            god_mode = getattr(player, 'god_mode', False)
+            inf_ricochet = getattr(player, 'infinite_ricochet', False)
+            if god_mode or inf_ricochet or abs(getattr(player, 'shot_delay', 0.25) - 0.25) > 0.01:
+                cheats_active = True
+            
             if getattr(player, 'ricochet_timer', 0) > 0:
                 self._draw_timer_icon(surf, self.margin, current_effect_y, player.ricochet_timer, 6.0, (50, 150, 255))
                 current_effect_y -= 30
@@ -58,24 +65,34 @@ class HUD:
                 self._draw_timer_icon(surf, self.margin, current_effect_y, player.overdrive_timer, 3.0, (255, 105, 180))
                 current_effect_y -= 30
 
+            if god_mode:
+                self._draw_timer_icon(surf, self.margin, current_effect_y, 1.0, 1.0, (255, 50, 100))
+                current_effect_y -= 30
+
             current_time = pygame.time.get_ticks()
             inv_remaining = 0
             inv_max = 1.0
 
-            if current_time < player.last_hit:
-                inv_remaining = (player.last_hit - current_time) / 1000.0
-                inv_max = 3.0
-            elif current_time - player.last_hit < player.invincibility_duration:
-                inv_remaining = (player.invincibility_duration - (current_time - player.last_hit)) / 1000.0
-                inv_max = player.invincibility_duration / 1000.0
+            if not god_mode:
+                if current_time < player.last_hit:
+                    inv_remaining = (player.last_hit - current_time) / 1000.0
+                    inv_max = 3.0
+                elif current_time - player.last_hit < player.invincibility_duration:
+                    inv_remaining = (player.invincibility_duration - (current_time - player.last_hit)) / 1000.0
+                    inv_max = player.invincibility_duration / 1000.0
 
-            if inv_remaining > 0:
-                self._draw_timer_icon(surf, self.margin, current_effect_y, inv_remaining, inv_max, (255, 255, 255))
-                current_effect_y -= 30
+                if inv_remaining > 0:
+                    self._draw_timer_icon(surf, self.margin, current_effect_y, inv_remaining, inv_max, (255, 255, 255))
+                    current_effect_y -= 30
 
         draw_text(surf, f"Score {g_engine.score:06d}", w / 2, 45)
         draw_text(surf, f"Wave {g_engine.level}", w - 60, h - 30)
         draw_text(surf, f"Life {max(0, player.getLife() if player else 0)}", w - 60, h - 60)
 
+        text_y_offset = 30
         if config.show_fps and clock:
-            draw_text(surf, f"FPS {int(clock.get_fps())}", 50, 30)
+            draw_text(surf, f"FPS {int(clock.get_fps())}", 60, text_y_offset, use_smaller_font=True)
+            text_y_offset += 30
+            
+        if cheats_active:
+            draw_text(surf, "CHEATS", 60, text_y_offset, GAME_COLOR, use_smaller_font=True)
