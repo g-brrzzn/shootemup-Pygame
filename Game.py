@@ -180,8 +180,11 @@ class Game(GameState):
         self.total_formations_current_wave = self.formations_to_spawn
         self.formations_beaten_in_wave = 0
         
-        self.spawn_next_formation()
+        self.current_wave_delay = 0 
+        self.sub_wave_delay = 0     
         self.wave_timer = 0
+        
+        self.spawn_next_formation()
 
     def spawn_next_formation(self):
         if self.formations_to_spawn > 0:
@@ -222,12 +225,14 @@ class Game(GameState):
                 FormationManager.spawn_formation(f1, g_engine.level)
                 FormationManager.spawn_formation(f2, g_engine.level)
                 self.formations_to_spawn -= 2
-                self.current_wave_delay = random.uniform(3.5, 5.5)
+
+                self.sub_wave_delay = random.uniform(1.8, 2.5) 
             else:
                 ftype = random.choice(available_options)
                 FormationManager.spawn_formation(ftype, g_engine.level)
                 self.formations_to_spawn -= 1
-                self.current_wave_delay = random.uniform(2.5, 4.0)
+                
+                self.sub_wave_delay = random.uniform(1.0, 1.5)
         else:
             self.level_done = True
 
@@ -319,10 +324,13 @@ class Game(GameState):
         if self.formations_to_spawn > 0:
             is_clear = len(g_engine.all_enemies) == 0
 
+            if hasattr(self, 'sub_wave_delay') and self.sub_wave_delay > 0:
+                self.sub_wave_delay -= dt
+                
             if self.current_wave_delay > 0:
                 self.current_wave_delay -= dt
 
-            if self.current_wave_delay <= 0 or is_clear:
+            if (self.current_wave_delay <= 0 and getattr(self, 'sub_wave_delay', 0) <= 0) or is_clear:
                 self.spawn_next_formation()
 
         elif len(g_engine.all_enemies) == 0:
