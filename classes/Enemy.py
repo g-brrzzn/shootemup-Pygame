@@ -40,6 +40,34 @@ class EnemyBase(pygame.sprite.Sprite):
         self.pending_kwargs = None
         self.custom_move_func = None
 
+
+    def _try_drop_powerup(self):
+        roll = uniform(0, 100)
+
+        drop_table = self.get_drop_table()
+
+        cumulative = 0.0
+
+        for entry in drop_table:
+            powerup_type = entry["type"]
+            chance = entry["chance"]
+            condition = entry.get("condition", lambda: True)
+
+            cumulative += chance
+
+            if roll <= cumulative:
+                if not condition():
+                    return
+
+                PowerUp(
+                    self.rect.center,
+                    powerup_type,
+                    g_engine.powerups,
+                    g_engine.all_sprites,
+                )
+                return
+
+
     @classmethod
     def load_assets(cls, assets_manager):
         cls.hit_sound = assets_manager.get_sound("hit")
@@ -76,30 +104,34 @@ class EnemyBase(pygame.sprite.Sprite):
             EnemyBase.instancelist.remove(self)
         except ValueError:
             pass
+        
+    def get_drop_table(self):
+        return [
+            {
+                "type": "life", 
+                "chance": 4.0
+                },
+            {
+                "type": "weapon",
+                "chance": 5.0,
+                "condition": lambda: g_engine.player.getPowerLevel() < 3
+            },
+            {
+                "type": "ricochet", 
+                "chance": 2.0
+             },
+        ]
 
     def damage(self):
         self.last_hit = pygame.time.get_ticks()
+        self.life -= 1
 
-        if self.life <= 1:
-            g_engine.score += self.score_value
-                        
-            roll = randint(0, 100)
-            if roll < 10:
-                PowerUp(
-                    self.rect.center, "life", g_engine.powerups, g_engine.all_sprites
-                )
-            elif roll < 15 and g_engine.player.getPowerLevel() < 3:
-                PowerUp(
-                    self.rect.center, "weapon", g_engine.powerups, g_engine.all_sprites
-                )
-            elif roll < 17:
-                PowerUp(
-                    self.rect.center, "ricochet", g_engine.powerups, g_engine.all_sprites
-                )
+        if self.life > 0:
+            return
 
-            self.kill()
-        else:
-            self.life -= 1
+        g_engine.score += self.score_value
+        self._try_drop_powerup()
+        self.kill()
 
     def shoot(self):
         pass

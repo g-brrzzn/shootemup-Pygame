@@ -78,25 +78,74 @@ class SideShot(Weapon):
 class BurstTurret(Weapon):
     def __init__(self):
         self.last_fire_time = 0
-        self.cooldown = 0.8
-        self.is_auto = False 
+        self.cooldown = 0.7
+
+        self.burst_active = False
+        self.burst_total = 0
+        self.burst_remaining = 0
+        self.next_shot_time = 0
+        self.burst_delay = 0.08
+
+        self.base_spread = 9        
+        self.spread_step = 2.2     
+
+    @property
+    def is_auto(self):
+        return self.burst_active
 
     def fire(self, player_rect, power_level, bullet_system):
         import pygame
         current_time = pygame.time.get_ticks() / 1000.0
-        
+
+        if self.burst_active:
+            if current_time >= self.next_shot_time:
+                self._shoot_projectile(player_rect, bullet_system)
+                self.burst_remaining -= 1
+                self.next_shot_time = current_time + self.burst_delay
+
+                if self.burst_remaining <= 0:
+                    self.burst_active = False
+
+            return False 
+
         if current_time - self.last_fire_time < self.cooldown:
             return False
-            
+
         self.last_fire_time = current_time
         lvl = _lvl(power_level)
-        
-        burst_count = 1 + (lvl + 1)
 
-        for i in range(burst_count):
-            offset_y = i * 15 
-            spread_angle = 90 + random.uniform(-18, 18) 
-            _single(bullet_system, (player_rect.centerx, player_rect.centery + offset_y), angle=spread_angle, speed_scale=1.1, damage_scale=1.2)
+        if lvl == 1:
+            self.burst_total = 3
+        elif lvl == 2:
+            self.burst_total = 4
+        else:
+            self.burst_total = 5
+
+        self.burst_remaining = self.burst_total
+        self.burst_active = True
+        
+        self._shoot_projectile(player_rect, bullet_system)
+        self.burst_remaining -= 1
+        self.next_shot_time = current_time + self.burst_delay
+
+        if self.burst_remaining <= 0:
+            self.burst_active = False
+
+        return True
+
+    def _shoot_projectile(self, player_rect, bullet_system):
+        import random
+        i = self.burst_total - self.burst_remaining
+        spread = random.uniform(-self.base_spread, self.base_spread) + (i * random.uniform(-self.spread_step, self.spread_step))
+        speed = 1.05 + (i * 0.02)
+
+        _single(
+            bullet_system,
+            player_rect.center,
+            angle=90 + spread,
+            speed_scale=speed,
+            damage_scale=0.85
+        )
 
 class TrackingDrones(Weapon):
     def __init__(self):
