@@ -77,10 +77,18 @@ BulletSystem.load_assets(g_engine.assets)
 EnemyBase.load_assets(g_engine.assets)
 
 pygame.mixer.init()
-pygame.mixer.music.load(g_engine.assets.get_sound("music"))
-pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.1)
 
+MUSIC_END_EVENT = pygame.USEREVENT + 1
+pygame.mixer.music.set_endevent(MUSIC_END_EVENT)
+
+def play_random_music():
+    if g_engine.assets.music_tracks:      
+        track = random.choice(g_engine.assets.music_tracks)
+        pygame.mixer.music.load(track)
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play() 
+
+play_random_music()
 
 class Game(GameState):
     def __init__(self, ai_stage="full"):
@@ -405,6 +413,8 @@ class GameRunner(object):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit()
+            if event.type == MUSIC_END_EVENT:
+                play_random_music()
             self.state.get_event(event)
 
     def update(self):

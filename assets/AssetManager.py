@@ -84,8 +84,15 @@ class AssetManager:
         self.sounds['menu_select'] = self._load_sound(p('sound/impactMetal_002.ogg'))
         self.sounds['menu_confirm'] = self._load_sound(p('sound/forceField_001.mp3'))
         self.sounds['wah-parry'] = self._load_sound(p('sound/wah-parry.mp3'))
+        self.sounds['power-up'] = self._load_sound(p('sound/Power-up.mp3'))
 
-        self.sounds['music'] = str(self._resolve_path(p('sound/victory.mp3')))
+        self.music_tracks = []
+        music_dir = ASSET_DIR / "sound" / "music"
+        
+        if music_dir.exists():
+            for file in music_dir.glob("*.mp3"):
+                self.music_tracks.append(str(file))
+        
 
     def _load_fonts(self):
         p = Path
