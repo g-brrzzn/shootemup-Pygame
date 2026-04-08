@@ -74,6 +74,67 @@ class FormationManager:
             y = randint(-400, -50) 
             EnemyClass((x, y), g_engine.all_enemies, g_engine.all_sprites)
 
+    @staticmethod
+    def _spawn_enter_and_stop(width, EnemyClass, count, level_difficulty):
+        gap = width // (count + 1)
+        for i in range(count):
+            x = gap * (i + 1)
+            y = -50 - (i * 30)
+            enemy = EnemyClass((x, y), g_engine.all_enemies, g_engine.all_sprites)
+            
+            def custom_move(e, dt):
+                import math
+                target_y = 80 + (e.random_offset % 60)
+                if e.y < target_y:
+                    e.y += e.base_speed * 1.5 * dt
+                else:
+                    e.x += math.sin(pygame.time.get_ticks() * 0.001 + e.random_offset) * 30 * dt
+
+            enemy.custom_move_func = custom_move
+
+    @staticmethod
+    def _spawn_sweep_cross(width, EnemyClass, count, level_difficulty):
+        side = choice(['left', 'right'])
+        start_x = -50 if side == 'left' else width + 50
+        direction = 1 if side == 'left' else -1
+        
+        for i in range(count):
+            y = -50 - (i * 60)
+            enemy = EnemyClass((start_x, y), g_engine.all_enemies, g_engine.all_sprites)
+            enemy.direction = direction
+            
+            def custom_move(e, dt):
+                e.y += e.base_speed * 0.4 * dt
+                e.x += getattr(e, 'direction', 1) * 350 * dt
+
+            enemy.custom_move_func = custom_move
+
+    @staticmethod
+    def _spawn_pincer(width, EnemyClass, count, level_difficulty):
+        FormationManager._spawn_diagonal_left(width, EnemyClass, max(2, count // 2), level_difficulty)
+        FormationManager._spawn_diagonal_right(width, EnemyClass, max(2, count // 2), level_difficulty)
+
+    @staticmethod
+    def _spawn_blockade(width, EnemyClass, count, level_difficulty):
+        gap = width // (count + 1)
+        for i in range(count):
+            EnemyClass((gap * (i + 1), -50), g_engine.all_enemies, g_engine.all_sprites)
+            EnemyClass((gap * (i + 1), -130), g_engine.all_enemies, g_engine.all_sprites)
+
+    @staticmethod
+    def _spawn_crossfire(width, EnemyClass, count, level_difficulty):
+        for side, direction, start_x in [('left', 1, -50), ('right', -1, width + 50)]:
+            for i in range(max(2, count // 2)):
+                y = -50 - (i * 60)
+                enemy = EnemyClass((start_x, y), g_engine.all_enemies, g_engine.all_sprites)
+                enemy.direction = direction
+                
+                def custom_move(e, dt):
+                    e.y += e.base_speed * 0.4 * dt
+                    e.x += getattr(e, 'direction', 1) * 350 * dt
+
+                enemy.custom_move_func = custom_move
+
     FORMATIONS = {
         'V_SHAPE': _spawn_v_shape,
         'LINE_HORIZONTAL': _spawn_line_horizontal,
@@ -81,6 +142,11 @@ class FormationManager:
         'DIAGONAL_RIGHT': _spawn_diagonal_right,
         'CIRCLE_CLUSTER': _spawn_circle_cluster,
         'RANDOM_RAIN': _spawn_random_rain,
+        'ENTER_AND_STOP': _spawn_enter_and_stop,
+        'SWEEP_CROSS': _spawn_sweep_cross,
+        'PINCER': _spawn_pincer,
+        'BLOCKADE': _spawn_blockade,
+        'CROSSFIRE': _spawn_crossfire,
     }
     
     @staticmethod
@@ -90,17 +156,29 @@ class FormationManager:
         EnemyClass = Enemy1
         formation_count = 5 
         
-        if level_difficulty > 2 and randint(0, 10) > 6: 
-            EnemyClass = Enemy2
-            formation_count = 3 
-            
-        if level_difficulty > 4 and randint(0, 10) > 8: 
-            EnemyClass = Enemy3
-            formation_count = 2 
+        if formation_type == 'ENTER_AND_STOP':
+            EnemyClass = choice([Enemy2, Enemy3])
+            formation_count = 3 if EnemyClass == Enemy2 else 2
+        elif formation_type in ['SWEEP_CROSS', 'CROSSFIRE']:
+            EnemyClass = Enemy1
+            formation_count = 6
+        elif formation_type == 'BLOCKADE':
+            EnemyClass = choice([Enemy1, Enemy2])
+            formation_count = 4 if EnemyClass == Enemy1 else 2
+        elif formation_type == 'PINCER':
+            EnemyClass = Enemy1
+            formation_count = 6
+        else:
+            if level_difficulty > 2 and randint(0, 10) > 6: 
+                EnemyClass = Enemy2
+                formation_count = 3 
+                
+            if level_difficulty > 4 and randint(0, 10) > 8: 
+                EnemyClass = Enemy3
+                formation_count = 2 
 
         if formation_type in FormationManager.FORMATIONS:
             spawn_func = FormationManager.FORMATIONS[formation_type]
             spawn_func(width, EnemyClass, formation_count, level_difficulty)
         else:
-            print(f"[Warning] Unknown formation type: '{formation_type}'")
             FormationManager._spawn_line_horizontal(width, EnemyClass, formation_count, level_difficulty)

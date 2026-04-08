@@ -176,24 +176,16 @@ class Game(GameState):
     def spawn_next_formation(self):
         if self.formations_to_spawn > 0:
             if self.ai_stage == "movement":
-                options = ["LINE_HORIZONTAL"]
+                options = ["LINE_HORIZONTAL", "BLOCKADE"]
             elif self.ai_stage == "single_enemy":
-                options = ["LINE_HORIZONTAL", "V_SHAPE"]
-            elif self.ai_stage == "swarm":
-                options = [
-                    "V_SHAPE",
-                    "LINE_HORIZONTAL",
-                    "DIAGONAL_LEFT",
-                    "DIAGONAL_RIGHT",
-                    "CIRCLE_CLUSTER",
-                    "RANDOM_RAIN",
-                ]
+                options = ["LINE_HORIZONTAL", "V_SHAPE", "BLOCKADE"]
             elif self.ai_stage == "boss":
                 options = [
                     "V_SHAPE",
                     "DIAGONAL_LEFT",
                     "DIAGONAL_RIGHT",
                     "CIRCLE_CLUSTER",
+                    "PINCER",
                 ]
             else:
                 options = [
@@ -203,14 +195,29 @@ class Game(GameState):
                     "DIAGONAL_RIGHT",
                     "CIRCLE_CLUSTER",
                     "RANDOM_RAIN",
+                    "ENTER_AND_STOP",
+                    "SWEEP_CROSS",
+                    "PINCER",
+                    "BLOCKADE",
+                    "CROSSFIRE",
                 ]
 
-            choice_idx = min(len(options), 2 + g_engine.level)
-            ftype = random.choice(options[:choice_idx])
+            choice_idx = min(len(options), 3 + g_engine.level)
+            available_options = options[:choice_idx]
 
-            FormationManager.spawn_formation(ftype, g_engine.level)
-            self.formations_to_spawn -= 1
-            self.current_wave_delay = 120
+            is_combo = g_engine.level >= 2 and random.random() < 0.35 and self.formations_to_spawn > 1
+
+            if is_combo:
+                f1, f2 = random.sample(available_options, 2)
+                FormationManager.spawn_formation(f1, g_engine.level)
+                FormationManager.spawn_formation(f2, g_engine.level)
+                self.formations_to_spawn -= 2
+                self.current_wave_delay = random.uniform(3.5, 5.5)
+            else:
+                ftype = random.choice(available_options)
+                FormationManager.spawn_formation(ftype, g_engine.level)
+                self.formations_to_spawn -= 1
+                self.current_wave_delay = random.uniform(2.5, 4.0)
         else:
             self.level_done = True
 
@@ -225,15 +232,11 @@ class Game(GameState):
         if event.type == KEYUP:
             g_engine.player.get_input_keyup(event)
             
-            
-        # --- LEVEL UP BUTTON (DEBUG) ----------------
             if event.key == K_TAB:
                 if hasattr(g_engine.player, 'reset_movement'):
                     g_engine.player.reset_movement()
                 self.next_state = "LevelUp"
                 self.done = True
-        # --------------------------------------------    
-            
             
         if event.type == JOYBUTTONDOWN:
             g_engine.player.get_controller_input(event)
@@ -296,7 +299,7 @@ class Game(GameState):
             if self.current_wave_delay > 0:
                 self.current_wave_delay -= dt
 
-            if self.current_wave_delay <= 0 or (is_clear and self.current_wave_delay < 100000):
+            if self.current_wave_delay <= 0 or is_clear:
                 self.spawn_next_formation()
 
         elif len(g_engine.all_enemies) == 0:

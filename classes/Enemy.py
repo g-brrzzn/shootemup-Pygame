@@ -7,7 +7,6 @@ from game_engine import g_engine
 from classes.PowerUp import PowerUp
 from constants.global_var import config, SCALED_SPRITE_SIZE
 
-
 class EnemyBase(pygame.sprite.Sprite):
     instancelist = []
 
@@ -39,6 +38,7 @@ class EnemyBase(pygame.sprite.Sprite):
         self.telegraph_timer = 0.0
         self.pending_pattern = None
         self.pending_kwargs = None
+        self.custom_move_func = None
 
     @classmethod
     def load_assets(cls, assets_manager):
@@ -110,6 +110,8 @@ class EnemyBase(pygame.sprite.Sprite):
     def check_bounds(self):
         if self.y > config.INTERNAL_RESOLUTION[1] + 100:
             self.kill()
+        if self.x < -100 or self.x > config.INTERNAL_RESOLUTION[0] + 100:
+            self.kill()
             
     def prepare_attack(self, pattern, kwargs):
         is_pink = kwargs.get("is_pink", False)
@@ -123,7 +125,10 @@ class EnemyBase(pygame.sprite.Sprite):
             self.shoot_cooldown = 0.5
 
     def update(self, dt):
-        self.move(dt)
+        if self.custom_move_func:
+            self.custom_move_func(self, dt)
+        else:
+            self.move(dt)
 
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= dt
@@ -163,7 +168,6 @@ class EnemyBase(pygame.sprite.Sprite):
                 
         self.image.set_colorkey((0, 0, 0))
                 
-
     def draw(self, surf):
         surf.blit(self.image, self.rect)
 
@@ -173,7 +177,6 @@ class EnemyBase(pygame.sprite.Sprite):
             x = randint(0, config.INTERNAL_RESOLUTION[0])
             y = randint(-200, -50)
             enemy_class((x, y), g_engine.all_enemies, g_engine.all_sprites)
-
 
 class Enemy1(EnemyBase):
     def __init__(self, pos, *groups):
@@ -194,7 +197,6 @@ class Enemy1(EnemyBase):
         if randint(0, 1000) < 5:
             is_pink = randint(0, 100) < 20 
             self.prepare_attack("single", {"angle": -90, "speed_scale": 0.75, "is_pink": is_pink})
-
 
 class Enemy2(EnemyBase):
     def __init__(self, pos, *groups):
@@ -220,7 +222,6 @@ class Enemy2(EnemyBase):
                 "spread",
                 {"count": 2, "spread_arc": 20, "angle": -90, "speed_scale": 0.45, "is_pink": is_pink}
             )
-
 
 class Enemy3(EnemyBase):
     def __init__(self, pos, *groups):
