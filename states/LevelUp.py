@@ -11,8 +11,9 @@ from .GameState import GameState
 from .States_util import draw_text, handle_analog_stick
 from classes.particles.Fall import Fall
 from classes.particles.LightRays import LightRays
-from constants.global_var import config, CONTROLS, GAME_COLOR, TITLE_YELLOW_1
+from constants.global_var import config, CONTROLS, GAME_COLOR, TITLE_YELLOW_1, PLAYER_COLOR_GREEN, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
 from constants.Utils import delta_time
+from states.States_util import vertical
 
 BASE_UPGRADES = [
     {
@@ -165,10 +166,10 @@ class LevelUp(GameState):
         if g_engine.player:
             g_engine.player.last_hit = pygame.time.get_ticks() + 1500
 
-        self.fall_1 = Fall(amount=35, min_s=15, max_s=40, color=TITLE_YELLOW_1, size=2)
-        self.fall_2 = Fall(amount=35, min_s=15, max_s=40, color=(100, 200, 255), size=2)
-        self.rays_1 = LightRays(amount=20, color=TITLE_YELLOW_1, min_speed=600, max_speed=1000, alpha=160, width=3, length=120, direction=-1)
-        self.rays_2 = LightRays(amount=15, color=(255, 150, 220), min_speed=800, max_speed=1400, alpha=200, width=2, length=200, direction=-1)
+        self.fall_1 = Fall(amount=35, min_s=15, max_s=40, color=PLAYER_COLOR_GREEN, size=2)
+        self.fall_2 = Fall(amount=35, min_s=15, max_s=40, color=(250, 160, 210), size=2)
+        self.rays_1 = LightRays(amount=20, color=PLAYER_COLOR_GREEN, min_speed=600, max_speed=1000, alpha=160, width=3, length=120, direction=-1)
+        self.rays_2 = LightRays(amount=15, color=(250, 160, 210), min_speed=800, max_speed=1400, alpha=200, width=2, length=200, direction=-1)
 
         available_fusions, available_bases = self._build_offer_pool()
         counts = self._skill_counts()
@@ -270,9 +271,7 @@ class LevelUp(GameState):
         w, h = config.INTERNAL_RESOLUTION
         time_now = pygame.time.get_ticks()
 
-        overlay = pygame.Surface((w, h), pygame.SRCALPHA)
-        overlay.fill((10, 15, 20, int(180 * (self.state_alpha / 255.0))))
-        surf.blit(overlay, (0, 0))
+        vertical(surf, False, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2)
 
         self.rays_1.draw(surf)
         self.rays_2.draw(surf)
@@ -283,7 +282,7 @@ class LevelUp(GameState):
 
         slide_offset_y = (255 - self.state_alpha) * 1.5
         title_y = h * 0.15 + math.sin(time_now * 0.003) * 5 - (slide_offset_y * 0.5)
-        draw_text(ui_surf, "WAVE REWARD", w / 2, title_y, TITLE_YELLOW_1)
+        draw_text(ui_surf, "WAVE REWARD", w / 2, title_y, PLAYER_COLOR_GREEN)
         draw_text(ui_surf, "CHOOSE AN UPGRADE", w / 2, title_y + 40, use_smaller_font=True)
 
         card_count = max(1, len(self.offered_upgrades))
@@ -314,7 +313,7 @@ class LevelUp(GameState):
                 border_thick = 5 if is_selected else 3
             else:
                 bg_color = (40, 50, 60, 230) if is_selected else (20, 25, 30, 150)
-                border_color = TITLE_YELLOW_1 if is_selected else (100, 100, 100, 150)
+                border_color = PLAYER_COLOR_GREEN if is_selected else (100, 100, 100, 150)
                 border_thick = 4 if is_selected else 2
 
             if is_selected:
@@ -349,7 +348,7 @@ class LevelUp(GameState):
                 level_text,
                 x + card_w / 2,
                 y + card_h * 0.4,
-                (100, 255, 100) if "NEW" in level_text or "FUSION" in level_text else (200, 200, 200),
+                PLAYER_COLOR_GREEN if "NEW" in level_text or "FUSION" in level_text else (200, 200, 200),
                 use_smaller_font=True,
             )
 

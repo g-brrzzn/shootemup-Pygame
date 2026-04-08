@@ -78,7 +78,7 @@ class SideShot(Weapon):
 class BurstTurret(Weapon):
     def __init__(self):
         self.last_fire_time = 0
-        self.cooldown = 1.0  
+        self.cooldown = 0.8
         self.is_auto = False 
 
     def fire(self, player_rect, power_level, bullet_system):
@@ -91,13 +91,12 @@ class BurstTurret(Weapon):
         self.last_fire_time = current_time
         lvl = _lvl(power_level)
         
-        burst_count = min(3, 1 + lvl)
+        burst_count = 1 + (lvl + 1)
 
         for i in range(burst_count):
-            offset_y = i * 45 
-            spread_angle = 90 + random.uniform(-10, 10) 
+            offset_y = i * 15 
+            spread_angle = 90 + random.uniform(-18, 18) 
             _single(bullet_system, (player_rect.centerx, player_rect.centery + offset_y), angle=spread_angle, speed_scale=1.1, damage_scale=1.2)
-
 
 class TrackingDrones(Weapon):
     def __init__(self):
