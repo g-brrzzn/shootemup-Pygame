@@ -248,6 +248,8 @@ class LevelUp(GameState):
 
         if g_engine.player:
             g_engine.player.last_hit = pygame.time.get_ticks() + 1500
+            if hasattr(g_engine.player, 'reset_movement'):
+                g_engine.player.reset_movement()
 
         self.next_state = "Game"
         self.done = True
@@ -414,6 +416,21 @@ class LevelUp(GameState):
         if event.type == JOYBUTTONDOWN:
             if event.button == 0:
                 self.apply_upgrade()
+                
+            if g_engine.platform == "Darwin":
+                if event.button == 13: 
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    self.selected = max(0, self.selected - 1)
+                if event.button == 14: 
+                    pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
+                    self.selected = min(len(self.offered_upgrades) - 1, self.selected + 1)
+
+        if event.type == JOYDEVICEADDED:
+            joystick = pygame.joystick.Joystick(event.device_index)
+            g_engine.joystick = joystick
+            
+        if event.type == JOYDEVICEREMOVED:
+            g_engine.joystick = None
 
         if event.type == JOYAXISMOTION and config.use_analog_stick:
             handle_analog_stick(self, event)

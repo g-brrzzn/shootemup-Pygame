@@ -20,6 +20,7 @@ from classes.CollisionManager import CollisionManager
 from classes.HUD import HUD
 
 from states.Menu import Menu
+from states.ModMenu import ModMenu
 from states.Pause import Pause
 from states.GameState import GameState
 from states.Options import Options
@@ -237,6 +238,13 @@ class Game(GameState):
                     g_engine.player.reset_movement()
                 self.next_state = "Pause"
                 self.done = True
+                
+            if event.key in CONTROLS.get("MOD_MENU", [K_BACKSPACE]):
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "ModMenu"
+                self.done = True
+                
         if event.type == KEYUP:
             g_engine.player.get_input_keyup(event)
             
@@ -257,15 +265,26 @@ class Game(GameState):
                     g_engine.player.reset_movement()
                 self.next_state = "Pause"
                 self.done = True
+                
+            if event.button in [4, 6]:
+                if hasattr(g_engine.player, 'reset_movement'):
+                    g_engine.player.reset_movement()
+                self.next_state = "ModMenu"
+                self.done = True
+                
         if event.type == JOYBUTTONUP:
             g_engine.player.get_controller_keyup(event)
+            
         if event.type == JOYAXISMOTION:
             g_engine.player.get_joyaxismotion_input(event)
+            
         if event.type == JOYHATMOTION:
             g_engine.player.get_joyhat_input(event)
+            
         if event.type == JOYDEVICEADDED:
             joystick = pygame.joystick.Joystick(event.device_index)
             g_engine.joystick = joystick
+            
         if event.type == JOYDEVICEREMOVED:
             g_engine.joystick = None
 
@@ -377,6 +396,27 @@ class Game(GameState):
         g_engine.explosion_system.draw(surf)
 
         self.stars_front.draw(surf)
+        
+        if getattr(g_engine, 'show_hitboxes', False):
+            if g_engine.player and g_engine.player.getLife() > 0:
+                pygame.draw.rect(surf, (0, 255, 0), g_engine.player.hitbox, 2)
+                pygame.draw.rect(surf, (50, 150, 255), g_engine.player.parry_rect, 1)
+
+            for enemy in g_engine.all_enemies:
+                pygame.draw.rect(surf, (255, 50, 50), enemy.rect, 2)
+                
+            for pu in g_engine.powerups:
+                pygame.draw.rect(surf, (255, 255, 0), pu.hitbox, 2)
+                
+            n_pb = g_engine.player_bullets.active_count
+            for i in range(n_pb):
+                px, py = g_engine.player_bullets.pos[i]
+                pygame.draw.circle(surf, (0, 255, 100), (int(px), int(py)), 4, 1)
+                
+            n_eb = g_engine.enemy_bullets.active_count
+            for i in range(n_eb):
+                px, py = g_engine.enemy_bullets.pos[i]
+                pygame.draw.circle(surf, (255, 100, 100), (int(px), int(py)), 4, 1)
 
         fill_pct = 0.0
         if self.boss_active:
@@ -471,6 +511,7 @@ if __name__ == "__main__":
         "Options": Options(),
         "GameOver": GameOver(),
         "LevelUp": LevelUp(), 
+        "ModMenu": ModMenu(),
     }
 
     start_state = "Menu"

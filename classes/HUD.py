@@ -13,7 +13,7 @@ class HUD:
         rect = pygame.Rect(x, y, self.icon_size, self.icon_size)
         pygame.draw.circle(surf, (40, 40, 40), rect.center, self.icon_size // 2)
         
-        fill_fraction = max(0, current_time / max_time)
+        fill_fraction = max(0, min(1.0, current_time / max_time))
         if fill_fraction > 0:
             start_angle = -math.pi / 2
             end_angle = start_angle + (2 * math.pi * fill_fraction)

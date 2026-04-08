@@ -175,19 +175,6 @@ class Player(pygame.sprite.Sprite):
                 self.parry_cooldown_timer = self.parry_cooldown
                 
 
-        # Debug keys
-        if event.key == K_o:
-            if self.shot_delay >= 0.1:
-                self.shot_delay -= 0.1
-        if event.key == K_l:
-            if self.shot_delay < 0.25:
-                self.shot_delay += 0.1
-        if event.key == K_i:
-            self.speed += 1
-        if event.key == K_k:
-            if self.speed >= 7:
-                self.speed -= 1
-
     def get_input_keyup(self, event):
         if event.key in CONTROLS["LEFT"]:
             self.moving_left = False
@@ -409,7 +396,9 @@ class Player(pygame.sprite.Sprite):
         if self.parry_cooldown_timer > 0:
             self.parry_cooldown_timer -= dt
             
-        if self.ricochet_timer > 0:
+        if getattr(self, 'infinite_ricochet', False):
+            self.ricochet_timer = 6.0
+        elif self.ricochet_timer > 0:
             self.ricochet_timer -= dt
 
         if self.parry_active:
@@ -557,6 +546,10 @@ class Player(pygame.sprite.Sprite):
             
 
     def take_damage(self):
+        
+        if getattr(self, 'god_mode', False):
+            return False
+        
         current_time = pygame.time.get_ticks()
         is_invincible = (current_time < self.last_hit) or (current_time - self.last_hit < self.invincibility_duration)
         
