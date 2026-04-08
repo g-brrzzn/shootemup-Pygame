@@ -167,7 +167,7 @@ class ModMenu(GameState):
             if event.button == 0:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 self.execute_action(self.selected, 0)
-            elif event.button in [4, 6]:
+            elif event.button == 6:
                 if hasattr(g_engine.player, 'reset_movement'):
                     g_engine.player.reset_movement()
                 self.next_state = "Game"

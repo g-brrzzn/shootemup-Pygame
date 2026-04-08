@@ -267,7 +267,7 @@ class Game(GameState):
                 self.next_state = "Pause"
                 self.done = True
                 
-            if event.button in [4, 6]:
+            if event.button == 6:
                 if hasattr(g_engine.player, 'reset_movement'):
                     g_engine.player.reset_movement()
                 self.next_state = "ModMenu"

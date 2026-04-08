@@ -197,6 +197,12 @@ class Player(pygame.sprite.Sprite):
         if event.button == 4:
             self.firing = True
 
+        if event.button in [2, 3]:
+            if not self.parry_active and self.parry_cooldown_timer <= 0:
+                self.parry_active = True
+                self.parry_timer = self.parry_duration
+                self.parry_cooldown_timer = self.parry_cooldown
+
         if g_engine.platform == "Darwin":
             if event.button == 11:
                 self.moving_up = True
@@ -282,6 +288,13 @@ class Player(pygame.sprite.Sprite):
                 self.firing = True
             else:
                 self.firing = False
+
+        if event.axis == 4 or (event.axis == 2 and g_engine.platform == "Linux"):
+            if event.value > 0.5:
+                if not self.parry_active and self.parry_cooldown_timer <= 0:
+                    self.parry_active = True
+                    self.parry_timer = self.parry_duration
+                    self.parry_cooldown_timer = self.parry_cooldown
 
     def get_firing_weapons(self):
         fusion_weapons = [
