@@ -88,6 +88,7 @@ class BurstTurret(Weapon):
 
         self.base_spread = 9        
         self.spread_step = 2.2     
+        self._current_lvl = 1 
 
     @property
     def is_auto(self):
@@ -113,6 +114,7 @@ class BurstTurret(Weapon):
 
         self.last_fire_time = current_time
         lvl = _lvl(power_level)
+        self._current_lvl = lvl
 
         if lvl == 1:
             self.burst_total = 3
@@ -132,6 +134,20 @@ class BurstTurret(Weapon):
             self.burst_active = False
 
         return True
+
+    def _shoot_projectile(self, player_rect, bullet_system):
+        import random
+        i = self.burst_total - self.burst_remaining
+        spread = random.uniform(-self.base_spread, self.base_spread) + (i * random.uniform(-self.spread_step, self.spread_step))
+        speed = 1.05 + (i * 0.02)
+
+        if self._current_lvl >= 2:
+            offset = 14
+            _single(bullet_system, (player_rect.centerx - offset, player_rect.centery), angle=90 + spread, speed_scale=speed, damage_scale=0.85)
+            _single(bullet_system, (player_rect.centerx + offset, player_rect.centery), angle=90 + spread, speed_scale=speed, damage_scale=0.85)
+        else:
+            _single(bullet_system, player_rect.center, angle=90 + spread, speed_scale=speed, damage_scale=0.85)
+            
 
     def _shoot_projectile(self, player_rect, bullet_system):
         import random
@@ -210,3 +226,85 @@ class StormWallFusion(Weapon):
         wall_count = min(7, 3 + lvl)
         _spread(bullet_system, player_rect.center, count=wall_count, spread_arc=70, angle=180, speed_scale=1.0, damage_scale=0.85)
         _spread(bullet_system, player_rect.center, count=wall_count, spread_arc=70, angle=0, speed_scale=1.0, damage_scale=0.85)
+        
+class FlakCannonFusion(Weapon):
+    def __init__(self):
+        self.last_fire_time = 0
+        self.cooldown = 1.0
+        self.burst_active = False
+        self.burst_total = 4
+        self.burst_remaining = 0
+        self.next_shot_time = 0
+        self.burst_delay = 0.1
+        self.base_spread = 12
+        self._current_lvl = 1
+
+    @property
+    def is_auto(self):
+        return self.burst_active
+
+    def fire(self, player_rect, power_level, bullet_system):
+        import pygame
+        current_time = pygame.time.get_ticks() / 1000.0
+
+        if self.burst_active:
+            if current_time >= self.next_shot_time:
+                self._shoot_projectile(player_rect, bullet_system)
+                self.burst_remaining -= 1
+                self.next_shot_time = current_time + self.burst_delay
+                if self.burst_remaining <= 0:
+                    self.burst_active = False
+            return False
+
+        if current_time - self.last_fire_time < self.cooldown:
+            return False
+
+        self.last_fire_time = current_time
+        self._current_lvl = _lvl(power_level)
+        self.burst_remaining = self.burst_total
+        self.burst_active = True
+        
+        self._shoot_projectile(player_rect, bullet_system)
+        self.burst_remaining -= 1
+        self.next_shot_time = current_time + self.burst_delay
+        if self.burst_remaining <= 0:
+            self.burst_active = False
+        return True
+
+    def _shoot_projectile(self, player_rect, bullet_system):
+        import random
+        spread = random.uniform(-self.base_spread, self.base_spread)
+        offset = 18
+        blast_rad = 50 + (self._current_lvl * 10)
+        
+        _single(bullet_system, (player_rect.centerx - offset, player_rect.centery), angle=90 + spread, speed_scale=1.2, damage_scale=0.8, explosive=True, blast_radius=blast_rad, splash_damage=0.8)
+        _single(bullet_system, (player_rect.centerx + offset, player_rect.centery), angle=90 + spread, speed_scale=1.2, damage_scale=0.8, explosive=True, blast_radius=blast_rad, splash_damage=0.8)
+
+class AegisSystemFusion(Weapon):
+    def __init__(self):
+        self.last_fire_time = 0
+        self.cooldown = 6.0   
+        self.is_auto = True
+
+    def fire(self, player_rect, power_level, bullet_system):
+        import pygame
+        current_time = pygame.time.get_ticks() / 1000.0
+        
+        if current_time - self.last_fire_time < self.cooldown:
+            return False
+            
+        self.last_fire_time = current_time
+        lvl = _lvl(power_level)
+        count = lvl  
+        
+        blocks_bullets = getattr(g_engine.player, 'orbiters_block_bullets', False)
+        
+        for i in range(count):
+            angle = (360 / count) * i
+            _single(
+                bullet_system, player_rect.center, angle=angle, speed_scale=0,
+                orbit=True, orbit_radius=115.0, orbit_speed=3.5, 
+                life=5.5,
+                is_shield=blocks_bullets, indestructible=True, is_aegis=True, damage_scale=1.5
+            )
+        return True

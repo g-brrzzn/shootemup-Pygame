@@ -13,6 +13,7 @@ class CollisionManager:
             return
 
         CollisionManager._check_enemy_bullets_vs_player()
+        CollisionManager._check_enemy_bullets_vs_shields()
         CollisionManager._check_player_bullets_vs_enemies()
         CollisionManager._check_player_vs_powerups()
         CollisionManager._check_player_vs_enemies()
@@ -54,13 +55,18 @@ class CollisionManager:
                 (b_y >= parry_rect.top) & (b_y <= parry_rect.bottom)
             )[0]
             
+            parried_this_frame = False 
+            
             for h in possible_parrys:
                 meta = g_engine.enemy_bullets.get_bullet_meta(h)
                 if meta.get("is_pink") and h not in bullets_to_kill:
                     g_engine.score += 150
                     g_engine.player.gain_exp(1)
-                    g_engine.player.on_parry_success()
+                    parried_this_frame = True 
                     bullets_to_kill.add(h)
+                    
+            if parried_this_frame:
+                g_engine.player.on_parry_success() 
 
         hits = np.nonzero(
             (b_x >= p_rect.left) & (b_x <= p_rect.right) &
@@ -79,6 +85,42 @@ class CollisionManager:
 
         for h in sorted(list(bullets_to_kill), reverse=True):
             g_engine.enemy_bullets.kill_bullet(h)
+
+
+    @staticmethod
+    def _check_enemy_bullets_vs_shields():
+        if g_engine.enemy_bullets.active_count <= 0 or g_engine.player_bullets.active_count <= 0:
+            return
+
+        p_n = g_engine.player_bullets.active_count
+        shields = [i for i in range(p_n) if g_engine.player_bullets.meta[i].get("is_shield")]
+
+        if not shields:
+            return
+
+        e_n = g_engine.enemy_bullets.active_count
+        e_x = g_engine.enemy_bullets.pos[:e_n, 0]
+        e_y = g_engine.enemy_bullets.pos[:e_n, 1]
+        bullets_to_kill = set()
+
+        for si in shields:
+            sx, sy = g_engine.player_bullets.pos[si]
+            
+            dist_sq = (e_x - sx)**2 + (e_y - sy)**2
+            hits = np.nonzero(dist_sq < 400)[0] 
+
+            for h in hits:
+                if h not in bullets_to_kill:
+                    bullets_to_kill.add(h)
+                    g_engine.spark_system.emit(
+                        pos=(e_x[h], e_y[h]),
+                        angle=random.randint(0, 360), speed=random.randint(3, 7),
+                        color=(100, 200, 255), scale=0.8
+                    )
+
+        for h in sorted(list(bullets_to_kill), reverse=True):
+            g_engine.enemy_bullets.kill_bullet(h)
+
 
     @staticmethod
     def _check_player_bullets_vs_enemies():
@@ -100,29 +142,41 @@ class CollisionManager:
             valid_hits = [h for h in hits if h not in bullets_to_kill]
 
             if valid_hits:
+                took_damage = False
                 for h in valid_hits:
-                    bullets_to_kill.add(h)
+                    meta = g_engine.player_bullets.meta[h]
+                    if not meta.get("indestructible"):
+                        bullets_to_kill.add(h)
+                        took_damage = True
+                    elif meta.get("orbit"):
+                        curr_t = pygame.time.get_ticks()
+                        if curr_t - getattr(enemy, 'last_orbit_hit', 0) >= 150:
+                            enemy.last_orbit_hit = curr_t
+                            took_damage = True
+                    else:
+                        took_damage = True
 
-                if isinstance(enemy, Boss):
-                    g_engine.explosion_system.create(
-                        enemy.rect.centerx,
-                        enemy.rect.centery + random.randint(-20, 20),
-                    )
-                else:
-                    g_engine.explosion_system.create(
-                        enemy.rect.centerx, enemy.rect.centery
-                    )
-                
-                enemy.damage()
+                if took_damage:
+                    if isinstance(enemy, Boss):
+                        g_engine.explosion_system.create(
+                            enemy.rect.centerx,
+                            enemy.rect.centery + random.randint(-20, 20),
+                        )
+                    else:
+                        g_engine.explosion_system.create(
+                            enemy.rect.centerx, enemy.rect.centery
+                        )
+                    
+                    enemy.damage()
 
-                for _ in range(random.randint(4, 8)):
-                    g_engine.spark_system.emit(
-                        pos=enemy.rect.center,
-                        angle=random.randint(0, 360),
-                        speed=random.randint(3, 10),
-                        color=(255, 255, 180),
-                        scale=1.5,
-                    )
+                    for _ in range(random.randint(4, 8)):
+                        g_engine.spark_system.emit(
+                            pos=enemy.rect.center,
+                            angle=random.randint(0, 360),
+                            speed=random.randint(3, 10),
+                            color=(255, 255, 180),
+                            scale=1.5,
+                        )
 
         for h in sorted(list(bullets_to_kill), reverse=True):
             g_engine.player_bullets.kill_bullet(h)

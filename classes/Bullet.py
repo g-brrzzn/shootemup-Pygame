@@ -147,9 +147,9 @@ class BulletSystem:
         meta.setdefault("damage_scale", 1.0)
         meta.setdefault("kind", "normal")
         
-        self.life[idx] = 2.5 if meta.get("homing") else 5.0
+        self.life[idx] = float(meta.get("life", 2.5 if meta.get("homing") else 5.0))
 
-        if meta.get("homing"):
+        if meta.get("homing") or meta.get("is_drone"):
             meta.setdefault("tracking_strength", 1.0)
 
         if meta.get("orbit"):
@@ -342,7 +342,22 @@ class BulletSystem:
             px, py = pos_list[i]
             meta = self.meta[i]
 
-            if meta.get("homing"):
+            if meta.get("is_aegis"):
+                life_left = life_list[i]
+                alpha = 255
+                if life_left < 1.0:
+                    alpha = int((life_left / 1.0) * 255)
+                if alpha > 0:
+                    pulse = abs(math.sin(pygame.time.get_ticks() * 0.01 + i)) * 3
+                    aegis_surf = pygame.Surface((30, 30), pygame.SRCALPHA)
+                    pygame.draw.circle(aegis_surf, (*GAME_COLOR[:3], int(alpha * 0.5)), (15, 15), 7 + pulse)
+                    pygame.draw.circle(aegis_surf, (*GAME_COLOR[:3], alpha), (15, 15), 5)
+                    if meta.get("is_shield"):
+                        pygame.draw.circle(aegis_surf, (255, 255, 255, alpha), (15, 15), 10 + pulse, 1)
+                    surf.blit(aegis_surf, (px - 15, py - 15))
+
+
+            elif meta.get("homing") or meta.get("is_drone"):
                 life_left = life_list[i]
                 alpha = 255
                 if life_left < 1.5:

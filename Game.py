@@ -78,6 +78,7 @@ BulletSystem.load_assets(g_engine.assets)
 EnemyBase.load_assets(g_engine.assets)
 
 pygame.mixer.init()
+pygame.mixer.set_num_channels(32)
 
 MUSIC_END_EVENT = pygame.USEREVENT + 1
 pygame.mixer.music.set_endevent(MUSIC_END_EVENT)
@@ -213,6 +214,9 @@ class Game(GameState):
                     "PINCER",
                     "BLOCKADE",
                     "CROSSFIRE",
+                    "AMBUSH",   
+                    "CONVOY",   
+                    "VORTEX",   
                 ]
 
             choice_idx = min(len(options), 3 + g_engine.level)

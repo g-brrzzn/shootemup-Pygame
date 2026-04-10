@@ -109,7 +109,7 @@ class EnemyBase(pygame.sprite.Sprite):
         return [
             {
                 "type": "life", 
-                "chance": 4.0
+                "chance": 3.0
                 },
             {
                 "type": "weapon",

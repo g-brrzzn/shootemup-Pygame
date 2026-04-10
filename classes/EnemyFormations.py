@@ -134,6 +134,60 @@ class FormationManager:
                     e.x += getattr(e, 'direction', 1) * 350 * dt
 
                 enemy.custom_move_func = custom_move
+                
+    @staticmethod
+    def _spawn_ambush(width, EnemyClass, count, level_difficulty):
+        height = config.INTERNAL_RESOLUTION[1]
+        for i in range(count):
+            side = choice(['left', 'right'])
+            start_x = -50 if side == 'left' else width + 50
+            start_y = height - 50 - (i * 50)
+            direction = 1 if side == 'left' else -1
+
+            enemy = EnemyClass((start_x, start_y), g_engine.all_enemies, g_engine.all_sprites)
+            enemy.direction = direction
+
+            def custom_move(e, dt):
+                e.y -= e.base_speed * 0.6 * dt 
+                e.x += getattr(e, 'direction', 1) * 250 * dt
+                if e.y < -100:  
+                    e.kill()
+
+            enemy.custom_move_func = custom_move
+
+    @staticmethod
+    def _spawn_convoy(width, EnemyClass, count, level_difficulty):
+        import math
+        center_x = width // 2
+        center_y = -100
+
+        Enemy3((center_x, center_y), g_engine.all_enemies, g_engine.all_sprites)
+
+        guard_count = max(4, count + 2)
+        radius = 110
+        for i in range(guard_count):
+            angle = (i / guard_count) * 6.28
+            x = center_x + int(math.cos(angle) * radius)
+            y = center_y + int(math.sin(angle) * radius)
+
+            guard = Enemy1((x, y), g_engine.all_enemies, g_engine.all_sprites)
+            guard.base_speed = config.INTERNAL_RESOLUTION[1] * 0.1125
+
+    @staticmethod
+    def _spawn_vortex(width, EnemyClass, count, level_difficulty):
+        import math
+        center_x = width // 2
+        for i in range(count + 3):
+            y = -50 - (i * 50)
+            enemy = Enemy1((center_x, y), g_engine.all_enemies, g_engine.all_sprites)
+            enemy.vortex_offset = i * 0.4
+
+            def custom_move(e, dt):
+                e.y += e.base_speed * 0.5 * dt
+                t = pygame.time.get_ticks() * 0.0025
+                e.x = center_x + math.sin(t + getattr(e, 'vortex_offset', 0)) * 250
+
+            enemy.custom_move_func = custom_move
 
     FORMATIONS = {
         'V_SHAPE': _spawn_v_shape,
@@ -147,6 +201,9 @@ class FormationManager:
         'PINCER': _spawn_pincer,
         'BLOCKADE': _spawn_blockade,
         'CROSSFIRE': _spawn_crossfire,
+        'AMBUSH': _spawn_ambush,       
+        'CONVOY': _spawn_convoy,       
+        'VORTEX': _spawn_vortex,       
     }
     
     @staticmethod

@@ -16,16 +16,15 @@ def main():
     vecnormalize_path = "models/PPO_LSTM/vecnormalize.pkl"
 
     if not os.path.exists(model_path):
-        print(f"ERRO: Modelo não encontrado em {model_path}!")
+        print(f"ERROR: Model not found at {model_path}!")
         return
 
     if not os.path.exists(vecnormalize_path):
-        print(f"ERRO: VecNormalize não encontrado em {vecnormalize_path}!")
+        print(f"ERROR: VecNormalize not found at {vecnormalize_path}!")
         return
 
-    print("Carregando o cérebro artificial...")
+    print("Loading the artificial brain...")
 
-    # Um único ambiente para jogar
     env = make_vec_env(
         ShootEmUpEnv,
         n_envs=1,
@@ -40,7 +39,7 @@ def main():
 
     obs = env.reset()
 
-    print("Iniciando a simulação...")
+    print("Starting the simulation...")
 
     running = True
     while running:
@@ -53,15 +52,13 @@ def main():
         action, _states = model.predict(obs, deterministic=True)
         obs, rewards, dones, infos = env.step(action)
 
-        pygame.display.set_caption(f"Shoot 'em Up IA Jogando - FPS: {int(clock.get_fps())}")
+        pygame.display.set_caption(f"Shoot 'em Up AI Playing - FPS: {int(clock.get_fps())}")
 
         if not shader_manager:
             game_surface.fill((0, 0, 0, 0))
 
-        # Acesse o ambiente real para desenhar
         real_env = env.venv.envs[0]
 
-        # Descasca wrappers (Monitor, etc)
         while hasattr(real_env, "env"):
             real_env = real_env.env
         real_env.game.draw(game_surface)
@@ -82,7 +79,7 @@ def main():
         clock.tick(g_engine.fps_limit)
 
         if dones[0]:
-            print(f"A IA morreu! Pontuação alcançada: {g_engine.score}. Reiniciando...")
+            print(f"The AI died! Score achieved: {g_engine.score}. Restarting...")
             obs = env.reset()
 
     pygame.quit()

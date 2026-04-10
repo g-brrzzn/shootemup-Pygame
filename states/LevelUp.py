@@ -33,6 +33,7 @@ BASE_UPGRADES = [
         "type": "weapon",
         "category": "secondary_side",
         "weapon_class": SideShot,
+        "excludes": ["burst_turret"],
     },
     {
         "id": "tracking_drones",
@@ -60,6 +61,7 @@ BASE_UPGRADES = [
         "type": "weapon",
         "category": "primary", 
         "weapon_class": BurstTurret,
+        "excludes": ["side_shot"],
     },
     {
         "id": "reinforced_hull",
@@ -71,6 +73,20 @@ BASE_UPGRADES = [
         "stat_target": "life",
         "flat_bonus": 1,
         "max_stacks": 8,
+        "repeatable": True,
+    },
+    {
+        "id": "overclock_core",
+        "name": "OVERCLOCK",
+        "desc": "Fire rate +25%, Spread +100%",
+        "color": (255, 50, 50),
+        "type": "stat",
+        "category": "passive",
+        "stats": {
+            "shot_delay": {"multiplier": 0.80},
+            "spread_arc_mult": {"multiplier": 2.0}
+        },
+        "max_stacks": 3,
         "repeatable": True,
     },
 ]
@@ -96,6 +112,26 @@ FUSIONS = [
         "requires": ["side_shot", "reinforced_hull"],
         "weapon_class": StormWallFusion,
     },
+    {
+        "id": "fusion_flak_cannon",
+        "name": "FLAK CANNON",
+        "desc": "FUSION: Explosive Twin-Bursts",
+        "color": (255, 100, 100),
+        "type": "fusion",
+        "category": "ultimate",
+        "requires": ["burst_turret", "bomb_pod"],
+        "weapon_class": FlakCannonFusion,
+    },
+    {
+        "id": "fusion_aegis",
+        "name": "AEGIS SYSTEM",
+        "desc": "FUSION: Orbital drones",
+        "color": (100, 200, 255),
+        "type": "fusion",
+        "category": "ultimate",
+        "requires": ["tracking_drones", "reinforced_hull"],
+        "weapon_class": AegisSystemFusion,
+    },
 ]
 
 class LevelUp(GameState):
@@ -119,6 +155,11 @@ class LevelUp(GameState):
     def _can_take_upgrade(self, upgrade, counts, owned_categories):
         owned_count = counts.get(upgrade["id"], 0)
         category = upgrade.get("category")
+        
+        if "excludes" in upgrade:
+            for ex_id in upgrade["excludes"]:
+                if counts.get(ex_id, 0) > 0:
+                    return False
 
         if upgrade["type"] == "weapon" and owned_count == 0:
             if category in owned_categories:
@@ -239,12 +280,20 @@ class LevelUp(GameState):
             player.weapon_levels[choice["id"]] = min(current_lvl + 1, 3)
 
         elif choice["type"] == "stat":
-            target = choice["stat_target"]
-            current_val = getattr(player, target, 0)
-            if "multiplier" in choice:
-                setattr(player, target, current_val * choice["multiplier"])
-            elif "flat_bonus" in choice:
-                setattr(player, target, current_val + choice["flat_bonus"])
+            if "stats" in choice: 
+                for target, mods in choice["stats"].items():
+                    current_val = getattr(player, target, 0.0)
+                    if "multiplier" in mods:
+                        setattr(player, target, current_val * mods["multiplier"])
+                    if "flat_bonus" in mods:
+                        setattr(player, target, current_val + mods["flat_bonus"])
+            else: 
+                target = choice["stat_target"]
+                current_val = getattr(player, target, 0)
+                if "multiplier" in choice:
+                    setattr(player, target, current_val * choice["multiplier"])
+                elif "flat_bonus" in choice:
+                    setattr(player, target, current_val + choice["flat_bonus"])
 
         if g_engine.player:
             g_engine.player.last_hit = pygame.time.get_ticks() + 1500
