@@ -133,6 +133,17 @@ class GameOver(GameState):
         self.fall.draw(surf)
         menu_maker(self.buttons, __class__.__name__, self.selected, surf, False)
 
+    def force_game_reset(self):
+        if g_engine.score > g_engine.high_score:
+            g_engine.high_score = g_engine.score
+            save_high_score(g_engine.high_score)
+        
+        if g_engine.player:
+            g_engine.player.setLife(0)
+            
+        self.next_state = "Menu"
+        self.done = True
+
     def get_event(self, event):
         if event.type == KEYDOWN:
             if event.key in CONTROLS["DOWN"]:
@@ -142,8 +153,8 @@ class GameOver(GameState):
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Menu"
-                    self.done = True
+                    # 2. CORRIJA AQUI NO TECLADO TAMBÉM:
+                    self.force_game_reset() 
                 elif self.selected == 1:
                     self.next_state = "Exit"
                     self.done = True
@@ -161,8 +172,7 @@ class GameOver(GameState):
             if event.button == 0:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.foce_game_reset()
-                    self.done = True
+                    self.force_game_reset()
                 elif self.selected == 1:
                     self.next_state = "Exit"
                     self.done = True
