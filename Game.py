@@ -26,6 +26,7 @@ from states.GameState import GameState
 from states.Options import Options
 from states.GameOver import GameOver, Exit
 from states.LevelUp import LevelUp
+from states.ControlsScreen import ControlsScreen
 from states.States_util import vertical, draw_text
 
 from constants.global_var import (
@@ -522,6 +523,7 @@ if __name__ == "__main__":
         "GameOver": GameOver(),
         "LevelUp": LevelUp(), 
         "ModMenu": ModMenu(),
+        "ControlsScreen": ControlsScreen(),
     }
 
     start_state = "Menu"

@@ -19,6 +19,6 @@ class GameEngine:
         self.shader_manager = None
         self.platform = None
         self.fps_limit = None
-
+        self.has_seen_controls = False
 
 g_engine = GameEngine()

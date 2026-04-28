@@ -82,7 +82,10 @@ class Menu(GameState):
             if event.key in CONTROLS["START"]:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Game"
+                    if not getattr(g_engine, 'has_seen_controls', False):
+                        self.next_state = "ControlsScreen"
+                    else:
+                        self.next_state = "Game"
                     self.done = True
                 elif self.selected == 1:
                     self.next_state = "Options"
@@ -104,7 +107,10 @@ class Menu(GameState):
             if event.button == 0:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Game"
+                    if not getattr(g_engine, 'has_seen_controls', False):
+                        self.next_state = "ControlsScreen"
+                    else:
+                        self.next_state = "Game"
                     self.done = True
                 elif self.selected == 1:
                     self.next_state = "Options"
