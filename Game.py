@@ -466,6 +466,15 @@ class GameRunner(object):
                 self.quit()
             if event.type == MUSIC_END_EVENT:
                 play_random_music()
+
+            if event.type == pygame.JOYDEVICEADDED or event.type in (pygame.JOYBUTTONDOWN, pygame.JOYHATMOTION, pygame.JOYAXISMOTION):
+                pygame.mouse.set_visible(False)
+            elif event.type in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONDOWN):
+                pygame.mouse.set_visible(True)
+            elif event.type == pygame.JOYDEVICEREMOVED:
+                if pygame.joystick.get_count() == 0:
+                    pygame.mouse.set_visible(True)
+
             self.state.get_event(event)
 
     def update(self):
