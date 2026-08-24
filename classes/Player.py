@@ -434,17 +434,14 @@ class Player(pygame.sprite.Sprite):
 
         current_speed = self.speed * self.speed_mult
 
-        if self.moving_right:
-            self.x += current_speed * dt
+        self.movement.x = (1 if self.moving_right else 0) - (1 if self.moving_left else 0)
+        self.movement.y = (1 if self.moving_down else 0) - (1 if self.moving_up else 0)
+
+        if self.movement.length_squared() > 0:
+            move = self.movement.normalize() * current_speed * dt
+            self.x += move.x
+            self.y += move.y
             self.rect.x = round(self.x)
-        if self.moving_left:
-            self.x -= current_speed * dt
-            self.rect.x = round(self.x)
-        if self.moving_up:
-            self.y -= current_speed * dt
-            self.rect.y = round(self.y)
-        if self.moving_down:
-            self.y += current_speed * dt
             self.rect.y = round(self.y)
 
         if self.rect.right > config.INTERNAL_RESOLUTION[0]:

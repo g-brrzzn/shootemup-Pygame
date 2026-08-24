@@ -84,7 +84,7 @@ class Exit(GameState):
             if event.button == 0:
                 pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_confirm"))
                 if self.selected == 0:
-                    self.next_state = "Menu"
+                    self.force_game_reset()
                     self.done = True
                 elif self.selected == 1:
                     pygame.quit()

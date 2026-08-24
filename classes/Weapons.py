@@ -147,21 +147,6 @@ class BurstTurret(Weapon):
             _single(bullet_system, (player_rect.centerx + offset, player_rect.centery), angle=90 + spread, speed_scale=speed, damage_scale=0.85)
         else:
             _single(bullet_system, player_rect.center, angle=90 + spread, speed_scale=speed, damage_scale=0.85)
-            
-
-    def _shoot_projectile(self, player_rect, bullet_system):
-        import random
-        i = self.burst_total - self.burst_remaining
-        spread = random.uniform(-self.base_spread, self.base_spread) + (i * random.uniform(-self.spread_step, self.spread_step))
-        speed = 1.05 + (i * 0.02)
-
-        _single(
-            bullet_system,
-            player_rect.center,
-            angle=90 + spread,
-            speed_scale=speed,
-            damage_scale=0.85
-        )
 
 class TrackingDrones(Weapon):
     def __init__(self):
