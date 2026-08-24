@@ -94,9 +94,10 @@ def play_random_music():
 play_random_music()
 
 class Game(GameState):
-    def __init__(self, ai_stage="full"):
+    def __init__(self, ai_stage="full", fixed_dt=None):
         super().__init__()
-        
+
+        self.fixed_dt = fixed_dt
         self.hud = HUD()
 
         g_engine.all_sprites = pygame.sprite.Group()
@@ -295,9 +296,13 @@ class Game(GameState):
             g_engine.joystick = None
 
     def update(self):
-        dt, self.last_time = delta_time(self.last_time)
-        if dt > 0.1:
-            dt = 0.1
+        if self.fixed_dt is not None:
+            dt = self.fixed_dt
+            self.last_time = time()
+        else:
+            dt, self.last_time = delta_time(self.last_time)
+            if dt > 0.1:
+                dt = 0.1
 
         if g_engine.hit_stop_frames > 0:
             g_engine.hit_stop_frames -= dt

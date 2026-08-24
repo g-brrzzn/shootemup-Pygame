@@ -1,6 +1,6 @@
 import pygame
 import math
-from random import randint
+from random import random
 from game_engine import g_engine
 from classes.Enemy import EnemyBase
 from constants.global_var import config
@@ -41,7 +41,7 @@ class Boss(EnemyBase):
             )
 
         self.rect.topleft = (self.x, self.y)
-        self.shoot()
+        self.shoot(dt)
 
         self.current_sprite += 5.25 * dt
         if self.current_sprite >= len(self.sprites):
@@ -52,13 +52,13 @@ class Boss(EnemyBase):
         else:
             self.display_image = self.sprites[int(self.current_sprite)]
 
-    def shoot(self):
-        if randint(0, 100) < 2:
+    def shoot(self, dt):
+        if random() < 1.2 * dt:
             g_engine.enemy_bullets.emit_pattern(
                 "single", self.rect.center, {"angle": -90, "speed_scale": 0.6}
             )
 
-        if randint(0, 200) < 2:
+        if random() < 0.6 * dt:
             g_engine.enemy_bullets.emit_pattern(
                 "spread",
                 (self.rect.centerx, self.rect.bottom),

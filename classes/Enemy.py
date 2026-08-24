@@ -1,7 +1,7 @@
 import pygame
 import math
 import numpy as np
-from random import randint, uniform
+from random import randint, uniform, random
 
 from game_engine import g_engine
 from classes.PowerUp import PowerUp
@@ -133,7 +133,7 @@ class EnemyBase(pygame.sprite.Sprite):
         self._try_drop_powerup()
         self.kill()
 
-    def shoot(self):
+    def shoot(self, dt):
         pass
 
     def move(self, dt):
@@ -176,7 +176,7 @@ class EnemyBase(pygame.sprite.Sprite):
                 self.shoot_cooldown = 1.5 
         else:
             if self.shoot_cooldown <= 0:
-                self.shoot()
+                self.shoot(dt)
 
         self.check_bounds()
         self.rect.topleft = (self.x, self.y)
@@ -225,9 +225,9 @@ class Enemy1(EnemyBase):
             math.sin(pygame.time.get_ticks() * 0.05 + self.random_offset) * 37.5 * dt
         )
 
-    def shoot(self):
-        if randint(0, 1000) < 5:
-            is_pink = randint(0, 100) < 20 
+    def shoot(self, dt):
+        if random() < 0.3 * dt:
+            is_pink = randint(0, 100) < 20
             self.prepare_attack("single", {"angle": -90, "speed_scale": 0.75, "is_pink": is_pink})
 
 class Enemy2(EnemyBase):
@@ -247,8 +247,8 @@ class Enemy2(EnemyBase):
         self.x = self.initial_x + math.sin(t + self.random_offset) * 150
         self.x = max(0, min(self.x, config.INTERNAL_RESOLUTION[0] - SCALED_SPRITE_SIZE))
 
-    def shoot(self):
-        if randint(0, 1000) < 5:
+    def shoot(self, dt):
+        if random() < 0.3 * dt:
             is_pink = randint(0, 100) < 20
             self.prepare_attack(
                 "spread",
@@ -275,8 +275,8 @@ class Enemy3(EnemyBase):
             elif self.x > target_x:
                 self.x -= self.horizontal_speed * dt
 
-    def shoot(self):
-        if randint(0, 1000) < 5:
+    def shoot(self, dt):
+        if random() < 0.3 * dt:
             dx = g_engine.player.rect.centerx - self.rect.centerx
             dy = g_engine.player.rect.centery - self.rect.centery
             angle = math.degrees(math.atan2(-dy, dx))

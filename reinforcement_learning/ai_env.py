@@ -15,7 +15,7 @@ class ShootEmUpEnv(gym.Env):
         self.stage = stage
         self.frame_skip = frame_skip
 
-        self.game = Game(ai_stage=stage)
+        self.game = Game(ai_stage=stage, fixed_dt=1.0 / 60.0)
 
         self.action_space = spaces.MultiDiscrete([3, 3])
 
@@ -48,7 +48,7 @@ class ShootEmUpEnv(gym.Env):
         return obs, {}
 
     def step(self, action):
-        for _ in range(3):
+        for _ in range(self.frame_skip):
             if g_engine.player and g_engine.player.getLife() > 0:
                 g_engine.player.apply_ai_action(action)
 
