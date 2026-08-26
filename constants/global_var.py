@@ -3,6 +3,7 @@ import json
 import os
 import platform
 from game_engine import g_engine
+from constants.Utils import get_user_data_dir
 
 if platform.system() == "Windows":
     try:
@@ -12,7 +13,7 @@ if platform.system() == "Windows":
     except Exception:
         pass
 
-CONFIG_FILE = "settings.json"
+CONFIG_FILE = os.path.join(get_user_data_dir(), "settings.json")
 
 
 class Configs:

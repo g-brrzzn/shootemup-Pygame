@@ -1,3 +1,5 @@
+import os
+import platform
 import pygame
 from time import time
 
@@ -11,16 +13,33 @@ def delta_time(last_time):
     return dt, last_time
 
 
+def get_user_data_dir():
+    """Per-user, writable directory to store save data (settings, high score)."""
+    app_name = "ShootEmUp"
+    system = platform.system()
+
+    if system == "Windows":
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    elif system == "Darwin":
+        base = os.path.expanduser("~/Library/Application Support")
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+
+    path = os.path.join(base, app_name)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def get_high_score():
     try:
-        with open("highscore.txt", "r") as f:
+        with open(os.path.join(get_user_data_dir(), "highscore.txt"), "r") as f:
             return int(f.read())
-    except:
+    except (OSError, ValueError):
         return 0
 
 
 def save_high_score(score):
-    with open("highscore.txt", "w") as f:
+    with open(os.path.join(get_user_data_dir(), "highscore.txt"), "w") as f:
         f.write(str(score))
 
 
