@@ -47,10 +47,12 @@ class PowerUp(pygame.sprite.Sprite):
         self.x = float(self.rect.centerx)
         self.y = float(self.rect.centery)
 
-        self.speed_y = random.uniform(100.0, 130.0) 
+        self.speed_y = random.uniform(100.0, 130.0)
         self.sway_speed = random.uniform(2.0, 3.5)
         self.sway_amp = random.uniform(40.0, 75.0)
         self.time_offset = random.uniform(0.0, 100.0)
+
+        self._scale_cache = {}
 
     def update(self, dt):
         t = (pygame.time.get_ticks() / 1000.0) + self.time_offset
@@ -64,11 +66,15 @@ class PowerUp(pygame.sprite.Sprite):
         self.rect.center = (round(self.x), round(self.y))
         self.hitbox.center = self.rect.center
 
-        scale_factor = 1.0 + 0.1 * math.sin(t * 8)
-        new_w = int(self.original_image.get_width() * scale_factor)
-        new_h = int(self.original_image.get_height() * scale_factor)
-        
-        self.image = pygame.transform.scale(self.original_image, (new_w, new_h))
+        scale_key = round(1.0 + 0.1 * math.sin(t * 8), 2)
+        scaled = self._scale_cache.get(scale_key)
+        if scaled is None:
+            new_w = max(1, int(self.original_image.get_width() * scale_key))
+            new_h = max(1, int(self.original_image.get_height() * scale_key))
+            scaled = pygame.transform.scale(self.original_image, (new_w, new_h))
+            self._scale_cache[scale_key] = scaled
+
+        self.image = scaled
         self.rect = self.image.get_rect(center=self.rect.center)
 
         if self.rect.top > config.INTERNAL_RESOLUTION[1] + 100:

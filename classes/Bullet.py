@@ -5,12 +5,20 @@ from constants.global_var import config, GAME_COLOR
 
 class BulletSystem:
     player_images = {1: [], 2: [], 3: []}
+    player_half_sizes = {1: [], 2: [], 3: []}
     enemy_images = []
-    
+    enemy_half_sizes = []
+
     glow_player = None
     glow_player_l2 = None
     glow_player_l3 = None
     glow_enemy = None
+
+    glow_player_half = (0, 0)
+    glow_player_l2_half = (0, 0)
+    glow_player_l3_half = (0, 0)
+    glow_enemy_half = (0, 0)
+    glow_enemy_pink_half = (0, 0)
 
     def __init__(self, max_particles, is_player):
         self.max_particles = max_particles
@@ -49,31 +57,43 @@ class BulletSystem:
         pygame.draw.circle(p_img_l3, (255, 255, 255), (p_img_l3.get_width() // 2, p_img_l3.get_height() // 2), 5)
 
         cls.player_images = {1: [], 2: [], 3: []}
+        cls.player_half_sizes = {1: [], 2: [], 3: []}
         for a in range(360):
             rot1 = pygame.transform.rotate(p_img, a - 90)
             rot1.set_colorkey((0, 0, 0))
             cls.player_images[1].append(rot1)
-            
+            cls.player_half_sizes[1].append((rot1.get_width() // 2, rot1.get_height() // 2))
+
             rot2 = pygame.transform.rotate(p_img_l2, a - 90)
             rot2.set_colorkey((0, 0, 0))
             cls.player_images[2].append(rot2)
-            
+            cls.player_half_sizes[2].append((rot2.get_width() // 2, rot2.get_height() // 2))
+
             rot3 = pygame.transform.rotate(p_img_l3, a - 90)
             rot3.set_colorkey((0, 0, 0))
             cls.player_images[3].append(rot3)
+            cls.player_half_sizes[3].append((rot3.get_width() // 2, rot3.get_height() // 2))
 
         cls.enemy_images = []
+        cls.enemy_half_sizes = []
         for a in range(360):
             rotated = pygame.transform.rotate(e_img, a - 90)
             rotated.set_colorkey((0, 0, 0))
             cls.enemy_images.append(rotated)
+            cls.enemy_half_sizes.append((rotated.get_width() // 2, rotated.get_height() // 2))
 
         cls.glow_player = assets_manager.get_image("glow_bullet_player")
         cls.glow_enemy = assets_manager.get_image("glow_bullet_enemy")
         cls.glow_enemy_pink = assets_manager.get_image("glow_bullet_pink")
-        
+
         cls.glow_player_l2 = pygame.transform.scale(cls.glow_player, (int(cls.glow_player.get_width() * 1.3), int(cls.glow_player.get_height() * 1.3)))
         cls.glow_player_l3 = pygame.transform.scale(cls.glow_player, (int(cls.glow_player.get_width() * 1.8), int(cls.glow_player.get_height() * 1.8)))
+
+        cls.glow_player_half = (cls.glow_player.get_width() // 2, cls.glow_player.get_height() // 2)
+        cls.glow_player_l2_half = (cls.glow_player_l2.get_width() // 2, cls.glow_player_l2.get_height() // 2)
+        cls.glow_player_l3_half = (cls.glow_player_l3.get_width() // 2, cls.glow_player_l3.get_height() // 2)
+        cls.glow_enemy_half = (cls.glow_enemy.get_width() // 2, cls.glow_enemy.get_height() // 2)
+        cls.glow_enemy_pink_half = (cls.glow_enemy_pink.get_width() // 2, cls.glow_enemy_pink.get_height() // 2)
 
     def set_target_provider(self, provider):
         self.target_provider = provider
@@ -383,38 +403,34 @@ class BulletSystem:
                 surf.blit(bomb_base, (px - 10, py - 10))
             
             else:
+                angle_idx = angle_list[i]
+
                 if self.is_player:
                     lvl = max(1, min(3, meta.get("power_level", 1)))
-                    
-                    img = self.player_images[lvl][angle_list[i]]
-                    
+
+                    img = self.player_images[lvl][angle_idx]
+                    img_w, img_h = self.player_half_sizes[lvl][angle_idx]
+
                     if lvl == 1:
-                        glow = self.glow_player
+                        glow, (glow_w, glow_h) = self.glow_player, self.glow_player_half
                     elif lvl == 2:
-                        glow = self.glow_player_l2
+                        glow, (glow_w, glow_h) = self.glow_player_l2, self.glow_player_l2_half
                     else:
-                        glow = self.glow_player_l3
-                        
-                    glow_w = glow.get_width() // 2
-                    glow_h = glow.get_height() // 2
-                    
-                    surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2))
+                        glow, (glow_w, glow_h) = self.glow_player_l3, self.glow_player_l3_half
+
+                    surf.blit(img, (px - img_w, py - img_h))
                     surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
-                    
+
                 else:
                     if meta.get("is_pink"):
-                        pygame.draw.circle(surf, (250, 160, 210), (px, py), 10) 
-                        
-                        glow = self.glow_enemy_pink
-                        glow_w = glow.get_width() // 2
-                        glow_h = glow.get_height() // 2
-                        surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
+                        pygame.draw.circle(surf, (250, 160, 210), (px, py), 10)
+
+                        glow_w, glow_h = self.glow_enemy_pink_half
+                        surf.blit(self.glow_enemy_pink, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
                     else:
-                        img = self.enemy_images[angle_list[i]]
-                        glow = self.glow_enemy
-                        
-                        glow_w = glow.get_width() // 2
-                        glow_h = glow.get_height() // 2
-                        
-                        surf.blit(img, (px - img.get_width() // 2, py - img.get_height() // 2))
-                        surf.blit(glow, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
+                        img = self.enemy_images[angle_idx]
+                        img_w, img_h = self.enemy_half_sizes[angle_idx]
+                        glow_w, glow_h = self.glow_enemy_half
+
+                        surf.blit(img, (px - img_w, py - img_h))
+                        surf.blit(self.glow_enemy, (px - glow_w, py - glow_h), special_flags=pygame.BLEND_ADD)
