@@ -53,6 +53,27 @@ def get_on_off_status(is_on):
     return "ON" if is_on else "OFF"
 
 
+_gradient_cache = {}
+
+
+def _build_gradient_surface(width, height, start_color, end_color):
+    height = max(1, height)
+    big_surf = pygame.Surface((1, height)).convert_alpha()
+    dd = 1.0 / height
+    sr, sg, sb, sa = start_color
+    er, eg, eb, ea = end_color
+    rm = (er - sr) * dd
+    gm = (eg - sg) * dd
+    bm = (eb - sb) * dd
+    am = (ea - sa) * dd
+    for y in range(height):
+        big_surf.set_at(
+            (0, y),
+            (int(sr + rm * y), int(sg + gm * y), int(sb + bm * y), int(sa + am * y)),
+        )
+    return pygame.transform.scale(big_surf, (max(1, width), height))
+
+
 def vertical(
     surf, is_square=True, start_color=BACKGROUND_COLOR_1, end_color=BACKGROUND_COLOR_2, custom_rect=None
 ):
@@ -71,21 +92,12 @@ def vertical(
         axis_x = center[0] - size[0] / 2
         axis_y = center[1] - size[1] / 2
 
-    height = size[1]
-    big_surf = pygame.Surface((1, height)).convert_alpha()
-    dd = 1.0 / height
-    sr, sg, sb, sa = start_color
-    er, eg, eb, ea = end_color
-    rm = (er - sr) * dd
-    gm = (eg - sg) * dd
-    bm = (eb - sb) * dd
-    am = (ea - sa) * dd
-    for y in range(int(height)):
-        big_surf.set_at(
-            (0, y),
-            (int(sr + rm * y), int(sg + gm * y), int(sb + bm * y), int(sa + am * y)),
-        )
-    v = pygame.transform.scale(big_surf, size)
+    key = (int(size[0]), int(size[1]), tuple(start_color), tuple(end_color))
+    v = _gradient_cache.get(key)
+    if v is None:
+        v = _build_gradient_surface(key[0], key[1], start_color, end_color)
+        _gradient_cache[key] = v
+
     surf.blit(v, (axis_x, axis_y))
 
 
