@@ -1,0 +1,8 @@
+# Extra dependencies for the reinforcement-learning scripts
+# (reinforcement_learning/train_ai.py, play_ai.py). Not needed to just
+# play the game -- install with:
+#   python -m pip install -r requirements.txt -r requirements-ai.txt
+gymnasium
+stable-baselines3
+sb3-contrib
+torch

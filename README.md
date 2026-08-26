@@ -72,6 +72,13 @@ The game features responsive standard arcade controls, alongside dedicated devel
    python -m pip install -r requirements.txt
    ```
 
+   Only needed if you also want to run the reinforcement-learning
+   scripts (`play_ai.py`, `reinforcement_learning/train_ai.py`):
+
+   ```console
+   python -m pip install -r requirements-ai.txt
+   ```
+
 1. **Launch the game:**
 
    ```console
