@@ -61,8 +61,7 @@ class CollisionManager:
                 meta = g_engine.enemy_bullets.get_bullet_meta(h)
                 if meta.get("is_pink") and h not in bullets_to_kill:
                     g_engine.score += 150
-                    g_engine.player.gain_exp(1)
-                    parried_this_frame = True 
+                    parried_this_frame = True
                     bullets_to_kill.add(h)
                     
             if parried_this_frame:

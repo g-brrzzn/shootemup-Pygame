@@ -268,16 +268,11 @@ class LevelUp(GameState):
             player.acquired_skills = []
         if not hasattr(player, "active_weapons"):
             player.active_weapons = {}
-        if not hasattr(player, "weapon_levels"):
-            player.weapon_levels = {}
 
         player.acquired_skills.append(dict(choice))
 
         if choice["type"] in ("weapon", "fusion"):
             player.active_weapons[choice["id"]] = choice["weapon_class"]()
-            
-            current_lvl = player.weapon_levels.get(choice["id"], 0)
-            player.weapon_levels[choice["id"]] = min(current_lvl + 1, 3)
 
         elif choice["type"] == "stat":
             if "stats" in choice: 

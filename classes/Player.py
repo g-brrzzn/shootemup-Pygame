@@ -50,12 +50,6 @@ class Player(pygame.sprite.Sprite):
         self.overdrive_timer = 0.0
         self.ricochet_timer = 0.0
 
-        self.parry_texts = []
-        try:
-            self.parry_font = pygame.font.Font(g_engine.assets.get_font_path("american_captain"), 30)
-        except:
-            self.parry_font = pygame.font.SysFont("arial", 30, bold=True)
-
         self.original_sprites = [
             g_engine.assets.get_image("player_idle1"),
             g_engine.assets.get_image("player_idle2"),
@@ -94,17 +88,9 @@ class Player(pygame.sprite.Sprite):
         self.muzzle_flashes = []
         self.trail = []
 
-        self.level = 1
-        self.exp = 0
-        self.max_exp = 10
-        self.pending_level_up = False
-
         self.acquired_skills = []
         self.active_weapons = {
             "base": FrontalCannon()
-        }
-        self.weapon_levels = {
-            "base": 1
         }
 
     def reset_movement(self):
@@ -135,27 +121,6 @@ class Player(pygame.sprite.Sprite):
         del arr 
         tinted.set_colorkey((0, 0, 0))
         return tinted
-
-    def gain_exp(self, amount):
-        self.exp += amount
-        if self.exp >= self.max_exp:
-            self.exp -= self.max_exp
-            self.level += 1
-            self.max_exp = int(self.max_exp * 1.5)
-            self.pending_level_up = True
-
-    def equip_weapon(self, weapon_id, weapon_instance, level=1):
-        self.active_weapons[weapon_id] = weapon_instance
-        self.weapon_levels[weapon_id] = max(self.weapon_levels.get(weapon_id, 0), level)
-
-    def unequip_weapon(self, weapon_id):
-        if weapon_id == "base":
-            return
-        self.active_weapons.pop(weapon_id, None)
-        self.weapon_levels.pop(weapon_id, None)
-
-    def add_skill(self, skill):
-        self.acquired_skills.append(dict(skill))
 
     def get_input(self, event):
         if event.key in CONTROLS["LEFT"]:

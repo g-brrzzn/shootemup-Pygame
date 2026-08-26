@@ -8,12 +8,9 @@ from classes.PowerUp import PowerUp
 from constants.global_var import config, SCALED_SPRITE_SIZE
 
 class EnemyBase(pygame.sprite.Sprite):
-    instancelist = []
-
     def __init__(self, pos, sprite_files_keys, *groups):
         super().__init__(*groups)
         self.x, self.y = float(pos[0]), float(pos[1])
-        self.instancelist.append(self)
 
         self.sprites = self.load_sprites(sprite_files_keys)
         self.white_sprites = [self.create_white_surface(s) for s in self.sprites]
@@ -98,13 +95,6 @@ class EnemyBase(pygame.sprite.Sprite):
             sprites.append(sprite)
         return sprites
 
-    def kill(self):
-        super().kill()
-        try:
-            EnemyBase.instancelist.remove(self)
-        except ValueError:
-            pass
-        
     def get_drop_table(self):
         return [
             {
