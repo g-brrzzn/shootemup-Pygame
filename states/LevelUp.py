@@ -8,7 +8,7 @@ from time import time
 from classes.Weapons import *
 from game_engine import g_engine
 from .GameState import GameState
-from .States_util import draw_text, handle_analog_stick
+from .States_util import draw_text, handle_menu_joystick_events
 from classes.particles.Fall import Fall
 from classes.particles.LightRays import LightRays
 from constants.global_var import config, CONTROLS, GAME_COLOR, TITLE_YELLOW_1, PLAYER_COLOR_GREEN, BACKGROUND_COLOR_MENU_1, BACKGROUND_COLOR_MENU_2
@@ -469,12 +469,4 @@ class LevelUp(GameState):
                     pygame.mixer.Sound.play(g_engine.assets.get_sound("menu_select"))
                     self.selected = min(len(self.offered_upgrades) - 1, self.selected + 1)
 
-        if event.type == JOYDEVICEADDED:
-            joystick = pygame.joystick.Joystick(event.device_index)
-            g_engine.joystick = joystick
-            
-        if event.type == JOYDEVICEREMOVED:
-            g_engine.joystick = None
-
-        if event.type == JOYAXISMOTION and config.use_analog_stick:
-            handle_analog_stick(self, event)
+        handle_menu_joystick_events(self, event)

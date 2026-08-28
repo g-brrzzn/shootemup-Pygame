@@ -7,9 +7,9 @@ from .States_util import (
     menu_maker,
     menu_select_next,
     menu_select_prev,
-    handle_analog_stick,
+    handle_menu_joystick_events,
 )
-from constants.global_var import CONTROLS, config
+from constants.global_var import CONTROLS
 
 
 class Pause(GameState):
@@ -73,11 +73,4 @@ class Pause(GameState):
                 if event.button == 12:
                     menu_select_next(self, self.buttons)
 
-        if event.type == JOYDEVICEADDED:
-            joystick = pygame.joystick.Joystick(event.device_index)
-            g_engine.joystick = joystick
-        if event.type == JOYDEVICEREMOVED:
-            g_engine.joystick = None
-
-        if event.type == JOYAXISMOTION and config.use_analog_stick:
-            handle_analog_stick(self, event)
+        handle_menu_joystick_events(self, event)

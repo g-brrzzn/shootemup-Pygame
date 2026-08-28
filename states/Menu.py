@@ -14,7 +14,7 @@ from .States_util import (
     draw_text,
     menu_select_next,
     menu_select_prev,
-    handle_analog_stick,
+    handle_menu_joystick_events,
 )
 from classes.particles.Fall import Fall
 from constants.Utils import delta_time
@@ -125,11 +125,4 @@ class Menu(GameState):
                 if event.button == 12:
                     menu_select_next(self, self.buttons)
 
-        if event.type == JOYDEVICEADDED:
-            joystick = pygame.joystick.Joystick(event.device_index)
-            g_engine.joystick = joystick
-        if event.type == JOYDEVICEREMOVED:
-            g_engine.joystick = None
-
-        if event.type == JOYAXISMOTION and config.use_analog_stick:
-            handle_analog_stick(self, event)
+        handle_menu_joystick_events(self, event)

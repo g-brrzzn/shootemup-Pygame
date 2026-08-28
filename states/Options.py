@@ -13,7 +13,7 @@ from .States_util import (
     get_on_off_status,
     menu_select_next,
     menu_select_prev,
-    handle_analog_stick,
+    handle_menu_joystick_events,
 )
 from classes.particles.Fall import Fall
 from constants.global_var import (
@@ -190,12 +190,4 @@ class Options(GameState):
                 if event.button == 14:
                     self.increase_option()
 
-        if event.type == JOYDEVICEADDED:
-            joystick = pygame.joystick.Joystick(event.device_index)
-            g_engine.joystick = joystick
-
-        if event.type == JOYDEVICEREMOVED:
-            g_engine.joystick = None
-
-        if event.type == JOYAXISMOTION and config.use_analog_stick:
-            handle_analog_stick(self, event)
+        handle_menu_joystick_events(self, event)

@@ -206,6 +206,23 @@ def menu_select_prev(menu, buttons):
     menu.selected = (menu.selected - 1) % len(buttons)
 
 
+def sync_joystick_device(event):
+    """Keeps g_engine.joystick in sync with connect/disconnect events.
+    Identical handling is needed by every state that reads controller input."""
+    if event.type == JOYDEVICEADDED:
+        g_engine.joystick = pygame.joystick.Joystick(event.device_index)
+    elif event.type == JOYDEVICEREMOVED:
+        g_engine.joystick = None
+
+
+def handle_menu_joystick_events(menu, event):
+    """Shared joystick plumbing for menu-style states: device connect/disconnect
+    plus translating analog stick motion into synthetic JOYHATMOTION navigation."""
+    sync_joystick_device(event)
+    if event.type == JOYAXISMOTION and config.use_analog_stick:
+        handle_analog_stick(menu, event)
+
+
 def handle_analog_stick(menu, event):
     deadzone = 0.5
 

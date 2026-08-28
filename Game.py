@@ -27,7 +27,7 @@ from states.Options import Options
 from states.GameOver import GameOver, Exit
 from states.LevelUp import LevelUp
 from states.ControlsScreen import ControlsScreen
-from states.States_util import vertical, draw_text
+from states.States_util import vertical, draw_text, sync_joystick_device
 
 from constants.global_var import (
     SCALE,
@@ -288,12 +288,7 @@ class Game(GameState):
         if event.type == JOYHATMOTION:
             g_engine.player.get_joyhat_input(event)
             
-        if event.type == JOYDEVICEADDED:
-            joystick = pygame.joystick.Joystick(event.device_index)
-            g_engine.joystick = joystick
-            
-        if event.type == JOYDEVICEREMOVED:
-            g_engine.joystick = None
+        sync_joystick_device(event)
 
     def update(self):
         if self.fixed_dt is not None:

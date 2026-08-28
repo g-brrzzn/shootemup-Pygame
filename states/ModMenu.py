@@ -5,7 +5,7 @@ from time import time
 
 from game_engine import g_engine
 from .GameState import GameState
-from .States_util import draw_text, handle_analog_stick
+from .States_util import draw_text, handle_menu_joystick_events
 from classes.particles.Fall import Fall
 from classes.PowerUp import PowerUp
 from constants.global_var import config, CONTROLS
@@ -183,10 +183,4 @@ class ModMenu(GameState):
                 elif event.button == 14:
                     self.execute_action(self.selected, 1)
 
-        if event.type == JOYDEVICEADDED:
-            g_engine.joystick = pygame.joystick.Joystick(event.device_index)
-        if event.type == JOYDEVICEREMOVED:
-            g_engine.joystick = None
-
-        if event.type == JOYAXISMOTION and config.use_analog_stick:
-            handle_analog_stick(self, event)
+        handle_menu_joystick_events(self, event)
